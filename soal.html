@@ -14,6 +14,13 @@
 <body class="bg-gray-100 min-h-screen pb-20">
 
     <div id="app" class="max-w-5xl mx-auto pt-8 px-4">
+        
+        <!-- NOTIFIKASI AUTO SAVE -->
+        <div v-if="lastSaved" class="fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded shadow-lg text-xs z-50 flex items-center gap-2 animate-pulse">
+            <i class="fas fa-save"></i> 
+            Draft Tersimpan: {{ lastSaved }}
+        </div>
+
         <!-- HEADER -->
         <header class="mb-8 text-center">
             <h1 class="text-3xl font-bold text-blue-900">INPUT BANK SOAL (ONLINE)</h1>
@@ -24,17 +31,30 @@
         <div v-if="isLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white p-6 rounded shadow-lg flex items-center gap-4">
                 <i class="fas fa-spinner fa-spin fa-2x text-blue-900"></i>
-                <span class="font-bold">Sedang menyimpan ke Server...</span>
+                <span class="font-bold">Sedang memproses...</span>
             </div>
         </div>
 
         <!-- STEP 1: SETUP -->
         <div v-if="step === 1" class="bg-white p-8 rounded-lg shadow-lg max-w-2xl mx-auto border-t-8 border-blue-900">
             <h2 class="text-xl font-bold mb-4 text-gray-800">1. Identitas Ujian</h2>
+            
+            <!-- ALERT DRAFT -->
+            <div v-if="hasDraft" class="mb-6 bg-yellow-50 border border-yellow-200 p-4 rounded text-sm text-yellow-800 flex justify-between items-center">
+                <div>
+                    <strong><i class="fas fa-history"></i> Draft Ditemukan!</strong><br>
+                    Melanjutkan pekerjaan terakhir Anda.
+                </div>
+                <button @click="resetDraft" class="bg-red-100 text-red-600 px-3 py-1 rounded hover:bg-red-200 text-xs font-bold">
+                    Hapus & Buat Baru
+                </button>
+            </div>
+
             <div class="space-y-4">
                  <div class="border-2 border-dashed border-gray-300 p-4 rounded text-center bg-gray-50">
                     <p class="text-sm font-bold text-gray-500 mb-2">Logo Sekolah (Untuk PDF)</p>
                     <input type="file" accept="image/*" @change="handleLogoUpload" class="text-sm">
+                    <div v-if="sekolah.logoPreview" class="mt-2"><img :src="sekolah.logoPreview" class="h-12 mx-auto object-contain"></div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="col-span-1 md:col-span-2">
@@ -70,12 +90,12 @@
         <div v-if="step === 2">
             <div class="sticky top-0 z-40 bg-white p-4 shadow mb-6 rounded flex justify-between items-center border-l-4 border-blue-900">
                 <div><h2 class="font-bold text-xl text-blue-900">{{ config.mapel }}</h2><span class="text-xs bg-blue-100 px-2 py-1 rounded">Kelas {{ config.kelas }}</span></div>
-                <div class="flex gap-2"><button @click="step=1" class="px-4 py-2 text-sm text-gray-500">Edit Info</button><button @click="step=3; window.scrollTo(0,0)" class="px-6 py-2 bg-green-600 text-white rounded font-bold shadow">INPUT KUNCI <i class="fas fa-check ml-2"></i></button></div>
+                <div class="flex gap-2"><button @click="step=1" class="px-4 py-2 text-sm text-gray-500">Edit Info</button><button @click="validateStep2" class="px-6 py-2 bg-green-600 text-white rounded font-bold shadow">INPUT KUNCI <i class="fas fa-check ml-2"></i></button></div>
             </div>
             <div v-for="(q, index) in questions" :key="index" class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200">
                 <div class="flex justify-between items-center mb-4 border-b pb-2"><span class="bg-blue-100 text-blue-900 px-3 py-1 rounded font-bold text-sm">No. {{ index + 1 }} - {{ q.typeLabel }}</span><span class="text-sm font-bold text-gray-500">{{ q.poin }} Poin</span></div>
                 <div class="mb-4">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Pertanyaan</label>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Pertanyaan <span class="text-red-500">*</span></label>
                     <input type="file" @change="handleImageUpload($event, index)" class="text-xs mb-2">
                     <img v-if="q.image" :src="q.image" class="h-24 object-contain mb-2 border p-1 rounded">
                     <textarea v-model="q.text" rows="3" class="w-full p-3 border rounded bg-gray-50"></textarea>
@@ -85,7 +105,7 @@
                 </div>
                 <div v-if="q.type === 'PG_KOMPLEKS'" class="grid gap-2"><div v-for="(o, i) in q.options" :key="i" class="flex gap-2"><input type="checkbox" disabled><input v-model="o.text" class="w-full p-2 border rounded bg-white" placeholder="Pernyataan..."></div></div>
             </div>
-            <div class="flex justify-center pb-10"><button @click="step=3; window.scrollTo(0,0)" class="px-10 py-4 bg-blue-900 text-white text-xl rounded-full font-bold shadow-xl">LANJUT KE KUNCI <i class="fas fa-arrow-right ml-2"></i></button></div>
+            <div class="flex justify-center pb-10"><button @click="validateStep2" class="px-10 py-4 bg-blue-900 text-white text-xl rounded-full font-bold shadow-xl">LANJUT KE KUNCI <i class="fas fa-arrow-right ml-2"></i></button></div>
         </div>
 
         <!-- STEP 3: KUNCI & SIMPAN -->
@@ -97,6 +117,10 @@
             <div class="grid gap-4 mb-8">
                 <div v-for="(q, index) in questions" :key="index" class="bg-white p-4 rounded shadow border-l-4 border-green-500">
                     <div class="mb-2 text-sm text-gray-800 font-semibold"><span class="bg-gray-200 px-2 py-1 rounded mr-2">No. {{ index + 1 }}</span> {{ q.text ? q.text.substring(0, 50) + '...' : '' }}</div>
+                    
+                    <!-- Validasi Visual -->
+                    <div v-if="['PG','BS','PG_KOMPLEKS'].includes(q.type)" class="text-xs text-red-500 font-bold mb-1">* Wajib diisi</div>
+
                     <div v-if="q.type === 'PG'" class="flex gap-4"><label v-for="opt in ['A', 'B', 'C', 'D']" class="cursor-pointer font-bold text-sm"><input type="radio" :name="'k'+index" :value="opt" v-model="q.answer"> {{opt}}</label></div>
                     <div v-if="q.type === 'BS'" class="flex gap-4"><label class="cursor-pointer text-sm"><input type="radio" :name="'k'+index" value="BENAR" v-model="q.answer"> BENAR</label><label class="cursor-pointer text-sm"><input type="radio" :name="'k'+index" value="SALAH" v-model="q.answer"> SALAH</label></div>
                     <div v-if="q.type === 'PG_KOMPLEKS'" class="flex gap-4 flex-wrap"><label v-for="(o, i) in q.options" :key="i" class="text-xs flex items-center gap-1"><input type="checkbox" v-model="o.isCorrect"> {{ o.text }}</label></div>
@@ -111,6 +135,7 @@
                     <span>UPLOAD KE SERVER (ONLINE)</span>
                 </button>
             </div>
+            <p class="text-center mt-4 text-xs text-gray-500">Data draft akan dihapus otomatis setelah berhasil upload.</p>
         </div>
     </div>
 
@@ -121,14 +146,13 @@
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // --- KONFIGURASI FIREBASE ---
-        // Ganti bagian ini dengan Config dari langkah 1
         const firebaseConfig = {
-             apiKey: "AIzaSyBivREr2y61OYTE0kLxRnkGtPCdLvHn_og",
-  authDomain: "cbt-albanna.firebaseapp.com",
-  projectId: "cbt-albanna",
-  storageBucket: "cbt-albanna.firebasestorage.app",
-  messagingSenderId: "740622197344",
-  appId: "1:740622197344:web:6112adf59edfbe496ed905"
+            apiKey: "AIzaSyBivREr2y61OYTE0kLxRnkGtPCdLvHn_og",
+            authDomain: "cbt-albanna.firebaseapp.com",
+            projectId: "cbt-albanna",
+            storageBucket: "cbt-albanna.firebasestorage.app",
+            messagingSenderId: "740622197344",
+            appId: "1:740622197344:web:6112adf59edfbe496ed905"
         };
 
         const appFirebase = initializeApp(firebaseConfig);
@@ -139,21 +163,74 @@
                 return {
                     step: 1,
                     isLoading: false,
+                    lastSaved: null,
+                    hasDraft: false,
                     config: { mapel: '', guru: '', kelas: '', tanggal: '', durasi: '' },
-                    sekolah: { logoBase64: null },
+                    sekolah: { logoBase64: null, logoPreview: null },
                     questions: []
                 }
             },
+            mounted() {
+                // LOAD DRAFT SAAT HALAMAN DIBUKA
+                const draft = localStorage.getItem('guru_soal_firebase_draft');
+                if (draft) {
+                    try {
+                        const parsed = JSON.parse(draft);
+                        this.step = parsed.step || 1;
+                        this.config = parsed.config || this.config;
+                        this.sekolah = parsed.sekolah || this.sekolah;
+                        this.questions = parsed.questions || [];
+                        this.hasDraft = true;
+                    } catch (e) { console.error("Gagal load draft", e); }
+                }
+            },
+            watch: {
+                // PANTAU PERUBAHAN UNTUK AUTO-SAVE
+                config: { handler() { this.saveDraft() }, deep: true },
+                questions: { handler() { this.saveDraft() }, deep: true },
+                step(val) { this.saveDraft() },
+                sekolah: { handler() { this.saveDraft() }, deep: true }
+            },
             methods: {
+                saveDraft() {
+                    const data = {
+                        step: this.step,
+                        config: this.config,
+                        sekolah: this.sekolah,
+                        questions: this.questions
+                    };
+                    // Simpan ke LocalStorage
+                    localStorage.setItem('guru_soal_firebase_draft', JSON.stringify(data));
+                    this.lastSaved = new Date().toLocaleTimeString();
+                },
+                resetDraft() {
+                    if(confirm("Yakin ingin menghapus draft dan mulai dari nol?")) {
+                        localStorage.removeItem('guru_soal_firebase_draft');
+                        location.reload(); 
+                    }
+                },
                 generateTemplate() {
                     if (!this.config.mapel || !this.config.kelas) return alert("Lengkapi Identitas!");
-                    this.questions = [];
-                    const m = this.config.mapel;
-                    if (['MATEMATIKA', 'IPA'].includes(m)) { this.addSlots('PG', 25, 2); this.addSlots('URAIAN', 10, 3); this.addSlots('ESAI', 5, 4); }
-                    else if (['BAHASA INGGRIS', 'BAHASA INDONESIA'].includes(m)) { this.addSlots('PG', 20, 2); this.addSlots('URAIAN', 10, 3); this.addSlots('BS', 10, 1); this.addSlots('ESAI', 5, 4); }
-                    else if (['BAHASA BALI', 'SENI BUDAYA', 'BAHASA ARAB'].includes(m)) { this.addSlots('PG', 40, 2); this.addSlots('ESAI', 5, 4); }
-                    else { this.addSlots('PG', 25, 2); this.addSlots('PG_KOMPLEKS', 5, 3); this.addSlots('URAIAN', 5, 3); this.addSlots('ESAI', 5, 4); }
-                    this.step = 2; window.scrollTo(0,0);
+                    
+                    if(this.questions.length === 0 || confirm("Buat slot baru? Soal yang ada sekarang akan terhapus.")) {
+                        this.questions = [];
+                        const m = this.config.mapel;
+                        if (['MATEMATIKA', 'IPA'].includes(m)) { this.addSlots('PG', 25, 2); this.addSlots('URAIAN', 10, 3); this.addSlots('ESAI', 5, 4); }
+                        else if (['BAHASA INGGRIS', 'BAHASA INDONESIA'].includes(m)) { this.addSlots('PG', 20, 2); this.addSlots('URAIAN', 10, 3); this.addSlots('BS', 10, 1); this.addSlots('ESAI', 5, 4); }
+                        else if (['BAHASA BALI', 'SENI BUDAYA', 'BAHASA ARAB'].includes(m)) { this.addSlots('PG', 40, 2); this.addSlots('ESAI', 5, 4); }
+                        else { this.addSlots('PG', 25, 2); this.addSlots('PG_KOMPLEKS', 5, 3); this.addSlots('URAIAN', 5, 3); this.addSlots('ESAI', 5, 4); }
+                        this.step = 2; window.scrollTo(0,0);
+                    }
+                },
+                validateStep2() {
+                    // Validasi Soal Terisi
+                    for(let i=0; i<this.questions.length; i++) {
+                        if(!this.questions[i].text && !this.questions[i].image) {
+                            return alert(`Soal No. ${i+1} Masih Kosong!`);
+                        }
+                    }
+                    this.step = 3; 
+                    window.scrollTo(0,0);
                 },
                 addSlots(type, count, points) {
                     let typeLabel = {'PG':'Pilihan Ganda', 'PG_KOMPLEKS':'PG Kompleks', 'URAIAN':'Uraian', 'ESAI':'Esai', 'BS':'Benar Salah'}[type];
@@ -166,7 +243,15 @@
                 },
                 handleLogoUpload(e) {
                     const f = e.target.files[0];
-                    if(f) { const r = new FileReader(); r.onload = (ev) => this.sekolah.logoBase64 = ev.target.result; r.readAsDataURL(f); }
+                    if(f) { 
+                        if(f.size > 500000) return alert("Maksimal 500KB agar Auto-Save lancar.");
+                        const r = new FileReader(); 
+                        r.onload = (ev) => {
+                            this.sekolah.logoBase64 = ev.target.result;
+                            this.sekolah.logoPreview = ev.target.result;
+                        };
+                        r.readAsDataURL(f); 
+                    }
                 },
                 handleImageUpload(e, i) {
                     const f = e.target.files[0]; 
@@ -176,22 +261,25 @@
                     }
                 },
                 async simpanKeFirebase() {
-                    // Validasi
+                    // Validasi Kunci
                     for(let q of this.questions) {
                         if(q.type==='PG' && !q.answer) return alert("Lengkapi Kunci Jawaban PG!");
+                        if(q.type==='BS' && !q.answer) return alert("Lengkapi Kunci Jawaban BS!");
                     }
 
                     this.isLoading = true;
                     try {
                         const paketSoal = {
                             config: this.config,
-                            soal: this.questions, // Gambar dalam base64 akan ikut tersimpan (kurang efisien tapi paling mudah utk pemula)
+                            soal: this.questions,
                             tanggal_buat: new Date().toISOString()
                         };
 
-                        // Simpan ke Collection 'bank_soal'
                         await addDoc(collection(db, "bank_soal"), paketSoal);
                         
+                        // HAPUS DRAFT SETELAH SUKSES UPLOAD
+                        localStorage.removeItem('guru_soal_firebase_draft');
+
                         alert("✅ BERHASIL! Soal tersimpan di Server Online.");
                         window.location.reload();
                     } catch (e) {
@@ -202,8 +290,51 @@
                     }
                 },
                 downloadPDFSoal() {
-                    // (Kode PDF sama seperti sebelumnya, dipersingkat agar muat)
-                    alert("Fitur PDF tetap berjalan normal.");
+                     const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    let y = 10;
+
+                    if (this.sekolah.logoBase64) doc.addImage(this.sekolah.logoBase64, 'PNG', 15, 10, 25, 25);
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.setTextColor(30, 58, 138); 
+                    doc.text("SMP ALBANNA", 45, 18);
+                    doc.setTextColor(0); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+                    doc.text("Jl. Tukad Yeh Ho III No.10, Denpasar, Bali 80234", 45, 24);
+                    doc.setLineWidth(0.5); doc.line(10, 35, pageWidth-10, 35);
+                    y = 45;
+
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+                    doc.text(`NASKAH SOAL: ${this.config.mapel}`, pageWidth/2, y, {align:'center'}); y+=7;
+                    doc.setFontSize(10); doc.setFont("helvetica", "normal");
+                    doc.text(`Guru: ${this.config.guru}`, 15, y); 
+                    doc.text(`Kelas: ${this.config.kelas}`, 80, y); 
+                    doc.text(`Waktu: ${this.config.durasi} Menit`, 130, y); y+=10;
+
+                    doc.setFillColor(240); doc.rect(15, y-5, pageWidth-30, 20, 'F');
+                    doc.setFontSize(8); doc.text("PERATURAN UJIAN: Berdoalah, Tulis Identitas, Kerjakan dengan Jujur.", 18, y+5);
+                    y+=25;
+
+                    doc.setFontSize(10);
+                    this.questions.forEach((q, idx) => {
+                        if (y > pageHeight - 40) { doc.addPage(); y = 20; }
+                        doc.setFont("helvetica", "bold"); doc.text(`${idx+1}.`, 15, y);
+                        doc.setFont("helvetica", "normal"); 
+                        const splitText = doc.splitTextToSize(q.text || '', 170);
+                        doc.text(splitText, 22, y); y += (splitText.length * 5) + 2;
+
+                        if(q.image) { 
+                             if (y > pageHeight - 50) { doc.addPage(); y = 20; }
+                            doc.addImage(q.image, 'JPEG', 25, y, 40, 0); y += 45; 
+                        }
+
+                        if(q.type === 'PG') { ['A','B','C','D'].forEach(opt=>{doc.text(`${opt}. ${q.options[opt]}`, 25, y); y+=5;}); }
+                        else if(q.type === 'BS') { doc.text("[ ] Benar   [ ] Salah", 25, y); y+=5; }
+                        else if(q.type === 'PG_KOMPLEKS') { q.options.forEach(o=>{doc.rect(25, y-3, 3, 3); doc.text(o.text, 32, y); y+=5;}); }
+                        else { y+=2; for(let l=0; l<3; l++) { doc.line(25, y, pageWidth-25, y); y+=6; } }
+                        y+=4;
+                    });
+                    doc.save(`SOAL_${this.config.mapel}_KELAS_${this.config.kelas}.pdf`);
                 }
             }
         }).mount('#app');
