@@ -2,171 +2,257 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Dashboard (Live) - SMP ALBANNA</title>
+    <title>Admin Dashboard (Secured) - SMP ALBANNA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Tambahkan Library PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>body { font-family: 'Montserrat', sans-serif; }</style>
 </head>
 <body class="bg-gray-100 min-h-screen">
 
-    <div id="admin-app" class="flex h-screen overflow-hidden">
-        
-        <!-- SIDEBAR -->
-        <div class="w-64 bg-slate-900 text-white flex flex-col h-full shadow-2xl z-10">
-            <div class="p-6 text-center border-b border-slate-700 bg-slate-800">
-                <h1 class="font-bold text-xl tracking-wider">ADMIN PANEL</h1>
-                <div class="flex items-center justify-center gap-2 text-xs text-green-400 mt-1">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    Online Real-Time
-                </div>
-            </div>
-            
-            <nav class="flex-1 p-4 space-y-2">
-                <button @click="activeTab = 'soal'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'soal' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
-                    <i class="fas fa-database w-5"></i> Bank Soal
-                </button>
-                <button @click="activeTab = 'hasil'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'hasil' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
-                    <i class="fas fa-poll w-5"></i> Hasil Ujian
-                </button>
-            </nav>
+    <div id="admin-app">
 
-            <div class="p-4 border-t border-slate-800 text-center text-xs text-slate-500">
-                SMP ALBANNA CBT
+        <!-- 1. HALAMAN LOGIN (Gembok) -->
+        <div v-if="!isLoggedIn" class="fixed inset-0 bg-slate-900 flex flex-col items-center justify-center z-50 p-4 text-white">
+            <div class="bg-white text-slate-900 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-2 bg-red-600"></div>
+                
+                <div class="mb-6">
+                    <span class="bg-red-100 text-red-600 p-4 rounded-full inline-block mb-4">
+                        <i class="fas fa-user-shield fa-3x"></i>
+                    </span>
+                    <h1 class="text-2xl font-bold text-slate-800">RESTRICTED AREA</h1>
+                    <p class="text-sm text-slate-500 mt-2 font-bold">Hanya Admin & IT Support yang diizinkan mengakses halaman ini.</p>
+                </div>
+
+                <form @submit.prevent="login" class="space-y-4">
+                    <div>
+                        <input type="password" v-model="passwordInput" placeholder="Masukkan Password Admin" class="w-full p-4 border-2 border-slate-200 rounded-lg text-center text-lg focus:border-blue-600 focus:outline-none transition" autofocus>
+                    </div>
+                    <button type="submit" class="w-full bg-slate-900 text-white py-3 rounded-lg font-bold hover:bg-slate-800 transition shadow-lg">
+                        MASUK DASHBOARD <i class="fas fa-sign-in-alt ml-2"></i>
+                    </button>
+                </form>
+
+                <div class="mt-6 pt-6 border-t border-slate-100">
+                    <p class="text-xs text-slate-400 mb-3">Lupa password atau butuh akses?</p>
+                    <a href="mailto:anursuhaida26@gmail.com?subject=Permintaan%20Akses%20Admin%20CBT&body=Halo%20Admin,%20saya%20butuh%20akses%20ke%20panel%20admin." class="inline-flex items-center justify-center gap-2 text-blue-600 text-sm font-bold hover:underline bg-blue-50 px-4 py-2 rounded-full transition">
+                        <i class="fas fa-envelope"></i> Minta Akses via Email
+                    </a>
+                </div>
+                
+                <div class="mt-4 text-[10px] text-slate-300">
+                    SMP ALBANNA CBT SYSTEM V1.0
+                </div>
             </div>
         </div>
 
-        <!-- MAIN CONTENT -->
-        <div class="flex-1 flex flex-col h-full overflow-hidden bg-gray-50">
+        <!-- 2. DASHBOARD ADMIN (Hanya Muncul Jika Login) -->
+        <div v-else class="flex h-screen overflow-hidden animate-fade-in">
             
-            <!-- TOP BAR -->
-            <div class="bg-white p-4 shadow-sm border-b flex justify-between items-center px-8">
-                <h2 class="text-2xl font-bold text-slate-800">
-                    {{ activeTab === 'soal' ? 'Database Bank Soal' : 'Monitoring Hasil Ujian' }}
-                </h2>
-                <div v-if="isLoading" class="flex items-center gap-2 text-blue-600 font-bold animate-pulse">
-                    <i class="fas fa-sync fa-spin"></i> Menghubungkan...
+            <!-- SIDEBAR -->
+            <div class="w-64 bg-slate-900 text-white flex flex-col h-full shadow-2xl z-10">
+                <div class="p-6 text-center border-b border-slate-700 bg-slate-800">
+                    <h1 class="font-bold text-xl tracking-wider">ADMIN PANEL</h1>
+                    <div class="flex items-center justify-center gap-2 text-xs text-green-400 mt-1">
+                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        Online Real-Time
+                    </div>
+                </div>
+                
+                <nav class="flex-1 p-4 space-y-2">
+                    <button @click="activeTab = 'soal'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'soal' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
+                        <i class="fas fa-database w-5"></i> Bank Soal
+                    </button>
+                    <button @click="activeTab = 'pengumpulan'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'pengumpulan' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
+                        <i class="fas fa-clipboard-check w-5"></i> Status Pengumpulan
+                    </button>
+                    <button @click="activeTab = 'hasil'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'hasil' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
+                        <i class="fas fa-poll w-5"></i> Hasil Ujian
+                    </button>
+                </nav>
+
+                <!-- Tombol Logout -->
+                <div class="p-4 border-t border-slate-800">
+                    <button @click="logout" class="w-full text-center text-xs text-red-400 hover:text-red-300 font-bold flex items-center justify-center gap-2">
+                        <i class="fas fa-sign-out-alt"></i> KELUAR / LOGOUT
+                    </button>
                 </div>
             </div>
 
-            <!-- CONTENT AREA -->
-            <div class="flex-1 overflow-y-auto p-8">
-
-                <!-- TAB 1: BANK SOAL -->
-                <div v-if="activeTab === 'soal'">
-                    
-                    <!-- Jika Kosong -->
-                    <div v-if="bankSoal.length === 0 && !isLoading" class="text-center text-gray-400 mt-20">
-                        <i class="fas fa-folder-open fa-4x mb-4 text-gray-300"></i>
-                        <p class="text-lg">Belum ada soal yang masuk dari Guru.</p>
-                        <p class="text-sm">Pastikan guru sudah klik tombol "UPLOAD KE SERVER" di halaman input soal.</p>
-                    </div>
-
-                    <!-- Grid Soal -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div v-for="paket in bankSoal" :key="paket.id" class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition group relative overflow-hidden">
-                            <div class="absolute top-0 left-0 w-1 h-full bg-blue-600"></div>
-                            
-                            <div class="flex justify-between items-start mb-3 pl-2">
-                                <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded uppercase">
-                                    Kelas {{ paket.config.kelas }}
-                                </span>
-                                <button @click="hapusBankSoal(paket.id)" class="text-gray-300 hover:text-red-500 transition" title="Hapus Paket Soal">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                            
-                            <h3 class="font-bold text-xl text-slate-800 mb-1 pl-2">{{ paket.config.mapel }}</h3>
-                            <p class="text-sm text-gray-500 mb-4 pl-2">
-                                <i class="fas fa-user-tie mr-1 opacity-70"></i> {{ paket.config.guru }}
-                            </p>
-                            
-                            <div class="flex justify-between items-center text-xs font-bold text-slate-500 border-t pt-3 mt-2 pl-2">
-                                <span><i class="fas fa-list-ol mr-1"></i> {{ paket.soal.length }} Soal</span>
-                                <span><i class="fas fa-clock mr-1"></i> {{ paket.config.durasi }} Menit</span>
-                            </div>
-                            <div class="text-[10px] text-gray-300 mt-2 text-right">
-                                ID: {{ paket.id.substring(0,8) }}...
-                            </div>
-                        </div>
+            <!-- MAIN CONTENT -->
+            <div class="flex-1 flex flex-col h-full overflow-hidden bg-gray-50">
+                
+                <!-- TOP BAR -->
+                <div class="bg-white p-4 shadow-sm border-b flex justify-between items-center px-8">
+                    <h2 class="text-2xl font-bold text-slate-800">
+                        <span v-if="activeTab === 'soal'">Database Bank Soal</span>
+                        <span v-else-if="activeTab === 'pengumpulan'">Monitoring Pengumpulan Soal</span>
+                        <span v-else>Monitoring Hasil Ujian</span>
+                    </h2>
+                    <div v-if="isLoading" class="flex items-center gap-2 text-blue-600 font-bold animate-pulse">
+                        <i class="fas fa-sync fa-spin"></i> Menghubungkan...
                     </div>
                 </div>
 
-                <!-- TAB 2: HASIL UJIAN -->
-                <div v-if="activeTab === 'hasil'">
-                    
-                    <!-- Filter Bar -->
-                    <div class="bg-white p-4 rounded-lg shadow-sm border mb-6 flex gap-4">
-                        <div class="flex items-center gap-2 text-sm font-bold text-gray-600">
-                            <i class="fas fa-filter"></i> Filter:
+                <!-- CONTENT AREA -->
+                <div class="flex-1 overflow-y-auto p-8">
+
+                    <!-- TAB 1: BANK SOAL -->
+                    <div v-if="activeTab === 'soal'">
+                        <div v-if="bankSoal.length === 0 && !isLoading" class="text-center text-gray-400 mt-20">
+                            <i class="fas fa-folder-open fa-4x mb-4 text-gray-300"></i>
+                            <p class="text-lg">Belum ada soal yang masuk dari Guru.</p>
+                            <p class="text-sm">Pastikan guru sudah klik tombol "UPLOAD KE SERVER" di halaman input soal.</p>
                         </div>
-                        <select v-model="filterKelas" class="p-2 border rounded bg-gray-50 text-sm">
-                            <option value="">Semua Kelas</option>
-                            <option v-for="c in kelasList" :value="c">{{ c }}</option>
-                        </select>
-                        <select v-model="filterMapel" class="p-2 border rounded bg-gray-50 text-sm">
-                            <option value="">Semua Mapel</option>
-                            <option v-for="m in uniqueMapels" :value="m">{{ m }}</option>
-                        </select>
-                        <div class="ml-auto text-sm text-gray-500 flex items-center">
-                            Total Data: {{ filteredHasil.length }}
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div v-for="paket in bankSoal" :key="paket.id" class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition group relative flex flex-col">
+                                <div class="flex justify-between items-start mb-3">
+                                    <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded uppercase">
+                                        Kelas {{ paket.config.kelas }}
+                                    </span>
+                                    <span class="text-[10px] text-gray-400 font-mono">{{ formatTime(paket.tanggal_buat) }}</span>
+                                </div>
+                                <h3 class="font-bold text-xl text-slate-800 mb-1">{{ paket.config.mapel }}</h3>
+                                <p class="text-sm text-gray-500 mb-4"><i class="fas fa-user-tie mr-1 opacity-70"></i> {{ paket.config.guru }}</p>
+                                
+                                <div class="mt-auto pt-4 border-t border-gray-100 grid grid-cols-3 gap-2">
+                                    <button @click="lihatSoal(paket)" class="flex items-center justify-center gap-1 bg-gray-100 hover:bg-blue-50 text-blue-700 py-2 rounded text-xs font-bold transition"><i class="fas fa-eye"></i> Lihat</button>
+                                    <button @click="downloadPDF(paket)" class="flex items-center justify-center gap-1 bg-gray-100 hover:bg-green-50 text-green-700 py-2 rounded text-xs font-bold transition"><i class="fas fa-file-pdf"></i> PDF</button>
+                                    <button @click="hapusBankSoal(paket.id)" class="flex items-center justify-center gap-1 bg-gray-100 hover:bg-red-50 text-red-600 py-2 rounded text-xs font-bold transition"><i class="fas fa-trash"></i> Hapus</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Tabel Hasil -->
-                    <div class="bg-white rounded-lg shadow overflow-hidden">
-                        <table class="w-full text-left border-collapse">
-                            <thead class="bg-slate-800 text-white">
-                                <tr>
-                                    <th class="p-4 text-sm">Waktu</th>
-                                    <th class="p-4 text-sm">Nama Siswa</th>
-                                    <th class="p-4 text-sm">Kelas</th>
-                                    <th class="p-4 text-sm">Mapel</th>
-                                    <th class="p-4 text-sm text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                <tr v-for="res in filteredHasil" :key="res.id" class="hover:bg-blue-50 transition">
-                                    <td class="p-4 text-sm text-gray-600 font-mono">
-                                        {{ formatTime(res.timestamp) }}
-                                    </td>
-                                    <td class="p-4 font-bold text-slate-800 uppercase">{{ res.student.nama }}</td>
-                                    <td class="p-4">
-                                        <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs font-bold border">
-                                            {{ res.student.kelas }}
-                                        </span>
-                                    </td>
-                                    <td class="p-4 text-sm">{{ res.mapel }}</td>
-                                    
-                                    <td class="p-4 text-center">
-                                        <button @click="hapusHasil(res.id)" class="text-red-400 hover:text-red-600 p-2 rounded hover:bg-red-50 transition" title="Hapus Data">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr v-if="filteredHasil.length === 0">
-                                    <td colspan="5" class="p-10 text-center text-gray-400">
-                                        Belum ada data siswa yang masuk sesuai filter.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <!-- TAB 2: STATUS PENGUMPULAN -->
+                    <div v-if="activeTab === 'pengumpulan'">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div v-for="grade in ['7', '8', '9']" :key="grade" class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                                <div class="bg-slate-800 text-white p-4 text-center">
+                                    <h3 class="text-xl font-bold">KELAS {{ grade }}</h3>
+                                    <p class="text-xs text-slate-400">Status Kelengkapan Soal</p>
+                                </div>
+                                <div class="p-0">
+                                    <table class="w-full text-sm">
+                                        <tbody class="divide-y divide-gray-100">
+                                            <tr v-for="mapel in masterMapel" :key="mapel" class="hover:bg-gray-50">
+                                                <td class="p-4 font-medium text-gray-700">{{ mapel }}</td>
+                                                <td class="p-4 text-right">
+                                                    <div v-if="checkAvailability(grade, mapel)" class="flex items-center justify-end gap-2 text-green-600">
+                                                        <span class="text-xs font-bold bg-green-100 px-2 py-1 rounded">Ada</span><i class="fas fa-check-circle fa-lg"></i>
+                                                    </div>
+                                                    <div v-else class="flex items-center justify-end gap-2 text-red-400 opacity-50">
+                                                        <span class="text-xs">Belum</span><i class="fas fa-times-circle fa-lg"></i>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="bg-gray-100 p-4 border-t">
+                                    <div class="flex justify-between text-xs font-bold mb-1">
+                                        <span>Progress</span><span>{{ countProgress(grade) }}/{{ masterMapel.length }}</span>
+                                    </div>
+                                    <div class="w-full bg-gray-300 rounded-full h-2.5">
+                                        <div class="bg-green-600 h-2.5 rounded-full" :style="{ width: (countProgress(grade) / masterMapel.length * 100) + '%' }"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- TAB 3: HASIL UJIAN -->
+                    <div v-if="activeTab === 'hasil'">
+                        <div class="bg-white p-4 rounded-lg shadow-sm border mb-6 flex gap-4">
+                            <div class="flex items-center gap-2 text-sm font-bold text-gray-600"><i class="fas fa-filter"></i> Filter:</div>
+                            <select v-model="filterKelas" class="p-2 border rounded bg-gray-50 text-sm">
+                                <option value="">Semua Kelas</option>
+                                <option v-for="c in kelasList" :value="c">{{ c }}</option>
+                            </select>
+                            <select v-model="filterMapel" class="p-2 border rounded bg-gray-50 text-sm">
+                                <option value="">Semua Mapel</option>
+                                <option v-for="m in uniqueMapels" :value="m">{{ m }}</option>
+                            </select>
+                            <div class="ml-auto text-sm text-gray-500 flex items-center">Total Data: {{ filteredHasil.length }}</div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow overflow-hidden">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-slate-800 text-white">
+                                    <tr><th class="p-4 text-sm">Waktu</th><th class="p-4 text-sm">Nama Siswa</th><th class="p-4 text-sm">Kelas</th><th class="p-4 text-sm">Mapel</th><th class="p-4 text-sm text-center">Aksi</th></tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <tr v-for="res in filteredHasil" :key="res.id" class="hover:bg-blue-50 transition">
+                                        <td class="p-4 text-sm text-gray-600 font-mono">{{ formatTime(res.timestamp) }}</td>
+                                        <td class="p-4 font-bold text-slate-800 uppercase">{{ res.student.nama }}</td>
+                                        <td class="p-4"><span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs font-bold border">{{ res.student.kelas }}</span></td>
+                                        <td class="p-4 text-sm">{{ res.mapel }}</td>
+                                        <td class="p-4 text-center"><button @click="hapusHasil(res.id)" class="text-red-400 hover:text-red-600 p-2 rounded hover:bg-red-50 transition" title="Hapus Data"><i class="fas fa-trash"></i></button></td>
+                                    </tr>
+                                    <tr v-if="filteredHasil.length === 0"><td colspan="5" class="p-10 text-center text-gray-400">Belum ada data siswa yang masuk sesuai filter.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                 </div>
-
             </div>
+
+            <!-- MODAL PREVIEW SOAL -->
+            <div v-if="modalSoal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl h-[90vh] flex flex-col">
+                    <div class="p-4 border-b flex justify-between items-center bg-slate-50 rounded-t-xl">
+                        <div>
+                            <h3 class="font-bold text-lg text-slate-800">{{ modalSoal.config.mapel }} (Kelas {{ modalSoal.config.kelas }})</h3>
+                            <p class="text-xs text-gray-500">Total: {{ modalSoal.soal.length }} Butir Soal | Guru: {{ modalSoal.config.guru }}</p>
+                        </div>
+                        <button @click="modalSoal = null" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-6 bg-gray-50">
+                        <div class="space-y-6">
+                            <div v-for="(q, idx) in modalSoal.soal" :key="idx" class="bg-white p-4 rounded-lg border shadow-sm">
+                                <div class="flex gap-3">
+                                    <span class="bg-blue-100 text-blue-800 w-6 h-6 flex items-center justify-center rounded text-xs font-bold shrink-0">{{ idx+1 }}</span>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-semibold text-gray-800 mb-2 whitespace-pre-wrap">{{ q.text }}</p>
+                                        <img v-if="q.image" :src="q.image" class="h-20 object-contain border mb-2 rounded">
+                                        <div class="text-xs text-gray-500 mb-2 flex items-center gap-2">
+                                            <span class="bg-gray-100 px-2 py-0.5 rounded">{{ q.type }}</span>
+                                            <span class="font-mono text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded border border-green-200">Kunci: {{ q.answer || '-' }}</span>
+                                        </div>
+                                        <div v-if="q.type === 'PG'" class="grid grid-cols-2 gap-2 text-xs">
+                                            <div v-for="(txt, key) in q.options" :class="['p-2 border rounded', key === q.answer ? 'bg-green-50 border-green-300 font-bold' : 'bg-gray-50']">{{ key }}. {{ txt }}</div>
+                                        </div>
+                                        <div v-if="q.type === 'PG_KOMPLEKS'" class="space-y-1 text-xs">
+                                            <div v-for="opt in q.options" :class="['p-2 border rounded flex items-center gap-2', opt.isCorrect ? 'bg-green-50 border-green-300' : 'bg-gray-50']">
+                                                <i :class="['fas', opt.isCorrect ? 'fa-check-square text-green-600' : 'fa-square text-gray-300']"></i><span :class="opt.isCorrect ? 'font-bold text-green-800' : ''">{{ opt.text }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4 border-t bg-white rounded-b-xl text-right">
+                        <button @click="modalSoal = null" class="bg-slate-800 text-white px-6 py-2 rounded hover:bg-slate-900 font-bold text-sm">Tutup Preview</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
-
     </div>
 
-    <!-- SCRIPT MODULE FIREBASE (CONFIG SUDAH BENAR) -->
+    <!-- SCRIPT MODULE FIREBASE -->
     <script type="module">
         import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // --- KONFIGURASI FIREBASE CBT ALBANNA ---
         const firebaseConfig = {
             apiKey: "AIzaSyBivREr2y61OYTE0kLxRnkGtPCdLvHn_og",
             authDomain: "cbt-albanna.firebaseapp.com",
@@ -176,33 +262,27 @@
             appId: "1:740622197344:web:6112adf59edfbe496ed905"
         };
 
-        // Inisialisasi App & Database
         const appFirebase = initializeApp(firebaseConfig);
         const db = getFirestore(appFirebase);
 
         createApp({
             data() {
                 return {
+                    isLoggedIn: false,
+                    passwordInput: '',
                     activeTab: 'soal',
                     isLoading: true,
                     bankSoal: [],
                     hasilUjian: [],
-                    
-                    // Filter Hasil
                     filterKelas: '',
-                    filterMapel: ''
+                    filterMapel: '',
+                    modalSoal: null,
+                    masterMapel: ['MATEMATIKA', 'IPA', 'BAHASA INGGRIS', 'BAHASA INDONESIA', 'BAHASA BALI', 'SENI BUDAYA', 'BAHASA ARAB', 'PJOK', 'IPS', 'PAI', 'INFORMATIKA']
                 }
             },
             computed: {
-                // List Kelas untuk Dropdown Filter
-                kelasList() {
-                    return ['7A','7B','7C','7D','7E','7F','8A','8B','8C','8D','8E','8F','9A','9B','9C','9D','9E'];
-                },
-                // List Mapel Unik dari Data yang Masuk
-                uniqueMapels() {
-                    return [...new Set(this.hasilUjian.map(h => h.mapel))];
-                },
-                // Logika Filter Tabel Hasil
+                kelasList() { return ['7A','7B','7C','7D','7E','7F','8A','8B','8C','8D','8E','8F','9A','9B','9C','9D','9E']; },
+                uniqueMapels() { return [...new Set(this.hasilUjian.map(h => h.mapel))]; },
                 filteredHasil() {
                     return this.hasilUjian.filter(h => {
                         const matchK = this.filterKelas ? h.student.kelas === this.filterKelas : true;
@@ -212,62 +292,95 @@
                 }
             },
             mounted() {
-                // 1. LISTEN REAL-TIME: BANK SOAL
-                // Mengambil data dari koleksi 'bank_soal' di Firebase
+                // Cek Session Login
+                if(sessionStorage.getItem('admin_logged_in') === 'true') {
+                    this.isLoggedIn = true;
+                }
+
                 const qSoal = query(collection(db, "bank_soal"));
                 onSnapshot(qSoal, (snapshot) => {
-                    this.bankSoal = snapshot.docs.map(doc => ({ 
-                        id: doc.id, 
-                        ...doc.data() 
-                    }));
-                    this.isLoading = false; // Matikan loading setelah data pertama masuk
-                }, (error) => {
-                    console.error("Error mengambil Bank Soal:", error);
+                    this.bankSoal = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     this.isLoading = false;
                 });
 
-                // 2. LISTEN REAL-TIME: HASIL UJIAN SISWA
-                // Mengambil data dari koleksi 'jawaban_siswa', diurutkan dari yang terbaru
                 const qHasil = query(collection(db, "jawaban_siswa"), orderBy("timestamp", "desc"));
                 onSnapshot(qHasil, (snapshot) => {
-                    this.hasilUjian = snapshot.docs.map(doc => ({ 
-                        id: doc.id, 
-                        ...doc.data() 
-                    }));
-                }, (error) => {
-                    console.error("Error mengambil Hasil Ujian:", error);
+                    this.hasilUjian = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 });
             },
             methods: {
-                // Format Tanggal agar mudah dibaca
+                login() {
+                    if(this.passwordInput === 'admin123') { // PASSWORD HARDCODED SEDERHANA
+                        this.isLoggedIn = true;
+                        sessionStorage.setItem('admin_logged_in', 'true');
+                    } else {
+                        alert("Password Salah!");
+                        this.passwordInput = '';
+                    }
+                },
+                logout() {
+                    this.isLoggedIn = false;
+                    sessionStorage.removeItem('admin_logged_in');
+                    this.passwordInput = '';
+                },
                 formatTime(isoStr) {
                     if(!isoStr) return '-';
                     const d = new Date(isoStr);
-                    return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute:'2-digit' }) + ' ' + 
-                           d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+                    return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute:'2-digit' }) + ' ' + d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
                 },
-                
-                // Hapus Paket Soal dari Database
-                async hapusBankSoal(id) {
-                    if(confirm("PERINGATAN: Menghapus paket soal ini akan membuatnya HILANG dari halaman ujian siswa.\n\nLanjutkan?")) {
-                        try {
-                            await deleteDoc(doc(db, "bank_soal", id));
-                            // Tidak perlu alert sukses atau refresh, karena onSnapshot otomatis mengupdate tampilan
-                        } catch (e) {
-                            alert("Gagal menghapus: " + e.message);
-                        }
-                    }
-                },
+                lihatSoal(paket) { this.modalSoal = paket; },
+                downloadPDF(paket) {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    let y = 10;
 
-                // Hapus Data Jawaban Siswa
-                async hapusHasil(id) {
-                    if(confirm("Hapus data jawaban siswa ini secara permanen?")) {
-                        try {
-                            await deleteDoc(doc(db, "jawaban_siswa", id));
-                        } catch (e) {
-                            alert("Gagal menghapus: " + e.message);
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.setTextColor(30, 58, 138); 
+                    doc.text("SMP ALBANNA", 45, 18);
+                    doc.setTextColor(0); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+                    doc.text("Jl. Tukad Yeh Ho III No.10, Denpasar, Bali 80234", 45, 24);
+                    doc.setLineWidth(0.5); doc.line(10, 35, pageWidth-10, 35);
+                    y = 45;
+
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+                    doc.text(`NASKAH SOAL: ${paket.config.mapel}`, pageWidth/2, y, {align:'center'}); y+=7;
+                    doc.setFontSize(10); doc.setFont("helvetica", "normal");
+                    doc.text(`Guru: ${paket.config.guru}`, 15, y); 
+                    doc.text(`Kelas: ${paket.config.kelas}`, 80, y); 
+                    doc.text(`Waktu: ${paket.config.durasi} Menit`, 130, y); y+=10;
+
+                    paket.soal.forEach((q, idx) => {
+                        if (y > pageHeight - 40) { doc.addPage(); y = 20; }
+                        doc.setFont("helvetica", "bold"); doc.text(`${idx+1}.`, 15, y);
+                        doc.setFont("helvetica", "normal"); 
+                        const splitText = doc.splitTextToSize(q.text || '', 170);
+                        doc.text(splitText, 22, y); y += (splitText.length * 5) + 2;
+
+                        if(q.image) { 
+                             if (y > pageHeight - 50) { doc.addPage(); y = 20; }
+                            try { doc.addImage(q.image, 'JPEG', 25, y, 40, 0); y += 45; } catch(e){} 
                         }
-                    }
+
+                        if(q.type === 'PG') { ['A','B','C','D'].forEach(opt=>{doc.text(`${opt}. ${q.options[opt]}`, 25, y); y+=5;}); }
+                        else if(q.type === 'BS') { doc.text("[ ] Benar   [ ] Salah", 25, y); y+=5; }
+                        else if(q.type === 'PG_KOMPLEKS') { q.options.forEach(o=>{doc.rect(25, y-3, 3, 3); doc.text(o.text, 32, y); y+=5;}); }
+                        else { y+=2; for(let l=0; l<3; l++) { doc.line(25, y, pageWidth-25, y); y+=6; } }
+                        y+=4;
+                    });
+                    doc.save(`SOAL_${paket.config.mapel}_KELAS_${paket.config.kelas}.pdf`);
+                },
+                async hapusBankSoal(id) {
+                    if(confirm("Hapus paket soal ini?")) await deleteDoc(doc(db, "bank_soal", id));
+                },
+                async hapusHasil(id) {
+                    if(confirm("Hapus data jawaban ini?")) await deleteDoc(doc(db, "jawaban_siswa", id));
+                },
+                checkAvailability(grade, mapel) {
+                    return this.bankSoal.some(paket => paket.config.kelas == grade && paket.config.mapel === mapel);
+                },
+                countProgress(grade) {
+                    return this.masterMapel.filter(m => this.checkAvailability(grade, m)).length;
                 }
             }
         }).mount('#admin-app');
