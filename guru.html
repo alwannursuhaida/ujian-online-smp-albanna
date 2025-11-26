@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Guru - Input Kisi-Kisi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body class="bg-gray-100 p-6">
+
+    <div id="app" class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+        <h1 class="text-2xl font-bold mb-6 text-blue-700">Generator Kisi-Kisi Soal</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 bg-blue-50 p-4 rounded border border-blue-200">
+            <input v-model="form.mapel" placeholder="Mata Pelajaran" class="p-2 border rounded col-span-2">
+            <input v-model="input.kd" placeholder="Kompetensi Dasar (KD)" class="p-2 border rounded">
+            <select v-model="input.level" class="p-2 border rounded">
+                <option value="" disabled>Level Kognitif</option>
+                <option>C1 - Mengingat</option>
+                <option>C2 - Memahami</option>
+                <option>C3 - Menerapkan</option>
+                <option>C4 - Menganalisis</option>
+            </select>
+            <textarea v-model="input.indikator" placeholder="Indikator Soal" class="p-2 border rounded col-span-2 h-20"></textarea>
+            
+            <button @click="tambahData" class="col-span-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-bold">
+                + Tambah Baris
+            </button>
+        </div>
+
+        <table class="w-full text-left border-collapse mb-6">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="p-2 border">No</th>
+                    <th class="p-2 border">KD</th>
+                    <th class="p-2 border">Level</th>
+                    <th class="p-2 border">Indikator</th>
+                    <th class="p-2 border">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="(item, index) in listData" :key="index">
+                    <td class="p-2 border text-center">{{ index + 1 }}</td>
+                    <td class="p-2 border">{{ item.kd }}</td>
+                    <td class="p-2 border">{{ item.level }}</td>
+                    <td class="p-2 border">{{ item.indikator }}</td>
+                    <td class="p-2 border text-center text-red-500 cursor-pointer" @click="hapusData(index)">Hapus</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <button @click="downloadPDF" class="bg-green-600 text-white px-6 py-3 rounded font-bold hover:bg-green-700 w-full">
+            📥 Download PDF Siap Cetak
+        </button>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    form: { mapel: '' },
+                    input: { kd: '', level: '', indikator: '' },
+                    listData: []
+                }
+            },
+            methods: {
+                tambahData() {
+                    if(!this.input.kd || !this.input.indikator) return alert("Lengkapi data!");
+                    this.listData.push({ ...this.input });
+                    this.input.kd = ''; 
+                    this.input.indikator = '';
+                    this.input.level = '';
+                },
+                hapusData(index) {
+                    this.listData.splice(index, 1);
+                },
+                downloadPDF() {
+                    if(this.listData.length === 0) return alert("Data masih kosong!");
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+
+                    doc.text(`Kisi-Kisi Soal: ${this.form.mapel}`, 14, 20);
+                    
+                    doc.autoTable({
+                        startY: 30,
+                        head: [['No', 'KD', 'Level Kognitif', 'Indikator Soal']],
+                        body: this.listData.map((item, i) => [i+1, item.kd, item.level, item.indikator]),
+                    });
+
+                    doc.save(`Kisi-Kisi-${this.form.mapel || 'Mapel'}.pdf`);
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
