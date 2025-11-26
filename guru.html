@@ -8,53 +8,96 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-gray-100 p-6">
+<body class="bg-gray-100 min-h-screen pb-20">
 
-    <div id="app" class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
-        <h1 class="text-2xl font-bold mb-6 text-blue-700">Generator Kisi-Kisi Soal</h1>
+    <div id="app" class="max-w-3xl mx-auto pt-10 px-4">
+        
+        <div v-if="step === 1" class="bg-white p-8 rounded-lg shadow-xl border-t-8 border-blue-600">
+            <h1 class="text-3xl font-bold mb-2 text-gray-800">Generator Kisi-Kisi Soal</h1>
+            <p class="text-gray-500 mb-8">Silakan pilih mata pelajaran untuk memulai.</p>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 bg-blue-50 p-4 rounded border border-blue-200">
-            <input v-model="form.mapel" placeholder="Mata Pelajaran" class="p-2 border rounded col-span-2">
-            <input v-model="input.kd" placeholder="Kompetensi Dasar (KD)" class="p-2 border rounded">
-            <select v-model="input.level" class="p-2 border rounded">
-                <option value="" disabled>Level Kognitif</option>
-                <option>C1 - Mengingat</option>
-                <option>C2 - Memahami</option>
-                <option>C3 - Menerapkan</option>
-                <option>C4 - Menganalisis</option>
-            </select>
-            <textarea v-model="input.indikator" placeholder="Indikator Soal" class="p-2 border rounded col-span-2 h-20"></textarea>
-            
-            <button @click="tambahData" class="col-span-2 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-bold">
-                + Tambah Baris
+            <div class="mb-6">
+                <label class="block text-sm font-bold mb-2 text-gray-700">Mata Pelajaran <span class="text-red-500">*</span></label>
+                <select v-model="selectedMapel" class="w-full p-4 border rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="" disabled selected>-- Pilih Mapel --</option>
+                    <option v-for="m in mapelList" :value="m">{{ m }}</option>
+                </select>
+            </div>
+
+            <button @click="lanjutKeKisiKisi" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">
+                LANJUT MULAI ISI <i class="fas fa-arrow-right ml-2"></i>
             </button>
         </div>
 
-        <table class="w-full text-left border-collapse mb-6">
-            <thead>
-                <tr class="bg-gray-200">
-                    <th class="p-2 border">No</th>
-                    <th class="p-2 border">KD</th>
-                    <th class="p-2 border">Level</th>
-                    <th class="p-2 border">Indikator</th>
-                    <th class="p-2 border">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="(item, index) in listData" :key="index">
-                    <td class="p-2 border text-center">{{ index + 1 }}</td>
-                    <td class="p-2 border">{{ item.kd }}</td>
-                    <td class="p-2 border">{{ item.level }}</td>
-                    <td class="p-2 border">{{ item.indikator }}</td>
-                    <td class="p-2 border text-center text-red-500 cursor-pointer" @click="hapusData(index)">Hapus</td>
-                </tr>
-            </tbody>
-        </table>
+        <div v-if="step === 2">
+            <div class="sticky top-0 z-50 bg-white p-4 shadow mb-6 rounded-b-lg flex justify-between items-center border-l-4 border-blue-600">
+                <div>
+                    <h2 class="font-bold text-xl">{{ selectedMapel }}</h2>
+                    <span class="text-sm text-gray-500">Total Soal: {{ soalList.length }}</span>
+                </div>
+                <button @click="gantiMapel" class="text-sm text-blue-600 underline">Ganti Mapel</button>
+            </div>
 
-        <button @click="downloadPDF" class="bg-green-600 text-white px-6 py-3 rounded font-bold hover:bg-green-700 w-full">
-            📥 Download PDF Siap Cetak
-        </button>
+            <div v-for="(soal, index) in soalList" :key="index" class="bg-white p-6 rounded-lg shadow-md mb-6 relative border-l-4 border-gray-300 hover:border-blue-500 transition">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg bg-gray-200 px-3 py-1 rounded">Nomor Soal: {{ index + 1 }}</h3>
+                    <button @click="hapusSoal(index)" class="text-red-500 hover:text-red-700" title="Hapus Soal Ini">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-sm font-semibold mb-1">Kompetensi Dasar (KD) <span class="text-red-500">*</span></label>
+                        <input type="text" v-model="soal.kd" class="w-full p-2 border rounded focus:ring-1 focus:ring-blue-500" placeholder="Isi KD...">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Level Kognitif <span class="text-red-500">*</span></label>
+                        <select v-model="soal.level" class="w-full p-2 border rounded bg-white">
+                            <option value="" disabled>Pilih Level</option>
+                            <option>L1 - C1 (Mengingat)</option>
+                            <option>L1 - C2 (Memahami)</option>
+                            <option>L2 - C3 (Menerapkan)</option>
+                            <option>L3 - C4 (Menganalisis)</option>
+                            <option>L3 - C5 (Mengevaluasi)</option>
+                            <option>L3 - C6 (Mencipta)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Bentuk Soal <span class="text-red-500">*</span></label>
+                        <select v-model="soal.bentuk" class="w-full p-2 border rounded bg-white">
+                            <option value="" disabled>Pilih Bentuk</option>
+                            <option>Pilihan Ganda</option>
+                            <option>Benar Salah</option>
+                            <option>Pilihan Ganda Kompleks</option>
+                            <option>Menjodohkan</option>
+                        </select>
+                    </div>
+
+                    <div class="col-span-2">
+                        <label class="block text-sm font-semibold mb-1">Indikator Soal <span class="text-red-500">*</span></label>
+                        <textarea v-model="soal.indikator" rows="3" class="w-full p-2 border rounded focus:ring-1 focus:ring-blue-500" placeholder="Siswa dapat..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <button @click="tambahSoal" class="w-full py-4 border-2 border-dashed border-gray-400 text-gray-500 font-bold rounded-lg hover:bg-gray-50 hover:border-blue-500 hover:text-blue-500 transition mb-24">
+                + TAMBAH NOMOR SOAL BERIKUTNYA
+            </button>
+
+            <div class="fixed bottom-0 left-0 w-full bg-white border-t p-4 shadow-lg flex justify-center z-40">
+                <div class="max-w-3xl w-full flex gap-4">
+                    <button @click="downloadPDF" class="flex-1 bg-green-600 text-white py-3 rounded font-bold hover:bg-green-700 shadow-lg">
+                        <i class="fas fa-file-pdf mr-2"></i> DOWNLOAD PDF SIAP CETAK
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -62,36 +105,94 @@
         createApp({
             data() {
                 return {
-                    form: { mapel: '' },
-                    input: { kd: '', level: '', indikator: '' },
-                    listData: []
+                    step: 1,
+                    selectedMapel: '',
+                    mapelList: [
+                        'IPA', 'IPS', 'MATEMATIKA', 'BAHASA BALI', 'BAHASA ARAB', 
+                        'BAHASA INDONESIA', 'BAHASA INGGRIS', 'OLAHRAGA', 
+                        'INFORMATIKA', 'KKA', 'AGAMA ISLAM', 'SENI BUDAYA'
+                    ],
+                    // Inisialisasi dengan 1 soal kosong
+                    soalList: [
+                        { kd: '', level: '', indikator: '', bentuk: '' }
+                    ]
                 }
             },
             methods: {
-                tambahData() {
-                    if(!this.input.kd || !this.input.indikator) return alert("Lengkapi data!");
-                    this.listData.push({ ...this.input });
-                    this.input.kd = ''; 
-                    this.input.indikator = '';
-                    this.input.level = '';
+                lanjutKeKisiKisi() {
+                    if (!this.selectedMapel) {
+                        return alert("Mohon pilih Mata Pelajaran terlebih dahulu!");
+                    }
+                    this.step = 2;
                 },
-                hapusData(index) {
-                    this.listData.splice(index, 1);
+                gantiMapel() {
+                    if(confirm("Ganti Mapel akan menghapus data yang sudah diisi. Lanjutkan?")) {
+                        this.step = 1;
+                        this.soalList = [{ kd: '', level: '', indikator: '', bentuk: '' }];
+                        this.selectedMapel = '';
+                    }
+                },
+                tambahSoal() {
+                    this.soalList.push({ kd: '', level: '', indikator: '', bentuk: '' });
+                    // Scroll otomatis ke bawah
+                    setTimeout(() => {
+                        window.scrollTo(0, document.body.scrollHeight);
+                    }, 100);
+                },
+                hapusSoal(index) {
+                    if (this.soalList.length === 1) return alert("Minimal harus ada 1 soal.");
+                    if(confirm("Hapus soal nomor ini?")) {
+                        this.soalList.splice(index, 1);
+                    }
+                },
+                validateForm() {
+                    // Cek apakah ada field kosong
+                    for (let i = 0; i < this.soalList.length; i++) {
+                        const s = this.soalList[i];
+                        if (!s.kd || !s.level || !s.indikator || !s.bentuk) {
+                            alert(`Data pada Soal Nomor ${i + 1} belum lengkap! Mohon diisi semua.`);
+                            return false;
+                        }
+                    }
+                    return true;
                 },
                 downloadPDF() {
-                    if(this.listData.length === 0) return alert("Data masih kosong!");
+                    if (!this.validateForm()) return;
+
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
 
-                    doc.text(`Kisi-Kisi Soal: ${this.form.mapel}`, 14, 20);
-                    
+                    // Header PDF
+                    doc.setFontSize(16);
+                    doc.text("KISI-KISI SOAL UJIAN", 105, 15, null, null, "center");
+                    doc.setFontSize(12);
+                    doc.text(`Mata Pelajaran: ${this.selectedMapel}`, 14, 25);
+                    doc.text(`Jumlah Soal: ${this.soalList.length}`, 14, 30);
+
+                    // Buat Tabel
                     doc.autoTable({
-                        startY: 30,
-                        head: [['No', 'KD', 'Level Kognitif', 'Indikator Soal']],
-                        body: this.listData.map((item, i) => [i+1, item.kd, item.level, item.indikator]),
+                        startY: 35,
+                        head: [['No', 'Kompetensi Dasar', 'Level', 'Indikator Soal', 'Bentuk Soal']],
+                        body: this.soalList.map((item, i) => [
+                            i + 1, 
+                            item.kd, 
+                            item.level, 
+                            item.indikator, 
+                            item.bentuk
+                        ]),
+                        theme: 'grid',
+                        headStyles: { fillColor: [41, 128, 185] }, // Warna biru header
+                        styles: { fontSize: 10, cellPadding: 3 },
+                        columnStyles: {
+                            0: { cellWidth: 10, halign: 'center' },
+                            1: { cellWidth: 50 },
+                            2: { cellWidth: 30 },
+                            3: { cellWidth: 'auto' },
+                            4: { cellWidth: 30 }
+                        }
                     });
 
-                    doc.save(`Kisi-Kisi-${this.form.mapel || 'Mapel'}.pdf`);
+                    doc.save(`Kisi-Kisi_${this.selectedMapel.replace(/\s+/g, '_')}.pdf`);
                 }
             }
         }).mount('#app');
