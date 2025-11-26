@@ -26,15 +26,22 @@
         <div v-if="step === 1" class="bg-white p-8 rounded-lg shadow-xl border-t-8 border-blue-900 max-w-2xl mx-auto">
             <div class="text-center mb-6">
                 <h1 class="text-2xl font-bold text-gray-800">SISTEM KISI-KISI SOAL</h1>
-                <p class="text-gray-500 font-bold">SMP ALBANNA</p>
+                <p class="text-blue-900 font-bold">SMP ALBANNA</p>
             </div>
 
-            <div class="mb-6">
-                <label class="block text-sm font-bold mb-2 text-gray-700">Mata Pelajaran <span class="text-red-500">*</span></label>
-                <select v-model="selectedMapel" class="w-full p-4 border rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900">
-                    <option value="" disabled selected>-- Pilih Mapel --</option>
-                    <option v-for="m in mapelList" :value="m">{{ m }}</option>
-                </select>
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-bold mb-2 text-gray-700">Nama Guru Pengampu <span class="text-red-500">*</span></label>
+                    <input v-model="namaGuru" placeholder="Contoh: Budi Santoso, S.Pd." class="w-full p-4 border rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold mb-2 text-gray-700">Mata Pelajaran <span class="text-red-500">*</span></label>
+                    <select v-model="selectedMapel" class="w-full p-4 border rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900">
+                        <option value="" disabled selected>-- Pilih Mapel --</option>
+                        <option v-for="m in mapelList" :value="m">{{ m }}</option>
+                    </select>
+                </div>
             </div>
 
             <div v-if="hasDraft" class="mb-4 bg-yellow-50 p-3 rounded border border-yellow-200 text-xs text-yellow-800">
@@ -52,38 +59,36 @@
 
         <div v-if="step === 2">
             
-            <div class="bg-white p-6 rounded-lg shadow mb-6 border-l-4 border-blue-900">
-                <h3 class="font-bold text-lg mb-4 text-gray-700 flex items-center gap-2">
-                    <i class="fas fa-image"></i> Logo Sekolah
-                </h3>
-                <div class="flex items-center gap-6">
-                    <div class="border-2 border-dashed border-gray-300 rounded p-2 flex items-center justify-center w-32 h-32 relative hover:bg-gray-50 bg-white">
-                        <input type="file" accept="image/*" @change="handleLogoUpload" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                        <div v-if="sekolah.logoPreview" class="w-full h-full flex items-center justify-center">
-                            <img :src="sekolah.logoPreview" class="max-w-full max-h-full object-contain">
-                        </div>
-                        <div v-else class="text-gray-400 text-xs text-center">
-                            <i class="fas fa-upload fa-2x mb-2 block"></i> Upload Logo
-                        </div>
+            <div class="bg-white p-6 rounded-lg shadow mb-6 border-l-4 border-blue-900 flex flex-col md:flex-row gap-6 items-center">
+                
+                <div class="border-2 border-dashed border-gray-300 rounded p-2 flex flex-col items-center justify-center w-32 h-32 relative hover:bg-gray-50 bg-white shrink-0">
+                    <input type="file" accept="image/*" @change="handleLogoUpload" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <div v-if="sekolah.logoPreview" class="w-full h-full flex items-center justify-center">
+                        <img :src="sekolah.logoPreview" class="max-w-full max-h-full object-contain">
                     </div>
-                    <div class="text-sm text-gray-500">
-                        <p class="font-bold text-gray-700">SMP ALBANNA</p>
-                        <p>Jl. Tukad Yeh Ho III No.10</p>
-                        <p>Denpasar, Bali 80234</p>
-                        <p class="text-xs mt-2 text-blue-600 bg-blue-50 inline-block px-2 py-1 rounded">
-                            <i class="fas fa-info-circle"></i> Kop surat sudah dipatenkan otomatis.
-                        </p>
+                    <div v-else class="text-gray-400 text-xs text-center">
+                        <i class="fas fa-upload fa-2x mb-2 block"></i> Upload Logo
+                    </div>
+                </div>
+
+                <div class="text-sm text-gray-600 flex-1">
+                    <h3 class="font-bold text-xl text-blue-900 mb-1">SMP ALBANNA</h3>
+                    <p>Jl. Tukad Yeh Ho III No.10</p>
+                    <p>Denpasar, Bali 80234</p>
+                    <div class="mt-3 pt-3 border-t border-gray-200 flex flex-col gap-1 text-xs">
+                        <p><strong>Guru:</strong> {{ namaGuru }}</p>
+                        <p><strong>Mapel:</strong> {{ selectedMapel }}</p>
                     </div>
                 </div>
             </div>
 
             <div class="sticky top-0 z-40 bg-white p-4 shadow mb-6 rounded flex justify-between items-center border-l-4 border-blue-900">
                 <div>
-                    <h2 class="font-bold text-xl text-blue-900">{{ selectedMapel }}</h2>
+                    <h2 class="font-bold text-lg md:text-xl text-blue-900 truncate max-w-[200px] md:max-w-none">{{ selectedMapel }}</h2>
                     <span class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded font-bold">Total Soal: {{ soalList.length }}</span>
                 </div>
-                <button @click="step = 1" class="text-sm text-gray-500 hover:text-blue-900 font-bold">
-                    <i class="fas fa-arrow-left"></i> KEMBALI
+                <button @click="step = 1" class="text-sm text-gray-500 hover:text-blue-900 font-bold whitespace-nowrap">
+                    <i class="fas fa-arrow-left"></i> EDIT INFO
                 </button>
             </div>
 
@@ -160,6 +165,7 @@
                     lastSaved: null,
                     hasDraft: false,
                     selectedMapel: '',
+                    namaGuru: '', // DATA BARU: NAMA GURU
                     mapelList: [
                         'IPA', 'IPS', 'MATEMATIKA', 'BAHASA BALI', 'BAHASA ARAB', 
                         'BAHASA INDONESIA', 'BAHASA INGGRIS', 'OLAHRAGA', 
@@ -173,11 +179,12 @@
                 }
             },
             mounted() {
-                const savedData = localStorage.getItem('guru_kisi_albanna');
+                const savedData = localStorage.getItem('guru_kisi_albanna_v2');
                 if (savedData) {
                     try {
                         const parsed = JSON.parse(savedData);
                         this.selectedMapel = parsed.selectedMapel || '';
+                        this.namaGuru = parsed.namaGuru || '';
                         this.sekolah = parsed.sekolah || this.sekolah;
                         this.soalList = parsed.soalList || this.soalList;
                         this.step = parsed.step || 1;
@@ -188,26 +195,30 @@
                 }
             },
             watch: {
+                // Simpan otomatis jika ada perubahan
                 soalList: { handler() { this.saveData(); }, deep: true },
                 sekolah: { handler() { this.saveData(); }, deep: true },
                 selectedMapel() { this.saveData(); },
+                namaGuru() { this.saveData(); },
                 step() { this.saveData(); }
             },
             methods: {
                 saveData() {
                     const dataToSave = {
                         selectedMapel: this.selectedMapel,
+                        namaGuru: this.namaGuru,
                         sekolah: this.sekolah,
                         soalList: this.soalList,
                         step: this.step
                     };
-                    localStorage.setItem('guru_kisi_albanna', JSON.stringify(dataToSave));
+                    localStorage.setItem('guru_kisi_albanna_v2', JSON.stringify(dataToSave));
                     this.lastSaved = new Date().toLocaleTimeString();
                 },
                 resetData() {
-                    if(confirm("Hapus draft dan mulai baru?")) {
-                        localStorage.removeItem('guru_kisi_albanna');
+                    if(confirm("Hapus semua data dan mulai baru?")) {
+                        localStorage.removeItem('guru_kisi_albanna_v2');
                         this.selectedMapel = '';
+                        this.namaGuru = '';
                         this.sekolah = { logoBase64: null, logoPreview: null };
                         this.soalList = [{ kd: '', level: '', indikator: '', bentuk: '' }];
                         this.step = 1;
@@ -217,6 +228,7 @@
                     }
                 },
                 lanjutKeKisiKisi() {
+                    if (!this.namaGuru.trim()) return alert("Mohon isi Nama Guru Pengampu!");
                     if (!this.selectedMapel) return alert("Pilih Mata Pelajaran!");
                     this.step = 2;
                 },
@@ -258,22 +270,26 @@
                     const pageWidth = doc.internal.pageSize.getWidth();
 
                     // --- KOP SURAT (HARDCODED: SMP ALBANNA) ---
-                    // Koordinat
                     const logoX = 15;
                     const logoY = 10;
-                    const logoSize = 25; // 25x25mm
-                    const textX = 45;    // Mulai teks di sebelah kanan logo
+                    const logoSize = 25;
+                    const textX = 45;
 
                     // 1. Logo
                     if (this.sekolah.logoBase64) {
                         doc.addImage(this.sekolah.logoBase64, 'PNG', logoX, logoY, logoSize, logoSize); 
                     }
 
-                    // 2. Teks Kop (Rata Kiri, Font Helvetica/Sans-Serif)
+                    // 2. Teks Kop (SMP ALBANNA BIRU)
                     doc.setFont("helvetica", "bold");
                     doc.setFontSize(18);
-                    doc.text("SMP ALBANNA", textX, 18); // Nama Sekolah Besar
+                    
+                    // Set Warna Biru untuk Nama Sekolah (RGB: 0, 51, 153 - Biru SMP)
+                    doc.setTextColor(30, 58, 138); 
+                    doc.text("SMP ALBANNA", textX, 18); 
 
+                    // Kembalikan ke Hitam untuk alamat
+                    doc.setTextColor(0, 0, 0); 
                     doc.setFont("helvetica", "normal");
                     doc.setFontSize(9);
                     doc.text("Jl. Tukad Yeh Ho III No.10", textX, 24);
@@ -290,19 +306,22 @@
                     doc.setLineWidth(0.1);
                     doc.line(10, 46, pageWidth - 10, 46);
 
-                    // --- JUDUL ---
+                    // --- JUDUL UTAMA (DINAMIS) ---
                     doc.setFont("helvetica", "bold");
                     doc.setFontSize(12);
-                    doc.text("KISI-KISI PENULISAN SOAL", pageWidth / 2, 55, { align: "center" });
+                    // Judul berubah sesuai mapel
+                    doc.text(`KISI-KISI ${this.selectedMapel.toUpperCase()}`, pageWidth / 2, 55, { align: "center" });
                     
+                    // --- IDENTITAS ---
                     doc.setFont("helvetica", "normal");
                     doc.setFontSize(10);
                     doc.text(`Mata Pelajaran : ${this.selectedMapel}`, 14, 65);
-                    doc.text(`Jumlah Soal    : ${this.soalList.length}`, 14, 70);
+                    doc.text(`Guru Pengampu  : ${this.namaGuru}`, 14, 70); // Tampilkan Nama Guru
+                    doc.text(`Jumlah Soal    : ${this.soalList.length}`, 14, 75);
 
                     // --- TABEL ---
                     doc.autoTable({
-                        startY: 75,
+                        startY: 80, // Geser ke bawah sedikit karena ada tambahan baris guru
                         head: [['No', 'Kompetensi Dasar', 'Level', 'Indikator Soal', 'Bentuk Soal']],
                         body: this.soalList.map((item, i) => [
                             i + 1, item.kd, item.level, item.indikator, item.bentuk
@@ -330,20 +349,22 @@
                         }
                     });
 
-                    // --- TTD ---
+                    // --- TANDA TANGAN ---
                     let finalY = doc.lastAutoTable.finalY + 15;
                     if (finalY > 250) { doc.addPage(); finalY = 20; }
                     
                     const date = new Date();
                     const tanggalIndo = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-                    // Layout TTD
                     const ttdX = pageWidth - 60;
                     
                     doc.setFontSize(10);
                     doc.text(`Denpasar, ${tanggalIndo}`, ttdX, finalY, { align: 'center' });
                     doc.text("Guru Mata Pelajaran,", ttdX, finalY + 5, { align: 'center' });
-                    doc.text("( ..................................... )", ttdX, finalY + 30, { align: 'center' });
+                    
+                    // Nama Guru di Tanda Tangan
+                    doc.setFont("helvetica", "bold");
+                    doc.text(`( ${this.namaGuru} )`, ttdX, finalY + 30, { align: 'center' });
 
                     doc.save(`Kisi-Kisi_${this.selectedMapel}_SMP_ALBANNA.pdf`);
                 }
