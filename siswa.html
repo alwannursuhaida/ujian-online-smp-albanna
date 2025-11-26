@@ -3,131 +3,435 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ujian Online Secure</title>
+    <title>Ujian CBT Online - SMP ALBANNA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Mencegah seleksi teks (copy paste) */
-        body { user-select: none; -webkit-user-select: none; }
+        body { font-family: 'Montserrat', sans-serif; user-select: none; }
+        /* Mencegah copy-paste dan klik kanan */
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen" oncontextmenu="return false;">
 
-    <div id="exam-app">
-        <div v-if="!ujianDimulai && !terblokir" class="flex flex-col items-center justify-center h-screen p-4">
-            <h1 class="text-3xl font-bold mb-4">Ujian Tengah Semester</h1>
-            <div class="bg-yellow-100 p-4 rounded border border-yellow-400 mb-6 max-w-md text-sm">
-                <strong>ATURAN PENTING:</strong>
-                <ul class="list-disc ml-5 mt-2">
-                    <li>Sistem akan masuk mode Layar Penuh (Fullscreen).</li>
-                    <li>Dilarang pindah tab atau membuka aplikasi lain.</li>
-                    <li>Jika terdeteksi keluar 3 kali, ujian otomatis terkunci.</li>
-                </ul>
-            </div>
-            <button @click="mulaiUjian" class="bg-blue-600 text-white px-8 py-3 rounded-full text-xl font-bold hover:bg-blue-700 shadow-lg transition transform hover:scale-105">
-                MULAI KERJAKAN
-            </button>
+    <div id="app" class="min-h-screen">
+        
+        <!-- LOADING OVERLAY -->
+        <div v-if="isLoading" class="fixed inset-0 bg-white flex flex-col items-center justify-center z-50 opacity-90">
+            <i class="fas fa-circle-notch fa-spin fa-3x text-blue-900 mb-4"></i>
+            <p class="text-blue-900 font-bold animate-pulse">{{ loadingMessage }}</p>
         </div>
 
-        <div v-if="terblokir" class="flex flex-col items-center justify-center h-screen bg-red-600 text-white p-8 text-center">
-            <h1 class="text-5xl font-bold mb-4">UJIAN DIBLOKIR ⛔</h1>
-            <p class="text-xl">Anda terdeteksi melakukan kecurangan (keluar dari aplikasi ujian) lebih dari batas yang ditentukan.</p>
-            <p class="mt-4 font-mono bg-red-800 p-2 rounded">Silakan lapor ke pengawas.</p>
+        <!-- 1. HALAMAN LOGIN / LANDING PAGE -->
+        <div v-if="!isExamActive && !isLocked && !isFinished && !isLoading" class="flex flex-col items-center justify-center min-h-screen px-4 bg-gray-100">
+            <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md border-t-8 border-blue-900">
+                
+                <div class="text-center mb-6">
+                    <img src="https://img.icons8.com/fluency/96/null/student-male.png" class="h-16 mx-auto mb-2">
+                    <h1 class="text-2xl font-bold text-blue-900">LOGIN PESERTA</h1>
+                    <p class="text-xs text-gray-500 tracking-widest">CBT SMP ALBANNA</p>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Nama -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nama Lengkap</label>
+                        <input v-model="student.nama" class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900 uppercase placeholder-gray-300" placeholder="Sesuai Absen">
+                    </div>
+
+                    <!-- NIS (Validasi Unik) -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nomor Induk Siswa (NIS)</label>
+                        <input v-model="student.nis" type="number" class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900 placeholder-gray-300" placeholder="Contoh: 212205">
+                    </div>
+
+                    <!-- Kelas -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Kelas</label>
+                        <select v-model="student.kelas" class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900">
+                            <option value="" disabled>-- Pilih Kelas --</option>
+                            <optgroup label="Kelas 7"><option v-for="c in 'ABCDEF'" :value="'7'+c">7{{c}}</option></optgroup>
+                            <optgroup label="Kelas 8"><option v-for="c in 'ABCDEF'" :value="'8'+c">8{{c}}</option></optgroup>
+                            <optgroup label="Kelas 9"><option v-for="c in 'ABCDE'" :value="'9'+c">9{{c}}</option></optgroup>
+                        </select>
+                    </div>
+
+                    <!-- Mapel (Dinamis dari Firebase) -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Mata Pelajaran</label>
+                        <select v-model="selectedExamId" class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900">
+                            <option value="" disabled>-- Pilih Soal Ujian --</option>
+                            <option v-for="exam in availableExams" :value="exam.id">
+                                {{ exam.config.mapel }} ({{ exam.config.durasi }} Menit)
+                            </option>
+                        </select>
+                        <p v-if="availableExams.length === 0 && student.kelas" class="text-xs text-red-400 mt-1 italic">
+                            Tidak ada soal tersedia untuk kelas {{ student.kelas }}
+                        </p>
+                    </div>
+
+                    <!-- Tombol Masuk -->
+                    <button @click="checkLogin" class="w-full bg-blue-900 text-white py-4 rounded-lg font-bold mt-4 hover:bg-blue-800 transition shadow-lg flex justify-center items-center gap-2">
+                        <span>MASUK UJIAN</span>
+                        <i class="fas fa-sign-in-alt"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <p class="mt-6 text-xs text-gray-400">
+                &copy; 2025 IT SMP Albanna. Dilarang melakukan kecurangan.
+            </p>
         </div>
 
-        <div v-if="ujianDimulai && !terblokir" class="max-w-3xl mx-auto py-8 px-4">
-            <div class="sticky top-0 bg-white p-4 shadow-md rounded-lg mb-6 flex justify-between items-center z-50">
-                <div>
-                    <span class="font-bold text-gray-700">Sisa Waktu: {{ waktu }} detik</span>
+        <!-- 2. HALAMAN UJIAN (SOAL) -->
+        <div v-if="isExamActive && !isLocked" class="pb-20">
+            
+            <!-- Sticky Header -->
+            <div class="sticky top-0 bg-white shadow-md z-40 px-4 py-3 flex justify-between items-center border-b-4 border-blue-900">
+                <div class="flex flex-col">
+                    <h2 class="font-bold text-blue-900 text-lg leading-tight">{{ student.mapel }}</h2>
+                    <p class="text-xs text-gray-500 font-mono">{{ student.nama }} ({{ student.nis }}) | {{ student.kelas }}</p>
                 </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-xs font-bold text-gray-500 uppercase">Pelanggaran:</span>
-                    <span class="bg-red-100 text-red-600 px-3 py-1 rounded-full font-bold">{{ jumlahPelanggaran }} / 3</span>
-                </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-lg shadow-md mb-4">
-                <p class="font-bold text-lg mb-4">1. Apa fungsi dari tag HTML &lt;br&gt;?</p>
-                <div class="space-y-2">
-                    <label class="block p-3 border rounded hover:bg-gray-50 cursor-pointer"><input type="radio" name="s1" class="mr-2"> Membuat garis baru</label>
-                    <label class="block p-3 border rounded hover:bg-gray-50 cursor-pointer"><input type="radio" name="s1" class="mr-2"> Menebalkan huruf</label>
-                    <label class="block p-3 border rounded hover:bg-gray-50 cursor-pointer"><input type="radio" name="s1" class="mr-2"> Membuat link</label>
-                </div>
-            </div>
-             <div class="bg-white p-6 rounded-lg shadow-md mb-4">
-                <p class="font-bold text-lg mb-4">2. Ibukota Indonesia adalah?</p>
-                <div class="space-y-2">
-                    <label class="block p-3 border rounded hover:bg-gray-50 cursor-pointer"><input type="radio" name="s2" class="mr-2"> Bandung</label>
-                    <label class="block p-3 border rounded hover:bg-gray-50 cursor-pointer"><input type="radio" name="s2" class="mr-2"> Jakarta</label>
-                    <label class="block p-3 border rounded hover:bg-gray-50 cursor-pointer"><input type="radio" name="s2" class="mr-2"> Surabaya</label>
+                <div class="flex items-center gap-3">
+                    <div class="hidden md:block text-xs text-right mr-2">
+                        <span class="block text-gray-400">Sisa Waktu</span>
+                    </div>
+                    <div :class="['px-4 py-2 rounded font-mono font-bold text-xl border-2', timerSeconds < 300 ? 'bg-red-50 text-red-600 border-red-200 animate-pulse' : 'bg-gray-100 text-gray-700 border-gray-200']">
+                        {{ timerDisplay }}
+                    </div>
                 </div>
             </div>
 
-            <button class="w-full bg-green-600 text-white py-4 rounded font-bold text-xl mt-6 hover:bg-green-700">
-                KIRIM JAWABAN
-            </button>
+            <!-- Container Soal -->
+            <div class="max-w-4xl mx-auto p-4">
+                
+                <div v-for="(group, gIndex) in groupedQuestions" :key="gIndex" class="mb-8">
+                    <h3 class="text-sm font-bold text-gray-500 mb-4 border-b-2 border-dashed border-gray-300 pb-2 uppercase flex items-center gap-2">
+                        <span class="bg-blue-900 text-white w-6 h-6 flex items-center justify-center rounded text-xs">{{ group.questions.length }}</span>
+                        {{ group.label }}
+                    </h3>
+
+                    <div v-for="(q, index) in group.questions" :key="q.originalIndex" class="bg-white p-6 rounded-xl shadow-sm mb-6 border border-gray-100 hover:shadow-md transition">
+                        <div class="flex gap-4">
+                            <div class="bg-blue-100 text-blue-800 w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm shrink-0 border border-blue-200">
+                                {{ index + 1 }}
+                            </div>
+                            <div class="w-full">
+                                <!-- Gambar -->
+                                <div v-if="q.image" class="mb-4">
+                                    <img :src="q.image" class="max-h-64 rounded-lg border shadow-sm cursor-zoom-in" onclick="window.open(this.src)">
+                                </div>
+                                
+                                <!-- Teks Pertanyaan -->
+                                <p class="text-gray-800 font-medium mb-5 text-lg leading-relaxed whitespace-pre-wrap">{{ q.text }}</p>
+
+                                <!-- OPSI JAWABAN -->
+                                
+                                <!-- PG -->
+                                <div v-if="q.type === 'PG'" class="space-y-3">
+                                    <label v-for="opt in ['A','B','C','D']" :class="['flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all relative overflow-hidden', answers[q.originalIndex] === opt ? 'bg-blue-50 border-blue-500 text-blue-900' : 'border-gray-100 hover:bg-gray-50']">
+                                        <input type="radio" :name="'q'+q.originalIndex" :value="opt" v-model="answers[q.originalIndex]" class="hidden">
+                                        <div :class="['w-8 h-8 flex items-center justify-center rounded-full font-bold mr-3 transition-colors', answers[q.originalIndex] === opt ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500']">{{ opt }}</div>
+                                        <span class="font-medium">{{ q.options[opt] }}</span>
+                                    </label>
+                                </div>
+
+                                <!-- BS -->
+                                <div v-if="q.type === 'BS'" class="flex gap-4">
+                                    <label :class="['flex-1 p-4 border-2 rounded-lg text-center cursor-pointer font-bold transition-all', answers[q.originalIndex] === 'BENAR' ? 'bg-green-50 border-green-500 text-green-700' : 'border-gray-100 hover:bg-gray-50']">
+                                        <input type="radio" :name="'q'+q.originalIndex" value="BENAR" v-model="answers[q.originalIndex]" class="hidden">
+                                        <i class="fas fa-check-circle mb-1 text-xl block"></i> BENAR
+                                    </label>
+                                    <label :class="['flex-1 p-4 border-2 rounded-lg text-center cursor-pointer font-bold transition-all', answers[q.originalIndex] === 'SALAH' ? 'bg-red-50 border-red-500 text-red-700' : 'border-gray-100 hover:bg-gray-50']">
+                                        <input type="radio" :name="'q'+q.originalIndex" value="SALAH" v-model="answers[q.originalIndex]" class="hidden">
+                                        <i class="fas fa-times-circle mb-1 text-xl block"></i> SALAH
+                                    </label>
+                                </div>
+
+                                <!-- PG Kompleks -->
+                                <div v-if="q.type === 'PG_KOMPLEKS'" class="space-y-2">
+                                    <label v-for="(opt, i) in q.options" :class="['flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all', (answers[q.originalIndex] || []).includes(i) ? 'bg-blue-50 border-blue-500' : 'border-gray-100 hover:bg-gray-50']">
+                                        <input type="checkbox" :value="i" v-model="answers[q.originalIndex]" class="mr-3 w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
+                                        <span>{{ opt.text }}</span>
+                                    </label>
+                                </div>
+
+                                <!-- Esai -->
+                                <div v-if="['URAIAN', 'ESAI'].includes(q.type)">
+                                    <textarea v-model="answers[q.originalIndex]" rows="5" class="w-full p-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-0 outline-none text-gray-700 bg-gray-50 focus:bg-white transition" placeholder="Ketik jawaban Anda dengan jelas di sini..."></textarea>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tombol Submit -->
+                <div class="mt-10 mb-20">
+                    <button @click="submitExam" class="w-full bg-green-600 text-white py-5 rounded-xl font-bold text-xl hover:bg-green-700 shadow-lg transform hover:scale-[1.01] transition flex items-center justify-center gap-3">
+                        <i class="fas fa-paper-plane"></i> KIRIM JAWABAN SAYA
+                    </button>
+                    <p class="text-center text-xs text-gray-400 mt-4">Pastikan semua soal telah terjawab sebelum mengirim.</p>
+                </div>
+            </div>
         </div>
+
+        <!-- 3. HALAMAN TERBLOKIR (PELANGGARAN) -->
+        <div v-if="isLocked" class="min-h-screen bg-red-600 flex flex-col items-center justify-center text-white p-8 text-center z-50">
+            <div class="bg-white p-8 rounded-full mb-6 shadow-xl">
+                <i class="fas fa-lock fa-5x text-red-600"></i>
+            </div>
+            <h1 class="text-4xl font-bold mb-2">UJIAN TERKUNCI!</h1>
+            <p class="text-xl mb-8 opacity-90">Sistem mendeteksi Anda keluar dari layar ujian / membuka aplikasi lain.</p>
+            
+            <div class="bg-red-800 bg-opacity-50 p-6 rounded-xl border border-red-400 max-w-lg">
+                <h3 class="font-bold mb-2 uppercase tracking-wider text-sm">Apa yang harus dilakukan?</h3>
+                <p class="mb-4">Segera lapor ke <strong>Pengawas Ujian</strong> untuk membuka blokir akun Anda.</p>
+                <div class="bg-white text-red-900 px-4 py-2 rounded font-mono font-bold text-lg">
+                    NIS: {{ student.nis }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. HALAMAN SELESAI -->
+        <div v-if="isFinished" class="min-h-screen bg-green-50 flex flex-col items-center justify-center p-8 text-center">
+            <div class="bg-white p-6 rounded-full shadow-lg mb-6">
+                <i class="fas fa-check-circle fa-5x text-green-500"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-green-800 mb-2">UJIAN SELESAI</h1>
+            <p class="text-gray-600 mb-8">Jawaban Anda telah berhasil disimpan ke Server Pusat.</p>
+            
+            <div class="bg-white p-6 rounded-xl shadow-md w-full max-w-md border-t-4 border-green-500">
+                <div class="flex justify-between border-b pb-2 mb-2">
+                    <span class="text-gray-500 text-sm">Nama</span>
+                    <span class="font-bold text-gray-800">{{ student.nama }}</span>
+                </div>
+                <div class="flex justify-between border-b pb-2 mb-2">
+                    <span class="text-gray-500 text-sm">Mata Pelajaran</span>
+                    <span class="font-bold text-gray-800">{{ student.mapel }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500 text-sm">Waktu Kirim</span>
+                    <span class="font-bold text-gray-800">{{ submitTime }}</span>
+                </div>
+            </div>
+            
+            <p class="mt-8 text-xs text-gray-400">Silakan tutup browser ini dengan tenang.</p>
+        </div>
+
     </div>
 
-    <script>
-        const { createApp } = Vue;
+    <!-- FIREBASE MODULE -->
+    <script type="module">
+        import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // --- KONFIGURASI FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBivREr2y61OYTE0kLxRnkGtPCdLvHn_og",
+            authDomain: "cbt-albanna.firebaseapp.com",
+            projectId: "cbt-albanna",
+            storageBucket: "cbt-albanna.firebasestorage.app",
+            messagingSenderId: "740622197344",
+            appId: "1:740622197344:web:6112adf59edfbe496ed905"
+        };
+
+        const appFirebase = initializeApp(firebaseConfig);
+        const db = getFirestore(appFirebase);
 
         createApp({
             data() {
                 return {
-                    ujianDimulai: false,
-                    terblokir: false,
-                    jumlahPelanggaran: 0,
-                    waktu: 3600
+                    loadingMessage: 'Menghubungkan ke Server...',
+                    isLoading: true,
+                    student: { nama: '', nis: '', kelas: '', mapel: '' },
+                    allExams: [],
+                    selectedExamId: '',
+                    isExamActive: false, isLocked: false, isFinished: false,
+                    groupedQuestions: [], answers: {},
+                    timerSeconds: 0, timerInterval: null,
+                    submitTime: ''
                 }
             },
-            mounted() {
-                // Deteksi jika user mencoba refresh halaman (peringatan)
-                window.onbeforeunload = function() {
-                    return "Yakin ingin keluar? Ujian akan terhenti.";
-                };
+            computed: {
+                availableExams() {
+                    if(!this.student.kelas) return [];
+                    const grade = this.student.kelas.charAt(0);
+                    return this.allExams.filter(e => e.config.kelas == grade);
+                },
+                timerDisplay() {
+                    const m = Math.floor(this.timerSeconds/60); const s = this.timerSeconds%60;
+                    return `${m}:${s<10?'0'+s:s}`;
+                }
+            },
+            async mounted() {
+                // CEK KONEKSI & LOAD SOAL
+                try {
+                    const q = query(collection(db, "bank_soal"));
+                    const snapshot = await getDocs(q);
+                    this.allExams = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                } catch (e) {
+                    alert("Gagal memuat soal: " + e.message);
+                } finally {
+                    this.isLoading = false;
+                }
 
-                // Deteksi Pindah Tab / Minimize
+                // DISABLE BACK BUTTON & REFRESH WARNING
+                window.history.pushState(null, null, window.location.href);
+                window.onpopstate = function () { window.history.go(1); };
+                window.onbeforeunload = function() { return "Yakin ingin keluar? Ujian akan terblokir!"; };
+
+                // SECURITY MONITOR
                 document.addEventListener("visibilitychange", () => {
-                    if (this.ujianDimulai && document.hidden) {
-                        this.catatPelanggaran("Terdeteksi pindah tab/aplikasi");
+                    if (document.hidden && this.isExamActive) {
+                        this.triggerLock("Pindah Tab / Minimize Browser");
                     }
                 });
-
-                // Mencegah Klik Kanan
-                document.addEventListener('contextmenu', event => event.preventDefault());
             },
             methods: {
-                mulaiUjian() {
-                    // Minta Fullscreen
-                    const elem = document.documentElement;
-                    if (elem.requestFullscreen) {
-                        elem.requestFullscreen().catch(err => {
-                            alert("Wajib Fullscreen untuk memulai!");
-                        });
+                shuffleArray(array) {
+                    for (let i = array.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [array[i], array[j]] = [array[j], array[i]];
                     }
-                    this.ujianDimulai = true;
-                    this.startTimer();
+                    return array;
                 },
-                catatPelanggaran(alasan) {
-                    if(this.terblokir) return;
-                    
-                    this.jumlahPelanggaran++;
-                    alert(`PERINGATAN KERAS!\n\n${alasan}.\nPelanggaran ke-${this.jumlahPelanggaran} dari 3.`);
 
-                    if (this.jumlahPelanggaran >= 3) {
-                        this.terblokir = true;
-                        this.ujianDimulai = false;
-                        document.exitFullscreen(); // Keluar fullscreen
+                async checkLogin() {
+                    if(!this.student.nama || !this.student.nis || !this.student.kelas || !this.selectedExamId) {
+                        return alert("Lengkapi semua data identitas!");
+                    }
+
+                    this.isLoading = true;
+                    this.loadingMessage = "Memeriksa Status Siswa...";
+
+                    try {
+                        // 1. CEK APAKAH SUDAH SUBMIT (JAWABAN_SISWA)
+                        const qSubmitted = query(collection(db, "jawaban_siswa"), 
+                            where("student.nis", "==", this.student.nis),
+                            where("examId", "==", this.selectedExamId)
+                        );
+                        const snapSubmit = await getDocs(qSubmitted);
+                        if(!snapSubmit.empty) {
+                            throw new Error("NIS ini SUDAH MENYELESAIKAN ujian mapel ini.");
+                        }
+
+                        // 2. CEK APAKAH TERBLOKIR (BLOCKED_STUDENTS)
+                        const qBlocked = query(collection(db, "blocked_students"), 
+                            where("student.nis", "==", this.student.nis),
+                            where("examId", "==", this.selectedExamId)
+                        );
+                        const snapBlock = await getDocs(qBlocked);
+                        if(!snapBlock.empty) {
+                            throw new Error("Akun Anda TERBLOKIR oleh sistem karena pelanggaran. Hubungi pengawas.");
+                        }
+
+                        // JIKA LOLOS SEMUA -> MULAI UJIAN
+                        this.startExam();
+
+                    } catch (e) {
+                        alert("GAGAL LOGIN:\n" + e.message);
+                    } finally {
+                        this.isLoading = false;
                     }
                 },
-                startTimer() {
-                    setInterval(() => {
-                        if(this.waktu > 0 && !this.terblokir) this.waktu--;
+
+                startExam() {
+                    const exam = this.allExams.find(e => e.id === this.selectedExamId);
+                    this.student.mapel = exam.config.mapel;
+                    this.activeExam = exam;
+
+                    // Acak Soal
+                    const groups = {};
+                    exam.soal.forEach((q, idx) => {
+                        if(!groups[q.type]) groups[q.type] = { label: q.typeLabel, questions: [] };
+                        groups[q.type].questions.push({ ...q, originalIndex: idx });
+                    });
+                    this.groupedQuestions = Object.values(groups).map(g => ({ label: g.label, questions: this.shuffleArray(g.questions) }));
+
+                    // Init Jawaban
+                    this.answers = {};
+                    exam.soal.forEach((q, idx) => this.answers[idx] = (q.type==='PG_KOMPLEKS' ? [] : null));
+
+                    // Timer
+                    this.timerSeconds = parseInt(exam.config.durasi) * 60;
+                    this.timerInterval = setInterval(() => {
+                        if(this.timerSeconds > 0) this.timerSeconds--; else this.submitExam(true);
                     }, 1000);
+
+                    // Fullscreen
+                    const elem = document.documentElement;
+                    if (elem.requestFullscreen) elem.requestFullscreen().catch(()=>{});
+
+                    this.isExamActive = true;
+                },
+
+                async triggerLock(reason) {
+                    if(this.isLocked) return; // Jangan double lock
+                    
+                    this.isExamActive = false;
+                    this.isLocked = true;
+                    clearInterval(this.timerInterval);
+
+                    // KIRIM STATUS BLOKIR KE FIREBASE (ADMIN NOTIFICATION)
+                    try {
+                        await addDoc(collection(db, "blocked_students"), {
+                            student: this.student,
+                            examId: this.activeExam.id,
+                            mapel: this.activeExam.config.mapel,
+                            reason: reason,
+                            timestamp: new Date().toISOString()
+                        });
+                    } catch(e) { console.error("Gagal lapor blokir", e); }
+                },
+
+                async submitExam(force=false) {
+                    if(!force) {
+                        // Cek Jawaban Kosong
+                        for(let i=0; i<this.activeExam.soal.length; i++) {
+                            const ans = this.answers[i];
+                            if(ans === null || ans === '' || (Array.isArray(ans) && ans.length===0)) {
+                                return alert("Anda belum menjawab semua soal! Cek kembali.");
+                            }
+                        }
+                        if(!confirm("Yakin ingin mengirim jawaban? Anda tidak bisa mengubahnya lagi.")) return;
+                    }
+
+                    this.isLoading = true;
+                    this.loadingMessage = "Mengirim Jawaban ke Server...";
+
+                    try {
+                        const result = {
+                            student: this.student,
+                            examId: this.activeExam.id,
+                            mapel: this.activeExam.config.mapel,
+                            answers: this.answers,
+                            timestamp: new Date().toISOString()
+                        };
+                        
+                        await addDoc(collection(db, "jawaban_siswa"), result);
+                        
+                        this.isExamActive = false;
+                        this.isFinished = true;
+                        this.submitTime = new Date().toLocaleTimeString();
+                        
+                        if (document.exitFullscreen) document.exitFullscreen();
+                        
+                        // Hapus listener unload agar tidak muncul warning saat close tab selesai
+                        window.onbeforeunload = null;
+
+                    } catch(e) {
+                        alert("Gagal mengirim jawaban! Periksa koneksi internet Anda.\n" + e.message);
+                        this.isLoading = false;
+                        this.isExamActive = true; // Kembalikan ke ujian
+                    } finally {
+                        this.isLoading = false;
+                    }
                 }
             }
-        }).mount('#exam-app');
+        }).mount('#app');
     </script>
 </body>
 </html>
