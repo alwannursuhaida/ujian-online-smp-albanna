@@ -6,13 +6,13 @@
     <title>Bank Soal Guru - SMP ALBANNA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Library PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Montserrat', sans-serif; }
-        /* Transisi halus */
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.5s; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen pb-20">
@@ -21,7 +21,7 @@
 
         <!-- HEADER -->
         <header class="mb-8 text-center">
-            <h1 class="text-3xl font-bold text-blue-900">INPUT SOAL & KUNCI JAWABAN</h1>
+            <h1 class="text-3xl font-bold text-blue-900">INPUT SOAL & GENERATOR</h1>
             <p class="text-gray-600 font-semibold">SMP ALBANNA</p>
         </header>
 
@@ -32,17 +32,21 @@
             <div :class="['w-10 h-10 rounded-full flex items-center justify-center font-bold text-white transition-all', step >= 2 ? 'bg-blue-900 scale-110' : 'bg-gray-400']">2</div>
             <div :class="['w-10 h-10 rounded-full flex items-center justify-center font-bold text-white transition-all', step >= 3 ? 'bg-blue-900 scale-110' : 'bg-gray-400']">3</div>
         </div>
-        <div class="flex justify-between text-xs font-bold text-gray-500 px-4 -mt-6 mb-8">
-            <span>Setup Ujian</span>
-            <span>Input Soal</span>
-            <span>Kunci Jawaban</span>
-        </div>
 
-        <!-- STEP 1: SETUP UJIAN -->
+        <!-- STEP 1: SETUP UJIAN & LOGO -->
         <div v-if="step === 1" class="bg-white p-8 rounded-lg shadow-lg max-w-2xl mx-auto border-t-8 border-blue-900">
-            <h2 class="text-xl font-bold mb-4 text-gray-800">Identitas Ujian</h2>
+            <h2 class="text-xl font-bold mb-4 text-gray-800">1. Identitas Ujian</h2>
             
             <div class="space-y-4">
+                <!-- Upload Logo untuk PDF -->
+                <div class="border-2 border-dashed border-gray-300 p-4 rounded text-center bg-gray-50">
+                    <p class="text-sm font-bold text-gray-500 mb-2">Logo Sekolah (Untuk Kop Surat PDF)</p>
+                    <input type="file" accept="image/*" @change="handleLogoUpload" class="text-sm">
+                    <div v-if="sekolah.logoPreview" class="mt-2 flex justify-center">
+                        <img :src="sekolah.logoPreview" class="h-16 object-contain">
+                    </div>
+                </div>
+
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Mata Pelajaran</label>
                     <select v-model="config.mapel" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-900 outline-none">
@@ -69,14 +73,15 @@
                     </select>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Tanggal Pelaksanaan</label>
-                    <input type="date" v-model="config.tanggal" class="w-full p-3 border rounded-lg bg-gray-50">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Waktu Pengerjaan (Menit)</label>
-                    <input type="number" v-model="config.durasi" class="w-full p-3 border rounded-lg bg-gray-50" placeholder="Contoh: 90">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Tanggal Ujian</label>
+                        <input type="date" v-model="config.tanggal" class="w-full p-3 border rounded-lg bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Durasi (Menit)</label>
+                        <input type="number" v-model="config.durasi" class="w-full p-3 border rounded-lg bg-gray-50" placeholder="90">
+                    </div>
                 </div>
             </div>
 
@@ -85,7 +90,7 @@
             </button>
         </div>
 
-        <!-- STEP 2: INPUT SOAL -->
+        <!-- STEP 2: INPUT SOAL (Sama seperti sebelumnya) -->
         <div v-if="step === 2">
             <div class="sticky top-0 z-40 bg-white p-4 shadow mb-6 rounded flex justify-between items-center border-l-4 border-blue-900">
                 <div>
@@ -102,8 +107,6 @@
 
             <!-- Loop Soal -->
             <div v-for="(q, index) in questions" :key="index" class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200">
-                
-                <!-- Header Soal -->
                 <div class="flex justify-between items-center mb-4 border-b pb-2">
                     <span class="bg-blue-100 text-blue-900 px-3 py-1 rounded font-bold text-sm">
                         No. {{ index + 1 }} - {{ q.typeLabel }}
@@ -111,10 +114,8 @@
                     <span class="text-sm font-bold text-gray-500">Bobot: {{ q.poin }} Poin</span>
                 </div>
 
-                <!-- Input Pertanyaan -->
                 <div class="mb-4">
                     <label class="block text-sm font-bold text-gray-700 mb-1">Pertanyaan</label>
-                    <!-- Fitur Upload Gambar Soal -->
                     <div class="mb-2">
                         <input type="file" @change="handleImageUpload($event, index)" class="text-xs text-gray-500">
                         <img v-if="q.image" :src="q.image" class="mt-2 h-24 object-contain border p-1 rounded">
@@ -122,9 +123,7 @@
                     <textarea v-model="q.text" rows="3" class="w-full p-3 border rounded focus:ring-1 focus:ring-blue-900 bg-gray-50" placeholder="Tulis soal di sini..."></textarea>
                 </div>
 
-                <!-- AREA INPUT OPSI BERDASARKAN TIPE -->
-                
-                <!-- 1. PILIHAN GANDA (PG) -->
+                <!-- Opsi Jawaban sesuai Tipe -->
                 <div v-if="q.type === 'PG'" class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div v-for="opt in ['A', 'B', 'C', 'D']" :key="opt" class="flex items-center gap-2">
                         <span class="font-bold w-6 text-center">{{ opt }}.</span>
@@ -132,99 +131,96 @@
                     </div>
                 </div>
 
-                <!-- 2. PG KOMPLEKS -->
-                <div v-if="q.type === 'PG_KOMPLEKS'" class="bg-yellow-50 p-3 rounded text-sm text-yellow-800 mb-2">
-                    <i class="fas fa-info-circle"></i> Tuliskan opsi jawaban. Siswa bisa memilih lebih dari satu.
+                <div v-if="q.type === 'PG_KOMPLEKS'" class="bg-yellow-50 p-3 rounded text-sm mb-2">
                     <div class="grid grid-cols-1 gap-2 mt-2">
                         <div v-for="(opt, i) in q.options" :key="i" class="flex items-center gap-2">
                             <input type="checkbox" disabled class="w-4 h-4">
-                            <input v-model="q.options[i].text" type="text" class="w-full p-2 border rounded bg-white" placeholder="Tulis pernyataan opsi...">
+                            <input v-model="q.options[i].text" type="text" class="w-full p-2 border rounded bg-white" placeholder="Pernyataan...">
                         </div>
                     </div>
                 </div>
 
-                <!-- 3. BENAR SALAH -->
-                <div v-if="q.type === 'BS'" class="bg-gray-50 p-3 rounded text-sm text-gray-500 text-center">
-                    Siswa akan memilih <strong>Benar</strong> atau <strong>Salah</strong>. (Tidak perlu input opsi).
+                <div v-if="q.type === 'BS'" class="bg-gray-50 p-3 rounded text-sm text-center">
+                    Siswa memilih <strong>Benar</strong> atau <strong>Salah</strong>.
                 </div>
 
-                <!-- 4. URAIAN / ESAI -->
-                <div v-if="['URAIAN', 'ESAI'].includes(q.type)" class="bg-gray-50 p-3 rounded text-sm text-gray-500 text-center">
-                    Siswa akan mengetik jawaban panjang.
+                <div v-if="['URAIAN', 'ESAI'].includes(q.type)" class="bg-gray-50 p-3 rounded text-sm text-center">
+                    Area jawaban esai siswa.
                 </div>
-
             </div>
 
-            <!-- Tombol Bottom -->
             <div class="flex justify-center pb-10">
-                <button @click="lanjutKeKunci" class="px-10 py-4 bg-blue-900 text-white text-xl rounded-full font-bold hover:bg-blue-800 shadow-xl transition transform hover:scale-105">
-                    SELESAI INPUT SOAL & LANJUT <i class="fas fa-arrow-right ml-2"></i>
+                <button @click="lanjutKeKunci" class="px-10 py-4 bg-blue-900 text-white text-xl rounded-full font-bold hover:bg-blue-800 shadow-xl">
+                    SELESAI INPUT & LANJUT <i class="fas fa-arrow-right ml-2"></i>
                 </button>
             </div>
         </div>
 
-        <!-- STEP 3: INPUT KUNCI JAWABAN -->
+        <!-- STEP 3: KUNCI & EXPORT -->
         <div v-if="step === 3">
             <div class="sticky top-0 z-40 bg-green-50 p-4 shadow mb-6 rounded flex justify-between items-center border-l-4 border-green-600">
                 <div>
-                    <h2 class="font-bold text-xl text-green-800">KUNCI JAWABAN</h2>
-                    <span class="text-xs text-gray-600">Pastikan kunci jawaban benar.</span>
+                    <h2 class="font-bold text-xl text-green-800">Review & Kunci</h2>
+                    <span class="text-xs text-gray-600">Isi kunci jawaban sebelum menyimpan.</span>
                 </div>
                 <button @click="step = 2" class="text-sm text-gray-500 hover:text-green-700 font-bold">
-                    <i class="fas fa-arrow-left"></i> KEMBALI KE SOAL
+                    <i class="fas fa-arrow-left"></i> EDIT SOAL
                 </button>
             </div>
 
-            <div class="grid grid-cols-1 gap-4">
+            <!-- List Soal Ringkas untuk Kunci -->
+            <div class="grid grid-cols-1 gap-4 mb-8">
                 <div v-for="(q, index) in questions" :key="index" class="bg-white p-4 rounded shadow border-l-4 border-green-500">
                     <div class="mb-2 text-sm text-gray-800 font-semibold">
                         <span class="bg-gray-200 px-2 py-1 rounded mr-2">No. {{ index + 1 }}</span>
-                        <span v-if="q.text" class="italic">"{{ q.text.substring(0, 50) }}..."</span>
-                        <span v-else class="text-red-400 italic">(Soal belum diisi)</span>
+                        {{ q.text.substring(0, 50) }}...
                     </div>
-
-                    <!-- INPUT KUNCI BERDASARKAN TIPE -->
-
-                    <!-- KUNCI PG -->
-                    <div v-if="q.type === 'PG'" class="flex gap-4 mt-2">
-                        <label v-for="opt in ['A', 'B', 'C', 'D']" :key="opt" class="flex items-center gap-1 cursor-pointer hover:bg-green-50 px-2 py-1 rounded">
-                            <input type="radio" :name="'kunci-'+index" :value="opt" v-model="q.answer" class="w-5 h-5 text-green-600">
-                            <span class="font-bold">{{ opt }}</span>
-                        </label>
+                    
+                    <!-- Input Kunci (Simple) -->
+                    <div v-if="q.type === 'PG'" class="flex gap-4">
+                        <label v-for="opt in ['A', 'B', 'C', 'D']" class="cursor-pointer font-bold text-sm"><input type="radio" :name="'k'+index" :value="opt" v-model="q.answer"> {{opt}}</label>
                     </div>
-
-                    <!-- KUNCI PG KOMPLEKS (Multi Checkbox) -->
-                    <div v-if="q.type === 'PG_KOMPLEKS'" class="mt-2">
-                        <p class="text-xs text-gray-500 mb-1">Centang semua jawaban benar:</p>
-                        <div class="flex flex-wrap gap-4">
-                            <label v-for="(opt, i) in q.options" :key="i" class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" v-model="opt.isCorrect" class="w-4 h-4">
-                                <span class="text-sm">{{ opt.text || 'Opsi ' + (i+1) }}</span>
-                            </label>
-                        </div>
+                    <div v-if="q.type === 'BS'" class="flex gap-4">
+                        <label class="cursor-pointer text-sm"><input type="radio" :name="'k'+index" value="BENAR" v-model="q.answer"> BENAR</label>
+                        <label class="cursor-pointer text-sm"><input type="radio" :name="'k'+index" value="SALAH" v-model="q.answer"> SALAH</label>
                     </div>
-
-                    <!-- KUNCI BENAR SALAH -->
-                    <div v-if="q.type === 'BS'" class="flex gap-4 mt-2">
-                        <label class="flex items-center gap-1 cursor-pointer">
-                            <input type="radio" :name="'kunci-'+index" value="BENAR" v-model="q.answer" class="w-4 h-4"> Benar
-                        </label>
-                        <label class="flex items-center gap-1 cursor-pointer">
-                            <input type="radio" :name="'kunci-'+index" value="SALAH" v-model="q.answer" class="w-4 h-4"> Salah
-                        </label>
+                    <div v-if="q.type === 'PG_KOMPLEKS'" class="flex gap-4 flex-wrap">
+                         <label v-for="(o, i) in q.options" :key="i" class="text-xs flex items-center gap-1"><input type="checkbox" v-model="o.isCorrect"> {{ o.text || 'Opsi '+(i+1) }}</label>
                     </div>
-
-                    <!-- KUNCI URAIAN / ESAI -->
-                    <div v-if="['URAIAN', 'ESAI'].includes(q.type)" class="mt-2">
-                        <textarea v-model="q.answer" class="w-full p-2 text-sm border rounded bg-green-50" rows="2" placeholder="Tuliskan kata kunci jawaban / pedoman penskoran guru..."></textarea>
-                    </div>
-
                 </div>
             </div>
 
-            <button @click="simpanDataFinal" class="w-full mt-8 bg-green-700 text-white py-4 rounded-lg font-bold hover:bg-green-800 shadow-xl text-xl mb-20">
-                <i class="fas fa-save mr-2"></i> SIMPAN DATA KE SERVER
-            </button>
+            <!-- AREA TOMBOL AKSI -->
+            <div class="bg-white p-6 rounded-lg shadow-xl border-t-4 border-blue-900">
+                <h3 class="font-bold text-lg mb-4 text-center">PILIH METODE PENYIMPANAN</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    
+                    <!-- 1. PDF SOAL (Untuk diprint/dibagikan) -->
+                    <button @click="downloadPDFSoal" class="bg-red-600 text-white py-4 px-6 rounded-lg font-bold hover:bg-red-700 shadow flex flex-col items-center justify-center gap-2">
+                        <i class="fas fa-file-pdf fa-2x"></i>
+                        <span>DOWNLOAD PDF SOAL</span>
+                        <span class="text-xs font-normal opacity-80">(Tanpa Kunci, Ada Kop)</span>
+                    </button>
+
+                    <!-- 2. SQL (Untuk Database Server) -->
+                    <button @click="generateSQL" class="bg-gray-800 text-white py-4 px-6 rounded-lg font-bold hover:bg-gray-900 shadow flex flex-col items-center justify-center gap-2">
+                        <i class="fas fa-database fa-2x"></i>
+                        <span>EXPORT SQL (DATABASE)</span>
+                        <span class="text-xs font-normal opacity-80">(Script INSERT INTO...)</span>
+                    </button>
+
+                    <!-- 3. JSON (Untuk Sistem Web Statis) -->
+                    <button @click="downloadJSON" class="bg-green-600 text-white py-4 px-6 rounded-lg font-bold hover:bg-green-700 shadow flex flex-col items-center justify-center gap-2">
+                        <i class="fas fa-code fa-2x"></i>
+                        <span>DOWNLOAD JSON</span>
+                        <span class="text-xs font-normal opacity-80">(Format Web App Siswa)</span>
+                    </button>
+
+                </div>
+            </div>
+            
+            <div class="h-20"></div>
         </div>
 
     </div>
@@ -237,124 +233,216 @@
                 return {
                     step: 1,
                     config: { mapel: '', tanggal: '', durasi: '' },
+                    sekolah: { logoBase64: null, logoPreview: null },
                     questions: []
                 }
             },
             methods: {
-                generateTemplate() {
-                    if (!this.config.mapel) return alert("Pilih Mata Pelajaran dulu!");
-                    
-                    this.questions = []; // Reset
-                    const m = this.config.mapel;
-                    
-                    // --- ATURAN DISTRIBUSI SOAL (HARDCODED) ---
-
-                    // 1. KELOMPOK A (MTK, IPA)
-                    if (['MATEMATIKA', 'IPA'].includes(m)) {
-                        this.addSlots('PG', 25, 2);
-                        this.addSlots('URAIAN', 10, 3);
-                        this.addSlots('ESAI', 5, 4);
-                    }
-                    // 2. KELOMPOK B (B.INGGRIS, B.INDO)
-                    else if (['BAHASA INGGRIS', 'BAHASA INDONESIA'].includes(m)) {
-                        this.addSlots('PG', 20, 2);
-                        this.addSlots('URAIAN', 10, 3);
-                        this.addSlots('BS', 10, 1);
-                        this.addSlots('ESAI', 5, 4);
-                    }
-                    // 3. KELOMPOK C (B.BALI, SENBUD, B.ARAB)
-                    else if (['BAHASA BALI', 'SENI BUDAYA', 'BAHASA ARAB'].includes(m)) {
-                        this.addSlots('PG', 40, 2);
-                        this.addSlots('ESAI', 5, 4);
-                    }
-                    // 4. KELOMPOK D (PENJAS, IPS, PAI, INFOR)
-                    else {
-                        this.addSlots('PG', 25, 2);
-                        this.addSlots('PG_KOMPLEKS', 5, 3); // 5 opsi per soal
-                        this.addSlots('URAIAN', 5, 3);
-                        this.addSlots('ESAI', 5, 4);
-                    }
-
-                    this.step = 2;
-                    window.scrollTo(0,0);
-                },
-
-                // Helper untuk membuat slot kosong
-                addSlots(type, count, points) {
-                    let typeLabel = '';
-                    if(type === 'PG') typeLabel = 'Pilihan Ganda';
-                    if(type === 'PG_KOMPLEKS') typeLabel = 'Pilihan Ganda Kompleks';
-                    if(type === 'URAIAN') typeLabel = 'Uraian Singkat';
-                    if(type === 'ESAI') typeLabel = 'Esai Panjang';
-                    if(type === 'BS') typeLabel = 'Benar / Salah';
-
-                    for (let i = 0; i < count; i++) {
-                        let qStructure = {
-                            type: type,
-                            typeLabel: typeLabel,
-                            poin: points,
-                            text: '',
-                            image: null,
-                            answer: '' // Untuk Kunci
-                        };
-
-                        // Struktur khusus Opsi
-                        if (type === 'PG') {
-                            qStructure.options = { A:'', B:'', C:'', D:'' };
-                        } else if (type === 'PG_KOMPLEKS') {
-                            // Default 4 opsi checklist
-                            qStructure.options = [
-                                { text: '', isCorrect: false },
-                                { text: '', isCorrect: false },
-                                { text: '', isCorrect: false },
-                                { text: '', isCorrect: false }
-                            ];
-                        }
-
-                        this.questions.push(qStructure);
-                    }
-                },
-
-                handleImageUpload(event, index) {
+                handleLogoUpload(event) {
                     const file = event.target.files[0];
                     if (file) {
                         const reader = new FileReader();
                         reader.onload = (e) => {
-                            this.questions[index].image = e.target.result;
+                            this.sekolah.logoBase64 = e.target.result;
+                            this.sekolah.logoPreview = e.target.result;
                         };
                         reader.readAsDataURL(file);
                     }
                 },
-
-                lanjutKeKunci() {
-                    // Validasi sederhana
-                    const emptyQ = this.questions.find(q => !q.text && !q.image);
-                    if (emptyQ && !confirm("Ada soal yang teks/gambarnya masih kosong. Yakin lanjut?")) {
-                        return;
+                generateTemplate() {
+                    if (!this.config.mapel) return alert("Pilih Mata Pelajaran dulu!");
+                    this.questions = [];
+                    const m = this.config.mapel;
+                    
+                    // LOGIKA DISTRIBUSI SOAL
+                    if (['MATEMATIKA', 'IPA'].includes(m)) {
+                        this.addSlots('PG', 25, 2); this.addSlots('URAIAN', 10, 3); this.addSlots('ESAI', 5, 4);
+                    } else if (['BAHASA INGGRIS', 'BAHASA INDONESIA'].includes(m)) {
+                        this.addSlots('PG', 20, 2); this.addSlots('URAIAN', 10, 3); this.addSlots('BS', 10, 1); this.addSlots('ESAI', 5, 4);
+                    } else if (['BAHASA BALI', 'SENI BUDAYA', 'BAHASA ARAB'].includes(m)) {
+                        this.addSlots('PG', 40, 2); this.addSlots('ESAI', 5, 4);
+                    } else { // Kelompok D
+                        this.addSlots('PG', 25, 2); this.addSlots('PG_KOMPLEKS', 5, 3); this.addSlots('URAIAN', 5, 3); this.addSlots('ESAI', 5, 4);
                     }
+                    this.step = 2;
+                    window.scrollTo(0,0);
+                },
+                addSlots(type, count, points) {
+                    let typeLabel = {'PG':'Pilihan Ganda', 'PG_KOMPLEKS':'Pilihan Ganda Kompleks', 'URAIAN':'Uraian Singkat', 'ESAI':'Esai Panjang', 'BS':'Benar / Salah'}[type];
+                    for (let i = 0; i < count; i++) {
+                        let q = { type, typeLabel, poin: points, text: '', image: null, answer: '' };
+                        if (type === 'PG') q.options = { A:'', B:'', C:'', D:'' };
+                        else if (type === 'PG_KOMPLEKS') q.options = Array(4).fill().map(() => ({ text: '', isCorrect: false }));
+                        this.questions.push(q);
+                    }
+                },
+                handleImageUpload(e, i) {
+                    const f = e.target.files[0];
+                    if(f) { const r = new FileReader(); r.onload = (ev) => this.questions[i].image = ev.target.result; r.readAsDataURL(f); }
+                },
+                lanjutKeKunci() {
                     this.step = 3;
                     window.scrollTo(0,0);
                 },
 
-                simpanDataFinal() {
-                    // Di sini logika simpan ke Database / JSON Download
-                    const dataFinal = {
-                        config: this.config,
-                        soal: this.questions
-                    };
-                    
-                    console.log(dataFinal); // Debug
-                    
-                    // Simulasi Download JSON
-                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataFinal));
-                    const downloadAnchorNode = document.createElement('a');
-                    downloadAnchorNode.setAttribute("href", dataStr);
-                    downloadAnchorNode.setAttribute("download", `BANK_SOAL_${this.config.mapel}.json`);
-                    document.body.appendChild(downloadAnchorNode);
-                    downloadAnchorNode.click();
-                    downloadAnchorNode.remove();
+                // --- FITUR 1: PDF GENERATOR (SOAL ONLY) ---
+                downloadPDFSoal() {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    let y = 10; // Posisi vertikal awal
 
-                    alert("Data berhasil disimpan! (File JSON terunduh)");
+                    // 1. KOP SURAT (SMP ALBANNA)
+                    const logoSize = 25;
+                    if (this.sekolah.logoBase64) doc.addImage(this.sekolah.logoBase64, 'PNG', 15, 10, logoSize, logoSize);
+                    
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(18);
+                    doc.setTextColor(30, 58, 138); // Biru
+                    doc.text("SMP ALBANNA", 45, 18);
+                    
+                    doc.setTextColor(0);
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(9);
+                    doc.text("Jl. Tukad Yeh Ho III No.10, Denpasar, Bali 80234", 45, 24);
+                    doc.text("Telepon (0361) 238 4444 | www.albanna.sch.id", 45, 29);
+                    
+                    doc.setLineWidth(0.5); doc.line(10, 35, pageWidth-10, 35);
+                    y = 45;
+
+                    // 2. IDENTITAS & PERATURAN
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+                    doc.text(`NASKAH SOAL: ${this.config.mapel}`, pageWidth/2, y, {align:'center'}); y+=7;
+                    
+                    doc.setFontSize(10); doc.setFont("helvetica", "normal");
+                    doc.text(`Hari/Tanggal : ${this.config.tanggal}`, 15, y); 
+                    doc.text(`Waktu        : ${this.config.durasi} Menit`, 120, y); y+=8;
+
+                    // Kotak Peraturan
+                    doc.setDrawColor(0); doc.setFillColor(245, 245, 245);
+                    doc.rect(15, y, pageWidth-30, 25, 'FD');
+                    doc.setFontSize(8);
+                    doc.text("PERATURAN UJIAN:", 18, y+5);
+                    doc.text("1. Berdoalah sebelum mengerjakan soal.", 18, y+10);
+                    doc.text("2. Tulis identitas dengan lengkap dan jelas.", 18, y+14);
+                    doc.text("3. Dahulukan menjawab soal yang dianggap mudah.", 18, y+18);
+                    doc.text("4. Periksa kembali pekerjaan sebelum diserahkan.", 18, y+22);
+                    y += 35;
+
+                    // 3. LOOP SOAL
+                    doc.setFontSize(10);
+                    this.questions.forEach((q, idx) => {
+                        // Cek Page Break
+                        if (y > pageHeight - 40) { doc.addPage(); y = 20; }
+
+                        // Nomor & Teks Soal
+                        doc.setFont("helvetica", "bold");
+                        doc.text(`${idx+1}.`, 15, y);
+                        
+                        doc.setFont("helvetica", "normal");
+                        // Split teks panjang
+                        const splitText = doc.splitTextToSize(q.text, 170);
+                        doc.text(splitText, 22, y);
+                        y += (splitText.length * 5) + 2;
+
+                        // Gambar Soal (Jika Ada)
+                        if (q.image) {
+                            if (y > pageHeight - 50) { doc.addPage(); y = 20; }
+                            // Hitung rasio gambar agar tidak gepeng
+                            doc.addImage(q.image, 'JPEG', 25, y, 40, 0); 
+                            y += 45; 
+                        }
+
+                        // Opsi Jawaban
+                        if (q.type === 'PG') {
+                            ['A','B','C','D'].forEach(opt => {
+                                if (y > pageHeight - 20) { doc.addPage(); y = 20; }
+                                doc.text(`${opt}. ${q.options[opt]}`, 25, y);
+                                y += 5;
+                            });
+                        } else if (q.type === 'PG_KOMPLEKS') {
+                            q.options.forEach(o => {
+                                if (y > pageHeight - 20) { doc.addPage(); y = 20; }
+                                doc.rect(25, y-3, 3, 3); // Kotak checkbox
+                                doc.text(o.text, 32, y);
+                                y += 5;
+                            });
+                        } else if (q.type === 'BS') {
+                            doc.text("[   ] Benar      [   ] Salah", 25, y);
+                            y += 5;
+                        } else {
+                            // Uraian/Esai (Garis kosong)
+                            y += 2;
+                            for(let l=0; l<4; l++) {
+                                doc.line(25, y, pageWidth-25, y);
+                                y += 6;
+                            }
+                        }
+                        y += 4; // Spasi antar soal
+                    });
+
+                    doc.save(`SOAL_${this.config.mapel}.pdf`);
+                },
+
+                // --- FITUR 2: SQL GENERATOR ---
+                generateSQL() {
+                    const tblUjian = "tbl_ujian";
+                    const tblSoal = "tbl_soal";
+                    const mapel = this.config.mapel.replace(/'/g, "\\'"); // Escape quote
+                    const tgl = this.config.tanggal;
+
+                    let sql = `-- SQL Script for ${mapel}\n`;
+                    sql += `-- Generated at ${new Date().toLocaleString()}\n\n`;
+                    
+                    // 1. Insert Header Ujian
+                    // Asumsi: id auto increment, kita pakai variabel SQL @ujian_id
+                    sql += `INSERT INTO ${tblUjian} (mata_pelajaran, tanggal_ujian, durasi_menit, status) VALUES ('${mapel}', '${tgl}', ${this.config.durasi}, 'aktif');\n`;
+                    sql += `SET @last_ujian_id = LAST_INSERT_ID();\n\n`;
+
+                    // 2. Insert Soal Loop
+                    this.questions.forEach((q, idx) => {
+                        const txt = q.text.replace(/'/g, "\\'");
+                        const tipe = q.type;
+                        let opsiA='', opsiB='', opsiC='', opsiD='', kunci='';
+                        let jsonOpsi = 'NULL';
+
+                        if(tipe === 'PG') {
+                            opsiA = q.options.A.replace(/'/g, "\\'");
+                            opsiB = q.options.B.replace(/'/g, "\\'");
+                            opsiC = q.options.C.replace(/'/g, "\\'");
+                            opsiD = q.options.D.replace(/'/g, "\\'");
+                            kunci = q.answer;
+                        } else if (tipe === 'PG_KOMPLEKS') {
+                            // Simpan sebagai JSON string
+                            jsonOpsi = `'${JSON.stringify(q.options).replace(/'/g, "\\'")}'`;
+                        } else {
+                            kunci = q.answer.replace(/'/g, "\\'");
+                        }
+
+                        // Query Builder
+                        sql += `INSERT INTO ${tblSoal} (ujian_id, nomor_soal, tipe_soal, pertanyaan, opsi_a, opsi_b, opsi_c, opsi_d, data_json, kunci_jawaban, bobot) \n`;
+                        sql += `VALUES (@last_ujian_id, ${idx+1}, '${tipe}', '${txt}', '${opsiA}', '${opsiB}', '${opsiC}', '${opsiD}', ${jsonOpsi}, '${kunci}', ${q.poin});\n`;
+                    });
+
+                    // Download File SQL
+                    const blob = new Blob([sql], {type: "text/plain;charset=utf-8"});
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `INSERT_SOAL_${this.config.mapel}.sql`;
+                    link.click();
+                },
+
+                // --- FITUR 3: JSON GENERATOR (Existing) ---
+                downloadJSON() {
+                    const data = { config: this.config, soal: this.questions };
+                    const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `BANK_SOAL_${this.config.mapel}.json`;
+                    link.click();
                 }
             }
         }).mount('#app');
