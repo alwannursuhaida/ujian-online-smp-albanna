@@ -60,7 +60,7 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="col-span-1 md:col-span-2">
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Mata Pelajaran</label>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Mata Pelajaran <span class="text-red-500">*</span></label>
                         <select v-model="config.mapel" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-900 outline-none">
                             <option value="" disabled>-- Pilih Mapel --</option>
                             <optgroup label="Kelompok A"><option value="MATEMATIKA">MATEMATIKA</option><option value="IPA">IPA</option></optgroup>
@@ -70,9 +70,8 @@
                         </select>
                     </div>
 
-                    <!-- KOLOM KELAS DITAMBAHKAN DISINI -->
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Kelas</label>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Kelas <span class="text-red-500">*</span></label>
                         <select v-model="config.kelas" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-900 outline-none">
                             <option value="" disabled>-- Pilih Kelas --</option>
                             <option value="7">Kelas 7</option>
@@ -82,14 +81,20 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Guru Pengampu</label>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Guru Pengampu <span class="text-red-500">*</span></label>
                         <input type="text" v-model="config.guru" class="w-full p-3 border rounded-lg bg-gray-50" placeholder="Nama Guru">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-sm font-bold text-gray-700 mb-2">Tanggal</label><input type="date" v-model="config.tanggal" class="w-full p-3 border rounded-lg bg-gray-50"></div>
-                    <div><label class="block text-sm font-bold text-gray-700 mb-2">Durasi (Menit)</label><input type="number" v-model="config.durasi" class="w-full p-3 border rounded-lg bg-gray-50" placeholder="90"></div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Tanggal <span class="text-red-500">*</span></label>
+                        <input type="date" v-model="config.tanggal" class="w-full p-3 border rounded-lg bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Durasi (Menit) <span class="text-red-500">*</span></label>
+                        <input type="number" v-model="config.durasi" class="w-full p-3 border rounded-lg bg-gray-50" placeholder="90">
+                    </div>
                 </div>
             </div>
             
@@ -104,24 +109,35 @@
                     <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-1 rounded ml-2">Kelas {{ config.kelas }}</span>
                     <div class="text-xs text-gray-500 mt-1">Total: {{ questions.length }} Soal</div>
                 </div>
-                <div class="flex gap-2"><button @click="step=1" class="px-4 py-2 text-sm text-gray-500">Edit Info</button><button @click="step=3; window.scrollTo(0,0)" class="px-6 py-2 bg-green-600 text-white rounded font-bold hover:bg-green-700 shadow">INPUT KUNCI <i class="fas fa-check ml-2"></i></button></div>
+                <div class="flex gap-2">
+                    <button @click="step=1" class="px-4 py-2 text-sm text-gray-500">Edit Info</button>
+                    <button @click="validateStep2" class="px-6 py-2 bg-green-600 text-white rounded font-bold hover:bg-green-700 shadow">INPUT KUNCI <i class="fas fa-check ml-2"></i></button>
+                </div>
             </div>
             <div v-for="(q, index) in questions" :key="index" class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200">
                 <div class="flex justify-between items-center mb-4 border-b pb-2"><span class="bg-blue-100 text-blue-900 px-3 py-1 rounded font-bold text-sm">No. {{ index + 1 }} - {{ q.typeLabel }}</span><span class="text-sm font-bold text-gray-500">{{ q.poin }} Poin</span></div>
                 <div class="mb-4">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Pertanyaan</label>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Pertanyaan <span class="text-red-500">*</span></label>
                     <input type="file" @change="handleImageUpload($event, index)" class="text-xs mb-2">
                     <img v-if="q.image" :src="q.image" class="h-24 object-contain mb-2 border p-1 rounded">
                     <textarea v-model="q.text" rows="3" class="w-full p-3 border rounded focus:ring-1 focus:ring-blue-900 bg-gray-50" placeholder="Tulis pertanyaan..."></textarea>
                 </div>
                 <div v-if="q.type === 'PG'" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div v-for="opt in ['A', 'B', 'C', 'D']" :key="opt" class="flex items-center gap-2"><span class="font-bold w-6 text-center">{{ opt }}.</span><input v-model="q.options[opt]" type="text" class="w-full p-2 border rounded" :placeholder="'Opsi '+opt"></div>
+                    <div v-for="opt in ['A', 'B', 'C', 'D']" :key="opt" class="flex items-center gap-2">
+                        <span class="font-bold w-6 text-center">{{ opt }}.</span>
+                        <input v-model="q.options[opt]" type="text" class="w-full p-2 border rounded" :placeholder="'Opsi '+opt">
+                    </div>
                 </div>
-                <div v-if="q.type === 'PG_KOMPLEKS'" class="grid gap-2"><div v-for="(o, i) in q.options" :key="i" class="flex gap-2"><input type="checkbox" disabled><input v-model="o.text" class="w-full p-2 border rounded bg-white" placeholder="Pernyataan..."></div></div>
+                <div v-if="q.type === 'PG_KOMPLEKS'" class="grid gap-2">
+                    <div v-for="(o, i) in q.options" :key="i" class="flex gap-2">
+                        <input type="checkbox" disabled>
+                        <input v-model="o.text" class="w-full p-2 border rounded bg-white" placeholder="Tulis Pernyataan...">
+                    </div>
+                </div>
                 <div v-if="['URAIAN', 'ESAI'].includes(q.type)" class="text-xs text-gray-400 italic bg-gray-50 p-2">Area jawaban siswa (kosongkan).</div>
                 <div v-if="q.type === 'BS'" class="text-xs text-gray-400 italic bg-gray-50 p-2">Siswa memilih Benar/Salah.</div>
             </div>
-            <div class="flex justify-center pb-10"><button @click="step=3; window.scrollTo(0,0)" class="px-10 py-4 bg-blue-900 text-white text-xl rounded-full font-bold hover:bg-blue-800 shadow-xl">LANJUT KE KUNCI <i class="fas fa-arrow-right ml-2"></i></button></div>
+            <div class="flex justify-center pb-10"><button @click="validateStep2" class="px-10 py-4 bg-blue-900 text-white text-xl rounded-full font-bold hover:bg-blue-800 shadow-xl">LANJUT KE KUNCI <i class="fas fa-arrow-right ml-2"></i></button></div>
         </div>
 
         <!-- STEP 3: KUNCI & SIMPAN -->
@@ -133,10 +149,14 @@
             <div class="grid gap-4 mb-8">
                 <div v-for="(q, index) in questions" :key="index" class="bg-white p-4 rounded shadow border-l-4 border-green-500">
                     <div class="mb-2 text-sm text-gray-800 font-semibold"><span class="bg-gray-200 px-2 py-1 rounded mr-2">No. {{ index + 1 }}</span> {{ q.text ? q.text.substring(0, 50) + '...' : '(Kosong)' }}</div>
+                    
+                    <!-- VALIDASI VISUAL: TAMPILKAN BINTANG MERAH JIKA BUKAN URAIAN -->
+                    <div v-if="['PG','BS','PG_KOMPLEKS'].includes(q.type)" class="text-xs text-red-500 font-bold mb-1">* Wajib diisi</div>
+
                     <div v-if="q.type === 'PG'" class="flex gap-4"><label v-for="opt in ['A', 'B', 'C', 'D']" class="cursor-pointer font-bold text-sm"><input type="radio" :name="'k'+index" :value="opt" v-model="q.answer"> {{opt}}</label></div>
                     <div v-if="q.type === 'BS'" class="flex gap-4"><label class="cursor-pointer text-sm"><input type="radio" :name="'k'+index" value="BENAR" v-model="q.answer"> BENAR</label><label class="cursor-pointer text-sm"><input type="radio" :name="'k'+index" value="SALAH" v-model="q.answer"> SALAH</label></div>
                     <div v-if="q.type === 'PG_KOMPLEKS'" class="flex gap-4 flex-wrap"><label v-for="(o, i) in q.options" :key="i" class="text-xs flex items-center gap-1"><input type="checkbox" v-model="o.isCorrect"> {{ o.text || 'Opsi '+(i+1) }}</label></div>
-                    <div v-if="['URAIAN', 'ESAI'].includes(q.type)"><textarea v-model="q.answer" class="w-full p-2 text-xs border bg-green-50" placeholder="Kata kunci jawaban..."></textarea></div>
+                    <div v-if="['URAIAN', 'ESAI'].includes(q.type)"><textarea v-model="q.answer" class="w-full p-2 text-xs border bg-green-50" placeholder="Kata kunci jawaban (Opsional)..."></textarea></div>
                 </div>
             </div>
 
@@ -166,7 +186,6 @@
                 }
             },
             mounted() {
-                // LOAD DRAFT SAAT DIBUKA
                 const draft = localStorage.getItem('guru_soal_draft');
                 if (draft) {
                     try {
@@ -180,7 +199,6 @@
                 }
             },
             watch: {
-                // AUTO SAVE LOGIC (Deep Watch)
                 config: { handler() { this.saveDraft() }, deep: true },
                 questions: { handler() { this.saveDraft() }, deep: true },
                 step(val) { this.saveDraft() },
@@ -200,7 +218,7 @@
                 resetDraft() {
                     if(confirm("Yakin ingin menghapus draft dan mulai dari nol?")) {
                         localStorage.removeItem('guru_soal_draft');
-                        location.reload(); // Refresh halaman
+                        location.reload(); 
                     }
                 },
                 handleLogoUpload(e) {
@@ -216,9 +234,13 @@
                     }
                 },
                 generateTemplate() {
-                    if (!this.config.mapel) return alert("Pilih Mata Pelajaran dulu!");
-                    // Jika ada draft questions (dan step masih 1), pakai yang lama atau reset?
-                    // Kita asumsikan jika generate ditekan, user ingin format baru
+                    // VALIDASI STEP 1: IDENTITAS WAJIB DIISI
+                    if (!this.config.mapel) return alert("Mohon pilih Mata Pelajaran!");
+                    if (!this.config.kelas) return alert("Mohon pilih Kelas!");
+                    if (!this.config.guru) return alert("Mohon isi Nama Guru Pengampu!");
+                    if (!this.config.tanggal) return alert("Mohon isi Tanggal Ujian!");
+                    if (!this.config.durasi) return alert("Mohon isi Durasi Ujian!");
+
                     if(this.questions.length === 0 || confirm("Buat slot baru? Soal yang ada sekarang akan terhapus.")) {
                         this.questions = [];
                         const m = this.config.mapel;
@@ -229,6 +251,43 @@
                         this.step = 2; window.scrollTo(0,0);
                     }
                 },
+                
+                // VALIDASI STEP 2: SOAL & OPSI WAJIB DIISI
+                validateStep2() {
+                    for (let i = 0; i < this.questions.length; i++) {
+                        const q = this.questions[i];
+                        const no = i + 1;
+                        
+                        // Cek Pertanyaan (Teks atau Gambar harus ada)
+                        if (!q.text && !q.image) {
+                            alert(`Soal No. ${no} belum diisi (Teks atau Gambar wajib ada)!`);
+                            return; // Stop
+                        }
+
+                        // Cek Opsi PG
+                        if (q.type === 'PG') {
+                            if (!q.options.A || !q.options.B || !q.options.C || !q.options.D) {
+                                alert(`Opsi jawaban A, B, C, D pada Soal No. ${no} wajib dilengkapi!`);
+                                return;
+                            }
+                        }
+
+                        // Cek Opsi PG Kompleks
+                        if (q.type === 'PG_KOMPLEKS') {
+                            for(let j=0; j<q.options.length; j++) {
+                                if(!q.options[j].text) {
+                                    alert(`Pernyataan opsi ke-${j+1} pada Soal No. ${no} (PG Kompleks) wajib diisi!`);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Jika lolos semua validasi
+                    this.step = 3; 
+                    window.scrollTo(0,0);
+                },
+
                 addSlots(type, count, points) {
                     let typeLabel = {'PG':'Pilihan Ganda', 'PG_KOMPLEKS':'Pilihan Ganda Kompleks', 'URAIAN':'Uraian', 'ESAI':'Esai', 'BS':'Benar Salah'}[type];
                     for (let i=0; i<count; i++) {
@@ -247,6 +306,29 @@
                 },
                 
                 simpanKeSistem() {
+                    // VALIDASI STEP 3: KUNCI JAWABAN WAJIB DIISI (Kecuali Uraian)
+                    for (let i = 0; i < this.questions.length; i++) {
+                        const q = this.questions[i];
+                        const no = i + 1;
+
+                        if (q.type === 'PG' && !q.answer) {
+                            alert(`Kunci Jawaban Soal No. ${no} (Pilihan Ganda) belum dipilih!`);
+                            return;
+                        }
+                        if (q.type === 'BS' && !q.answer) {
+                            alert(`Kunci Jawaban Soal No. ${no} (Benar/Salah) belum dipilih!`);
+                            return;
+                        }
+                        if (q.type === 'PG_KOMPLEKS') {
+                            const hasCorrect = q.options.some(o => o.isCorrect);
+                            if (!hasCorrect) {
+                                alert(`Kunci Jawaban Soal No. ${no} (PG Kompleks) minimal harus ada satu jawaban benar!`);
+                                return;
+                            }
+                        }
+                    }
+
+                    // PROSES SIMPAN
                     let dbBankSoal = JSON.parse(localStorage.getItem('smp_albanna_bank_soal') || '[]');
                     const paketSoal = {
                         id: Date.now().toString(),
@@ -257,7 +339,6 @@
                     dbBankSoal.push(paketSoal);
                     localStorage.setItem('smp_albanna_bank_soal', JSON.stringify(dbBankSoal));
                     
-                    // HAPUS DRAFT SETELAH DISIMPAN PERMANEN
                     localStorage.removeItem('guru_soal_draft');
                     
                     alert(`✅ BERHASIL!\nSoal Mata Pelajaran ${this.config.mapel} Kelas ${this.config.kelas} telah disimpan ke Sistem.`);
