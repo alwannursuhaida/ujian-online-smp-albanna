@@ -18,23 +18,56 @@
 
     <div id="app" class="max-w-4xl mx-auto pt-10 px-4">
         
+        <!-- NOTIFIKASI AUTO SAVE -->
         <div v-if="lastSaved" class="fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded shadow-lg text-xs z-50 flex items-center gap-2 animate-pulse">
             <i class="fas fa-save"></i> 
             Auto-save: {{ lastSaved }}
         </div>
 
-        <div v-if="step === 1" class="bg-white p-8 rounded-lg shadow-xl border-t-8 border-blue-900 max-w-2xl mx-auto">
-            <div class="text-center mb-6">
+        <!-- STEP 1: IDENTITAS KISI-KISI -->
+        <div v-if="step === 1" class="bg-white p-8 rounded-lg shadow-xl border-t-8 border-blue-900 max-w-2xl mx-auto relative">
+            
+            <!-- TOMBOL KEMBALI KE MENU UTAMA -->
+            <div class="absolute top-4 left-4">
+                <a href="index.html" class="text-gray-400 hover:text-blue-900 transition" title="Kembali ke Menu Utama">
+                    <i class="fas fa-arrow-left fa-lg"></i>
+                </a>
+            </div>
+
+            <div class="text-center mb-6 mt-2">
                 <h1 class="text-2xl font-bold text-gray-800">SISTEM KISI-KISI SOAL</h1>
                 <p class="text-blue-900 font-bold">SMP ALBANNA</p>
             </div>
 
             <div class="space-y-4 mb-6">
+                <!-- Input Nama Guru -->
                 <div>
                     <label class="block text-sm font-bold mb-2 text-gray-700">Nama Guru Pengampu <span class="text-red-500">*</span></label>
                     <input v-model="namaGuru" placeholder="Contoh: Budi Santoso, S.Pd." class="w-full p-4 border rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900">
                 </div>
 
+                <!-- Grid Kelas & Semester (BARU) -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Kelas <span class="text-red-500">*</span></label>
+                        <select v-model="kelas" class="w-full p-4 border rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900">
+                            <option value="" disabled>-- Pilih --</option>
+                            <option value="7">Kelas 7</option>
+                            <option value="8">Kelas 8</option>
+                            <option value="9">Kelas 9</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Semester <span class="text-red-500">*</span></label>
+                        <select v-model="semester" class="w-full p-4 border rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900">
+                            <option value="" disabled>-- Pilih --</option>
+                            <option value="Ganjil">Ganjil</option>
+                            <option value="Genap">Genap</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Input Mapel -->
                 <div>
                     <label class="block text-sm font-bold mb-2 text-gray-700">Mata Pelajaran <span class="text-red-500">*</span></label>
                     <select v-model="selectedMapel" class="w-full p-4 border rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900">
@@ -44,6 +77,7 @@
                 </div>
             </div>
 
+            <!-- Pesan Draft -->
             <div v-if="hasDraft" class="mb-4 bg-yellow-50 p-3 rounded border border-yellow-200 text-xs text-yellow-800">
                 <i class="fas fa-history mr-1"></i> Memuat data tersimpan sebelumnya.
             </div>
@@ -57,8 +91,10 @@
             </button>
         </div>
 
+        <!-- STEP 2: INPUT KISI-KISI -->
         <div v-if="step === 2">
             
+            <!-- INFO HEADER -->
             <div class="bg-white p-6 rounded-lg shadow mb-6 border-l-4 border-blue-900 flex flex-col md:flex-row gap-6 items-center">
                 <div class="border-2 border-dashed border-gray-300 rounded p-2 flex flex-col items-center justify-center w-32 h-32 relative hover:bg-gray-50 bg-white shrink-0">
                     <input type="file" accept="image/*" @change="handleLogoUpload" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
@@ -72,15 +108,19 @@
 
                 <div class="text-sm text-gray-600 flex-1">
                     <h3 class="font-bold text-xl text-blue-900 mb-1">SMP ALBANNA</h3>
-                    <p>Jl. Tukad Yeh Ho III No.10</p>
-                    <p>Denpasar, Bali 80234</p>
+                    <p>Jl. Tukad Yeh Ho III No.10, Denpasar</p>
                     <div class="mt-3 pt-3 border-t border-gray-200 flex flex-col gap-1 text-xs">
-                        <p><strong>Guru:</strong> {{ namaGuru }}</p>
-                        <p><strong>Mapel:</strong> {{ selectedMapel }}</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <p><strong>Guru:</strong> {{ namaGuru }}</p>
+                            <p><strong>Mapel:</strong> {{ selectedMapel }}</p>
+                            <p><strong>Kelas:</strong> {{ kelas }}</p>
+                            <p><strong>Semester:</strong> {{ semester }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Sticky Header Nav -->
             <div class="sticky top-0 z-40 bg-white p-4 shadow mb-6 rounded flex justify-between items-center border-l-4 border-blue-900">
                 <div>
                     <h2 class="font-bold text-lg md:text-xl text-blue-900 truncate max-w-[200px] md:max-w-none">{{ selectedMapel }}</h2>
@@ -91,6 +131,7 @@
                 </button>
             </div>
 
+            <!-- Loop Kartu Soal -->
             <div v-for="(soal, index) in soalList" :key="index" class="bg-white p-6 rounded-lg shadow-md mb-6 relative group hover:shadow-lg transition border border-gray-100">
                 <div class="absolute -left-3 top-4 bg-blue-900 text-white w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm shadow border-2 border-white">
                     {{ index + 1 }}
@@ -129,6 +170,7 @@
                             <option>Benar Salah</option>
                             <option>Pilihan Ganda Kompleks</option>
                             <option>Menjodohkan</option>
+                            <option>Uraian</option>
                         </select>
                     </div>
 
@@ -139,18 +181,20 @@
                 </div>
             </div>
 
+            <!-- Tombol Tambah -->
             <button @click="tambahSoal" class="w-full py-4 border-2 border-dashed border-gray-300 text-gray-400 font-bold rounded-lg hover:bg-blue-50 hover:border-blue-500 hover:text-blue-600 transition mb-32 flex flex-col items-center gap-2">
                 <i class="fas fa-plus-circle fa-2x"></i>
                 TAMBAH NOMOR SOAL BERIKUTNYA
             </button>
 
+            <!-- Floating Bottom Bar -->
             <div class="fixed bottom-0 left-0 w-full bg-white border-t p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex justify-center z-40 flex-col md:flex-row">
                 <div class="max-w-3xl w-full flex flex-col md:flex-row gap-4">
-                    
+                    <!-- Auto Correct -->
                     <button @click="autoCorrect" class="bg-yellow-500 text-white py-3 px-6 rounded font-bold hover:bg-yellow-600 shadow-lg flex items-center justify-center gap-2 text-sm whitespace-nowrap">
                         <i class="fas fa-magic"></i> CEK EJAAN (KBBI)
                     </button>
-
+                    <!-- Download -->
                     <button @click="downloadPDF" class="flex-1 bg-green-600 text-white py-3 rounded font-bold hover:bg-green-700 shadow-lg flex items-center justify-center gap-2 text-sm">
                         <i class="fas fa-file-pdf"></i> DOWNLOAD PDF
                     </button>
@@ -162,49 +206,15 @@
     <script>
         const { createApp } = Vue;
 
-        // KAMUS KATA TIDAK BAKU -> BAKU (Common Mistakes in Education)
+        // KAMUS EJAAN
         const KAMUS_BAKU = {
-            "analisa": "analisis",
-            "praktek": "praktik",
-            "apotik": "apotek",
-            "atlit": "atlet",
-            "aktifitas": "aktivitas",
-            "kreatifitas": "kreativitas",
-            "efektifitas": "efektivitas",
-            "kualitas": "kualitas", // just in case
-            "kwalitas": "kualitas",
-            "jadual": "jadwal",
-            "resiko": "risiko",
-            "sistim": "sistem",
-            "metoda": "metode",
-            "diagnosa": "diagnosis",
-            "hipotesa": "hipotesis",
-            "objek": "objek", // baku
-            "obyek": "objek",
-            "subjek": "subjek",
-            "subyek": "subjek",
-            "ijin": "izin",
-            "nasehat": "nasihat",
-            "faham": "paham",
-            "fikir": "pikir",
-            "berfikir": "berpikir",
-            "negri": "negeri",
-            "tekhnik": "teknik",
-            "tekhnologi": "teknologi",
-            "hakikat": "hakikat",
-            "hakekat": "hakikat",
-            "jaman": "zaman",
-            "respon": "respons",
-            "silahkan": "silakan",
-            "sekedar": "sekadar",
-            "standarisasi": "standardisasi",
-            "cidera": "cedera",
-            "indera": "indra",
-            "nafas": "napas",
-            "lobang": "lubang",
-            "karir": "karier",
-            "konkrit": "konkret",
-            "moderen": "modern"
+            "analisa": "analisis", "praktek": "praktik", "apotik": "apotek", "atlit": "atlet", "aktifitas": "aktivitas",
+            "kreatifitas": "kreativitas", "efektifitas": "efektivitas", "kwalitas": "kualitas", "jadual": "jadwal",
+            "resiko": "risiko", "sistim": "sistem", "metoda": "metode", "diagnosa": "diagnosis", "hipotesa": "hipotesis",
+            "obyek": "objek", "subyek": "subjek", "ijin": "izin", "nasehat": "nasihat", "faham": "paham", "fikir": "pikir",
+            "berfikir": "berpikir", "negri": "negeri", "tekhnik": "teknik", "tekhnologi": "teknologi", "hakekat": "hakikat",
+            "jaman": "zaman", "respon": "respons", "silahkan": "silakan", "sekedar": "sekadar", "cidera": "cedera",
+            "indera": "indra", "nafas": "napas", "lobang": "lubang", "karir": "karier", "konkrit": "konkret"
         };
         
         createApp({
@@ -213,8 +223,12 @@
                     step: 1,
                     lastSaved: null,
                     hasDraft: false,
+                    // DATA IDENTITAS BARU
                     selectedMapel: '',
                     namaGuru: '',
+                    kelas: '',
+                    semester: '',
+                    
                     mapelList: [
                         'IPA', 'IPS', 'MATEMATIKA', 'BAHASA BALI', 'BAHASA ARAB', 
                         'BAHASA INDONESIA', 'BAHASA INGGRIS', 'OLAHRAGA', 
@@ -228,12 +242,14 @@
                 }
             },
             mounted() {
-                const savedData = localStorage.getItem('guru_kisi_albanna_v4');
+                const savedData = localStorage.getItem('guru_kisi_albanna_v5');
                 if (savedData) {
                     try {
                         const parsed = JSON.parse(savedData);
                         this.selectedMapel = parsed.selectedMapel || '';
                         this.namaGuru = parsed.namaGuru || '';
+                        this.kelas = parsed.kelas || '';
+                        this.semester = parsed.semester || '';
                         this.sekolah = parsed.sekolah || this.sekolah;
                         this.soalList = parsed.soalList || this.soalList;
                         this.step = parsed.step || 1;
@@ -242,10 +258,13 @@
                 }
             },
             watch: {
+                // Watcher deep untuk auto save semua perubahan
                 soalList: { handler() { this.saveData(); }, deep: true },
                 sekolah: { handler() { this.saveData(); }, deep: true },
                 selectedMapel() { this.saveData(); },
                 namaGuru() { this.saveData(); },
+                kelas() { this.saveData(); },
+                semester() { this.saveData(); },
                 step() { this.saveData(); }
             },
             methods: {
@@ -253,35 +272,36 @@
                     const dataToSave = {
                         selectedMapel: this.selectedMapel,
                         namaGuru: this.namaGuru,
+                        kelas: this.kelas,
+                        semester: this.semester,
                         sekolah: this.sekolah,
                         soalList: this.soalList,
                         step: this.step
                     };
-                    localStorage.setItem('guru_kisi_albanna_v4', JSON.stringify(dataToSave));
+                    localStorage.setItem('guru_kisi_albanna_v5', JSON.stringify(dataToSave));
                     this.lastSaved = new Date().toLocaleTimeString();
                 },
                 resetData() {
-                    if(confirm("Hapus semua data?")) {
-                        localStorage.removeItem('guru_kisi_albanna_v4');
-                        this.selectedMapel = '';
-                        this.namaGuru = '';
+                    if(confirm("Hapus semua data dan mulai baru?")) {
+                        localStorage.removeItem('guru_kisi_albanna_v5');
+                        this.selectedMapel = ''; this.namaGuru = ''; this.kelas = ''; this.semester = '';
                         this.sekolah = { logoBase64: null, logoPreview: null };
                         this.soalList = [{ kd: '', level: '', indikator: '', bentuk: '' }];
-                        this.step = 1;
-                        this.hasDraft = false;
-                        this.lastSaved = null;
+                        this.step = 1; this.hasDraft = false; this.lastSaved = null;
                         alert("Reset berhasil!");
                     }
                 },
                 lanjutKeKisiKisi() {
                     if (!this.namaGuru.trim()) return alert("Mohon isi Nama Guru!");
+                    if (!this.kelas) return alert("Mohon pilih Kelas!");
+                    if (!this.semester) return alert("Mohon pilih Semester!");
                     if (!this.selectedMapel) return alert("Pilih Mapel!");
                     this.step = 2;
                 },
                 handleLogoUpload(event) {
                     const file = event.target.files[0];
                     if (file) {
-                        if(file.size > 500000) return alert("Maksimal 500KB!");
+                        if(file.size > 500000) return alert("File logo maksimal 500KB!");
                         const reader = new FileReader();
                         reader.onload = (e) => {
                             this.sekolah.logoBase64 = e.target.result;
@@ -298,42 +318,26 @@
                     if (this.soalList.length === 1) return alert("Minimal 1 soal.");
                     if(confirm("Hapus nomor ini?")) this.soalList.splice(index, 1);
                 },
-                
-                // --- LOGIKA AUTO CORRECT ---
                 autoCorrect() {
                     let totalFixed = 0;
-                    
                     this.soalList.forEach(soal => {
                         ['kd', 'indikator'].forEach(field => {
                             if(!soal[field]) return;
-
                             let text = soal[field];
                             let originalText = text;
-
-                            // Loop Kamus Baku
                             for (const [salah, benar] of Object.entries(KAMUS_BAKU)) {
-                                // Regex: cari kata utuh (\b), ignore case (i), global (g)
                                 const regex = new RegExp(`\\b${salah}\\b`, 'gi');
-                                
-                                if (text.match(regex)) {
-                                    text = text.replace(regex, benar);
-                                }
+                                if (text.match(regex)) text = text.replace(regex, benar);
                             }
-
                             if (text !== originalText) {
-                                soal[field] = text; // Update state
+                                soal[field] = text;
                                 totalFixed++;
                             }
                         });
                     });
-
-                    if (totalFixed > 0) {
-                        alert(`✨ Koreksi Selesai! Berhasil memperbaiki ${totalFixed} kata tidak baku.`);
-                    } else {
-                        alert("✅ Tidak ditemukan kesalahan ejaan umum.");
-                    }
+                    if (totalFixed > 0) alert(`✨ Berhasil memperbaiki ${totalFixed} kata tidak baku.`);
+                    else alert("✅ Tidak ditemukan kesalahan ejaan umum.");
                 },
-
                 validateForm() {
                     for (let i = 0; i < this.soalList.length; i++) {
                         const s = this.soalList[i];
@@ -345,9 +349,7 @@
                     return true;
                 },
                 downloadPDF() {
-                    // Jalankan Auto Correct dulu secara silent sebelum download
                     this.autoCorrect(); 
-
                     if (!this.validateForm()) return;
 
                     const { jsPDF } = window.jspdf;
@@ -355,78 +357,63 @@
                     const pageWidth = doc.internal.pageSize.getWidth();
 
                     // --- KOP SURAT ---
-                    const logoX = 15;
-                    const logoY = 10;
-                    const logoSize = 25;
-                    const textX = 45;
+                    const logoX = 15; const logoY = 10; const logoSize = 25; const textX = 45;
+                    if (this.sekolah.logoBase64) doc.addImage(this.sekolah.logoBase64, 'PNG', logoX, logoY, logoSize, logoSize); 
 
-                    if (this.sekolah.logoBase64) {
-                        doc.addImage(this.sekolah.logoBase64, 'PNG', logoX, logoY, logoSize, logoSize); 
-                    }
-
-                    doc.setFont("helvetica", "bold");
-                    doc.setFontSize(18);
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(18);
                     doc.setTextColor(30, 58, 138); 
                     doc.text("SMP ALBANNA", textX, 18); 
 
-                    doc.setTextColor(0, 0, 0); 
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(9);
-                    doc.text("Jl. Tukad Yeh Ho III No.10", textX, 24);
-                    doc.text("Dangin Puri Klod, Denpasar Timur,", textX, 28);
-                    doc.text("Denpasar, Bali 80234", textX, 32);
+                    doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+                    doc.text("Jl. Tukad Yeh Ho III No.10, Denpasar, Bali 80234", textX, 24);
+                    doc.text("Dangin Puri Klod, Denpasar Timur", textX, 28);
+                    doc.text("Telepon (0361) 238 4444  |  www.albanna.sch.id", textX, 33);
 
-                    doc.setFontSize(8);
-                    doc.text("Telepon (0361) 238 4444  |  Surel info@albanna.sch.id", textX, 37);
-                    doc.text("www.albanna.sch.id", textX, 41);
-
-                    doc.setLineWidth(0.5);
-                    doc.line(10, 45, pageWidth - 10, 45);
-                    doc.setLineWidth(0.1);
-                    doc.line(10, 46, pageWidth - 10, 46);
+                    doc.setLineWidth(0.5); doc.line(10, 40, pageWidth - 10, 40);
+                    doc.setLineWidth(0.1); doc.line(10, 41, pageWidth - 10, 41);
 
                     // --- JUDUL UTAMA ---
-                    doc.setFont("helvetica", "bold");
-                    doc.setFontSize(12);
-                    doc.text(`KISI-KISI ${this.selectedMapel.toUpperCase()}`, pageWidth / 2, 55, { align: "center" });
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+                    doc.text(`KISI-KISI ${this.selectedMapel.toUpperCase()}`, pageWidth / 2, 50, { align: "center" });
                     
-                    // --- IDENTITAS ---
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(10);
+                    // --- IDENTITAS (DIRAPIKAN DENGAN KELAS & SEMESTER) ---
+                    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
                     
-                    doc.text("Mata Pelajaran", 14, 65);
-                    doc.text("Guru Pengampu", 14, 70);
-                    doc.text("Jumlah Soal", 14, 75);
+                    const startY = 60;
+                    const gap = 5;
+                    const col1 = 14; // Label X
+                    const col2 = 50; // Content X (Titik dua)
 
-                    doc.text(`: ${this.selectedMapel}`, 50, 65);
-                    doc.text(`: ${this.namaGuru}`, 50, 70);
-                    doc.text(`: ${this.soalList.length}`, 50, 75);
+                    // Baris 1: Mapel
+                    doc.text("Mata Pelajaran", col1, startY);
+                    doc.text(`: ${this.selectedMapel}`, col2, startY);
+
+                    // Baris 2: Kelas / Semester (BARU)
+                    doc.text("Kelas / Semester", col1, startY + gap);
+                    doc.text(`: ${this.kelas} / ${this.semester}`, col2, startY + gap);
+
+                    // Baris 3: Guru
+                    doc.text("Guru Pengampu", col1, startY + (gap*2));
+                    doc.text(`: ${this.namaGuru}`, col2, startY + (gap*2));
+
+                    // Baris 4: Jumlah Soal
+                    doc.text("Jumlah Soal", col1, startY + (gap*3));
+                    doc.text(`: ${this.soalList.length} Butir`, col2, startY + (gap*3));
 
                     // --- TABEL ---
                     doc.autoTable({
-                        startY: 80, 
+                        startY: startY + (gap*4) + 5, 
                         head: [['No', 'Kompetensi Dasar', 'Level', 'Indikator Soal', 'Bentuk Soal']],
                         body: this.soalList.map((item, i) => [
                             i + 1, item.kd, item.level, item.indikator, item.bentuk
                         ]),
                         theme: 'grid',
                         headStyles: { 
-                            fillColor: [255, 255, 255], 
-                            textColor: [0, 0, 0], 
-                            lineColor: [0, 0, 0], 
-                            lineWidth: 0.1, 
-                            fontStyle: 'bold', 
-                            halign: 'center',
-                            valign: 'middle', 
-                            minCellHeight: 10
+                            fillColor: [255, 255, 255], textColor: [0, 0, 0], lineColor: [0, 0, 0], 
+                            lineWidth: 0.1, fontStyle: 'bold', halign: 'center', valign: 'middle', minCellHeight: 10
                         },
                         styles: { 
-                            lineColor: [0, 0, 0], 
-                            lineWidth: 0.1, 
-                            fontSize: 10, 
-                            cellPadding: 3, 
-                            font: "helvetica",
-                            valign: 'middle' 
+                            lineColor: [0, 0, 0], lineWidth: 0.1, fontSize: 10, cellPadding: 3, font: "helvetica", valign: 'middle' 
                         },
                         columnStyles: {
                             0: { cellWidth: 10, halign: 'center' },
@@ -448,7 +435,7 @@
                     doc.setFont("helvetica", "bold");
                     doc.text(`( ${this.namaGuru} )`, ttdX, finalY + 30, { align: 'center' });
 
-                    doc.save(`Kisi-Kisi_${this.selectedMapel}_SMP_ALBANNA.pdf`);
+                    doc.save(`Kisi-Kisi_${this.selectedMapel}_${this.kelas}_SMP_ALBANNA.pdf`);
                 }
             }
         }).mount('#app');
