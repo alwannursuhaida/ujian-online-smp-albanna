@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ujian Online Secure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        /* Mencegah seleksi teks (copy paste) */
+        body { user-select: none; -webkit-user-select: none; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <div id="exam-app">
+        <div v-if="!ujianDimulai && !terblokir" class="flex flex-col items-center justify-center h-screen p-4">
+            <h1 class="text-3xl font-bold mb-4">Ujian Tengah Semester</h1>
+            <div class="bg-yellow-100 p-4 rounded border border-yellow-400 mb-6 max-w-md text-sm">
+                <strong>ATURAN PENTING:</strong>
+                <ul class="list-disc ml-5 mt-2">
+                    <li>Sistem akan masuk mode Layar Penuh (Fullscreen).</li>
+                    <li>Dilarang pindah tab atau membuka aplikasi lain.</li>
+                    <li>Jika terdeteksi keluar 3 kali, ujian otomatis terkunci.</li>
+                </ul>
+            </div>
+            <button @click="mulaiUjian" class="bg-blue-600 text-white px-8 py-3 rounded-full text-xl font-bold hover:bg-blue-700 shadow-lg transition transform hover:scale-105">
+                MULAI KERJAKAN
+            </button>
+        </div>
+
+        <div v-if="terblokir" class="flex flex-col items-center justify-center h-screen bg-red-600 text-white p-8 text-center">
+            <h1 class="text-5xl font-bold mb-4">UJIAN DIBLOKIR ⛔</h1>
+            <p class="text-xl">Anda terdeteksi melakukan kecurangan (keluar dari aplikasi ujian) lebih dari batas yang ditentukan.</p>
+            <p class="mt-4 font-mono bg-red-800 p-2 rounded">Silakan lapor ke pengawas.</p>
+        </div>
+
+        <div v-if="ujianDimulai && !terblokir" class="max-w-3xl mx-auto py-8 px-4">
+            <div class="sticky top-0 bg-white p-4 shadow-md rounded-lg mb-6 flex justify-between items-center z-50">
+                <div>
+                    <span class="font-bold text-gray-700">Sisa Waktu: {{ waktu }} detik</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-gray-500 uppercase">Pelanggaran:</span>
+                    <span class="bg-red-100 text-red-600 px-3 py-1 rounded-full font-bold">{{ jumlahPelanggaran }} / 3</span>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md mb-4">
+                <p class="font-bold text-lg mb-4">1. Apa fungsi dari tag HTML &lt;br&gt;?</p>
+                <div class="space-y-2">
+                    <label class="block p-3 border rounded hover:bg-gray-50 cursor-pointer"><input type="radio" name="s1" class="mr-2"> Membuat garis baru</label>
+                    <label class="block p-3 border rounded hover:bg-gray-50 cursor-pointer"><input type="radio" name="s1" class="mr-2"> Menebalkan huruf</label>
+                    <label class="block p-3 border rounded hover:bg-gray-50 cursor-pointer"><input type="radio" name="s1" class="mr-2"> Membuat link</label>
+                </div>
+            </div>
+             <div class="bg-white p-6 rounded-lg shadow-md mb-4">
+                <p class="font-bold text-lg mb-4">2. Ibukota Indonesia adalah?</p>
+                <div class="space-y-2">
+                    <label class="block p-3 border rounded hover:bg-gray-50 cursor-pointer"><input type="radio" name="s2" class="mr-2"> Bandung</label>
+                    <label class="block p-3 border rounded hover:bg-gray-50 cursor-pointer"><input type="radio" name="s2" class="mr-2"> Jakarta</label>
+                    <label class="block p-3 border rounded hover:bg-gray-50 cursor-pointer"><input type="radio" name="s2" class="mr-2"> Surabaya</label>
+                </div>
+            </div>
+
+            <button class="w-full bg-green-600 text-white py-4 rounded font-bold text-xl mt-6 hover:bg-green-700">
+                KIRIM JAWABAN
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    ujianDimulai: false,
+                    terblokir: false,
+                    jumlahPelanggaran: 0,
+                    waktu: 3600
+                }
+            },
+            mounted() {
+                // Deteksi jika user mencoba refresh halaman (peringatan)
+                window.onbeforeunload = function() {
+                    return "Yakin ingin keluar? Ujian akan terhenti.";
+                };
+
+                // Deteksi Pindah Tab / Minimize
+                document.addEventListener("visibilitychange", () => {
+                    if (this.ujianDimulai && document.hidden) {
+                        this.catatPelanggaran("Terdeteksi pindah tab/aplikasi");
+                    }
+                });
+
+                // Mencegah Klik Kanan
+                document.addEventListener('contextmenu', event => event.preventDefault());
+            },
+            methods: {
+                mulaiUjian() {
+                    // Minta Fullscreen
+                    const elem = document.documentElement;
+                    if (elem.requestFullscreen) {
+                        elem.requestFullscreen().catch(err => {
+                            alert("Wajib Fullscreen untuk memulai!");
+                        });
+                    }
+                    this.ujianDimulai = true;
+                    this.startTimer();
+                },
+                catatPelanggaran(alasan) {
+                    if(this.terblokir) return;
+                    
+                    this.jumlahPelanggaran++;
+                    alert(`PERINGATAN KERAS!\n\n${alasan}.\nPelanggaran ke-${this.jumlahPelanggaran} dari 3.`);
+
+                    if (this.jumlahPelanggaran >= 3) {
+                        this.terblokir = true;
+                        this.ujianDimulai = false;
+                        document.exitFullscreen(); // Keluar fullscreen
+                    }
+                },
+                startTimer() {
+                    setInterval(() => {
+                        if(this.waktu > 0 && !this.terblokir) this.waktu--;
+                    }, 1000);
+                }
+            }
+        }).mount('#exam-app');
+    </script>
+</body>
+</html>
