@@ -57,20 +57,36 @@
                     <input type="file" accept="image/*" @change="handleLogoUpload" class="text-sm">
                     <div v-if="sekolah.logoPreview" class="mt-2"><img :src="sekolah.logoPreview" class="h-12 mx-auto"></div>
                 </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Mata Pelajaran</label>
-                    <select v-model="config.mapel" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-900 outline-none">
-                        <option value="" disabled>-- Pilih Mapel --</option>
-                        <optgroup label="Kelompok A"><option value="MATEMATIKA">MATEMATIKA</option><option value="IPA">IPA</option></optgroup>
-                        <optgroup label="Kelompok B"><option value="BAHASA INGGRIS">BAHASA INGGRIS</option><option value="BAHASA INDONESIA">BAHASA INDONESIA</option></optgroup>
-                        <optgroup label="Kelompok C"><option value="BAHASA BALI">BAHASA BALI</option><option value="SENI BUDAYA">SENI BUDAYA</option><option value="BAHASA ARAB">BAHASA ARAB</option></optgroup>
-                        <optgroup label="Kelompok D"><option value="PJOK">PJOK</option><option value="IPS">IPS</option><option value="PAI">PAI</option><option value="INFORMATIKA">INFORMATIKA</option></optgroup>
-                    </select>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="col-span-1 md:col-span-2">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Mata Pelajaran</label>
+                        <select v-model="config.mapel" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-900 outline-none">
+                            <option value="" disabled>-- Pilih Mapel --</option>
+                            <optgroup label="Kelompok A"><option value="MATEMATIKA">MATEMATIKA</option><option value="IPA">IPA</option></optgroup>
+                            <optgroup label="Kelompok B"><option value="BAHASA INGGRIS">BAHASA INGGRIS</option><option value="BAHASA INDONESIA">BAHASA INDONESIA</option></optgroup>
+                            <optgroup label="Kelompok C"><option value="BAHASA BALI">BAHASA BALI</option><option value="SENI BUDAYA">SENI BUDAYA</option><option value="BAHASA ARAB">BAHASA ARAB</option></optgroup>
+                            <optgroup label="Kelompok D"><option value="PJOK">PJOK</option><option value="IPS">IPS</option><option value="PAI">PAI</option><option value="INFORMATIKA">INFORMATIKA</option></optgroup>
+                        </select>
+                    </div>
+
+                    <!-- KOLOM KELAS DITAMBAHKAN DISINI -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Kelas</label>
+                        <select v-model="config.kelas" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-900 outline-none">
+                            <option value="" disabled>-- Pilih Kelas --</option>
+                            <option value="7">Kelas 7</option>
+                            <option value="8">Kelas 8</option>
+                            <option value="9">Kelas 9</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Guru Pengampu</label>
+                        <input type="text" v-model="config.guru" class="w-full p-3 border rounded-lg bg-gray-50" placeholder="Nama Guru">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Guru Pengampu</label>
-                    <input type="text" v-model="config.guru" class="w-full p-3 border rounded-lg bg-gray-50" placeholder="Nama Guru">
-                </div>
+
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="block text-sm font-bold text-gray-700 mb-2">Tanggal</label><input type="date" v-model="config.tanggal" class="w-full p-3 border rounded-lg bg-gray-50"></div>
                     <div><label class="block text-sm font-bold text-gray-700 mb-2">Durasi (Menit)</label><input type="number" v-model="config.durasi" class="w-full p-3 border rounded-lg bg-gray-50" placeholder="90"></div>
@@ -83,7 +99,11 @@
         <!-- STEP 2: INPUT SOAL -->
         <div v-if="step === 2">
             <div class="sticky top-0 z-40 bg-white p-4 shadow mb-6 rounded flex justify-between items-center border-l-4 border-blue-900">
-                <div><h2 class="font-bold text-xl text-blue-900">{{ config.mapel }}</h2><span class="text-xs text-gray-500">Total: {{ questions.length }} Soal</span></div>
+                <div>
+                    <h2 class="font-bold text-xl text-blue-900">{{ config.mapel }}</h2>
+                    <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-1 rounded ml-2">Kelas {{ config.kelas }}</span>
+                    <div class="text-xs text-gray-500 mt-1">Total: {{ questions.length }} Soal</div>
+                </div>
                 <div class="flex gap-2"><button @click="step=1" class="px-4 py-2 text-sm text-gray-500">Edit Info</button><button @click="step=3; window.scrollTo(0,0)" class="px-6 py-2 bg-green-600 text-white rounded font-bold hover:bg-green-700 shadow">INPUT KUNCI <i class="fas fa-check ml-2"></i></button></div>
             </div>
             <div v-for="(q, index) in questions" :key="index" class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200">
@@ -140,7 +160,7 @@
                     step: 1,
                     lastSaved: null,
                     hasDraft: false,
-                    config: { mapel: '', guru: '', tanggal: '', durasi: '' },
+                    config: { mapel: '', guru: '', kelas: '', tanggal: '', durasi: '' },
                     sekolah: { logoBase64: null, logoPreview: null },
                     questions: []
                 }
@@ -240,7 +260,7 @@
                     // HAPUS DRAFT SETELAH DISIMPAN PERMANEN
                     localStorage.removeItem('guru_soal_draft');
                     
-                    alert(`✅ BERHASIL!\nSoal Mata Pelajaran ${this.config.mapel} telah disimpan ke Sistem.`);
+                    alert(`✅ BERHASIL!\nSoal Mata Pelajaran ${this.config.mapel} Kelas ${this.config.kelas} telah disimpan ke Sistem.`);
                     window.location.reload(); 
                 },
 
@@ -262,7 +282,9 @@
                     doc.setFont("helvetica", "bold"); doc.setFontSize(12);
                     doc.text(`NASKAH SOAL: ${this.config.mapel}`, pageWidth/2, y, {align:'center'}); y+=7;
                     doc.setFontSize(10); doc.setFont("helvetica", "normal");
-                    doc.text(`Guru: ${this.config.guru}`, 15, y); doc.text(`Waktu: ${this.config.durasi} Menit`, 120, y); y+=10;
+                    doc.text(`Guru: ${this.config.guru}`, 15, y); 
+                    doc.text(`Kelas: ${this.config.kelas}`, 80, y); 
+                    doc.text(`Waktu: ${this.config.durasi} Menit`, 130, y); y+=10;
 
                     doc.setFillColor(240); doc.rect(15, y-5, pageWidth-30, 20, 'F');
                     doc.setFontSize(8); doc.text("PERATURAN UJIAN: Berdoalah, Tulis Identitas, Kerjakan dengan Jujur.", 18, y+5);
@@ -287,7 +309,7 @@
                         else { y+=2; for(let l=0; l<3; l++) { doc.line(25, y, pageWidth-25, y); y+=6; } }
                         y+=4;
                     });
-                    doc.save(`SOAL_${this.config.mapel}.pdf`);
+                    doc.save(`SOAL_${this.config.mapel}_KELAS_${this.config.kelas}.pdf`);
                 }
             }
         }).mount('#app');
