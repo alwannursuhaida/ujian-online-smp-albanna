@@ -144,9 +144,14 @@
                 TAMBAH NOMOR SOAL BERIKUTNYA
             </button>
 
-            <div class="fixed bottom-0 left-0 w-full bg-white border-t p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex justify-center z-40">
-                <div class="max-w-3xl w-full flex gap-4">
-                    <button @click="downloadPDF" class="flex-1 bg-green-600 text-white py-3 rounded font-bold hover:bg-green-700 shadow-lg flex items-center justify-center gap-2">
+            <div class="fixed bottom-0 left-0 w-full bg-white border-t p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex justify-center z-40 flex-col md:flex-row">
+                <div class="max-w-3xl w-full flex flex-col md:flex-row gap-4">
+                    
+                    <button @click="autoCorrect" class="bg-yellow-500 text-white py-3 px-6 rounded font-bold hover:bg-yellow-600 shadow-lg flex items-center justify-center gap-2 text-sm whitespace-nowrap">
+                        <i class="fas fa-magic"></i> CEK EJAAN (KBBI)
+                    </button>
+
+                    <button @click="downloadPDF" class="flex-1 bg-green-600 text-white py-3 rounded font-bold hover:bg-green-700 shadow-lg flex items-center justify-center gap-2 text-sm">
                         <i class="fas fa-file-pdf"></i> DOWNLOAD PDF
                     </button>
                 </div>
@@ -156,6 +161,51 @@
 
     <script>
         const { createApp } = Vue;
+
+        // KAMUS KATA TIDAK BAKU -> BAKU (Common Mistakes in Education)
+        const KAMUS_BAKU = {
+            "analisa": "analisis",
+            "praktek": "praktik",
+            "apotik": "apotek",
+            "atlit": "atlet",
+            "aktifitas": "aktivitas",
+            "kreatifitas": "kreativitas",
+            "efektifitas": "efektivitas",
+            "kualitas": "kualitas", // just in case
+            "kwalitas": "kualitas",
+            "jadual": "jadwal",
+            "resiko": "risiko",
+            "sistim": "sistem",
+            "metoda": "metode",
+            "diagnosa": "diagnosis",
+            "hipotesa": "hipotesis",
+            "objek": "objek", // baku
+            "obyek": "objek",
+            "subjek": "subjek",
+            "subyek": "subjek",
+            "ijin": "izin",
+            "nasehat": "nasihat",
+            "faham": "paham",
+            "fikir": "pikir",
+            "berfikir": "berpikir",
+            "negri": "negeri",
+            "tekhnik": "teknik",
+            "tekhnologi": "teknologi",
+            "hakikat": "hakikat",
+            "hakekat": "hakikat",
+            "jaman": "zaman",
+            "respon": "respons",
+            "silahkan": "silakan",
+            "sekedar": "sekadar",
+            "standarisasi": "standardisasi",
+            "cidera": "cedera",
+            "indera": "indra",
+            "nafas": "napas",
+            "lobang": "lubang",
+            "karir": "karier",
+            "konkrit": "konkret",
+            "moderen": "modern"
+        };
         
         createApp({
             data() {
@@ -178,7 +228,7 @@
                 }
             },
             mounted() {
-                const savedData = localStorage.getItem('guru_kisi_albanna_v3');
+                const savedData = localStorage.getItem('guru_kisi_albanna_v4');
                 if (savedData) {
                     try {
                         const parsed = JSON.parse(savedData);
@@ -207,12 +257,12 @@
                         soalList: this.soalList,
                         step: this.step
                     };
-                    localStorage.setItem('guru_kisi_albanna_v3', JSON.stringify(dataToSave));
+                    localStorage.setItem('guru_kisi_albanna_v4', JSON.stringify(dataToSave));
                     this.lastSaved = new Date().toLocaleTimeString();
                 },
                 resetData() {
                     if(confirm("Hapus semua data?")) {
-                        localStorage.removeItem('guru_kisi_albanna_v3');
+                        localStorage.removeItem('guru_kisi_albanna_v4');
                         this.selectedMapel = '';
                         this.namaGuru = '';
                         this.sekolah = { logoBase64: null, logoPreview: null };
@@ -248,6 +298,42 @@
                     if (this.soalList.length === 1) return alert("Minimal 1 soal.");
                     if(confirm("Hapus nomor ini?")) this.soalList.splice(index, 1);
                 },
+                
+                // --- LOGIKA AUTO CORRECT ---
+                autoCorrect() {
+                    let totalFixed = 0;
+                    
+                    this.soalList.forEach(soal => {
+                        ['kd', 'indikator'].forEach(field => {
+                            if(!soal[field]) return;
+
+                            let text = soal[field];
+                            let originalText = text;
+
+                            // Loop Kamus Baku
+                            for (const [salah, benar] of Object.entries(KAMUS_BAKU)) {
+                                // Regex: cari kata utuh (\b), ignore case (i), global (g)
+                                const regex = new RegExp(`\\b${salah}\\b`, 'gi');
+                                
+                                if (text.match(regex)) {
+                                    text = text.replace(regex, benar);
+                                }
+                            }
+
+                            if (text !== originalText) {
+                                soal[field] = text; // Update state
+                                totalFixed++;
+                            }
+                        });
+                    });
+
+                    if (totalFixed > 0) {
+                        alert(`✨ Koreksi Selesai! Berhasil memperbaiki ${totalFixed} kata tidak baku.`);
+                    } else {
+                        alert("✅ Tidak ditemukan kesalahan ejaan umum.");
+                    }
+                },
+
                 validateForm() {
                     for (let i = 0; i < this.soalList.length; i++) {
                         const s = this.soalList[i];
@@ -259,6 +345,9 @@
                     return true;
                 },
                 downloadPDF() {
+                    // Jalankan Auto Correct dulu secara silent sebelum download
+                    this.autoCorrect(); 
+
                     if (!this.validateForm()) return;
 
                     const { jsPDF } = window.jspdf;
@@ -301,16 +390,14 @@
                     doc.setFontSize(12);
                     doc.text(`KISI-KISI ${this.selectedMapel.toUpperCase()}`, pageWidth / 2, 55, { align: "center" });
                     
-                    // --- IDENTITAS (DIRAPIKAN DENGAN KOORDINAT) ---
+                    // --- IDENTITAS ---
                     doc.setFont("helvetica", "normal");
                     doc.setFontSize(10);
                     
-                    // Label
                     doc.text("Mata Pelajaran", 14, 65);
                     doc.text("Guru Pengampu", 14, 70);
                     doc.text("Jumlah Soal", 14, 75);
 
-                    // Titik Dua & Isi (Rata di koordinat X=50)
                     doc.text(`: ${this.selectedMapel}`, 50, 65);
                     doc.text(`: ${this.namaGuru}`, 50, 70);
                     doc.text(`: ${this.soalList.length}`, 50, 75);
@@ -330,8 +417,8 @@
                             lineWidth: 0.1, 
                             fontStyle: 'bold', 
                             halign: 'center',
-                            valign: 'middle', // <--- FIX NO TUMPANG TINDIH
-                            minCellHeight: 10 // <--- FIX TAMBAHAN
+                            valign: 'middle', 
+                            minCellHeight: 10
                         },
                         styles: { 
                             lineColor: [0, 0, 0], 
@@ -339,7 +426,7 @@
                             fontSize: 10, 
                             cellPadding: 3, 
                             font: "helvetica",
-                            valign: 'middle' // ISI TABEL JUGA TENGAH
+                            valign: 'middle' 
                         },
                         columnStyles: {
                             0: { cellWidth: 10, halign: 'center' },
