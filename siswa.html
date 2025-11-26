@@ -34,11 +34,13 @@
                 </div>
 
                 <div class="space-y-4">
+                    <!-- Nama -->
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nama Lengkap</label>
                         <input v-model="student.nama" class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900 uppercase placeholder-gray-300" placeholder="Sesuai Absen">
                     </div>
 
+                    <!-- Kelas -->
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Kelas</label>
                         <select v-model="student.kelas" class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900">
@@ -49,6 +51,7 @@
                         </select>
                     </div>
 
+                    <!-- Mapel -->
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Mata Pelajaran</label>
                         <select v-model="selectedExamId" class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900">
@@ -67,7 +70,7 @@
                     </button>
                 </div>
             </div>
-            <p class="mt-6 text-xs text-gray-400 text-center">&copy; 2025 IT SMP Albanna Muhammad Alwan Nursuhaida.<br>Sistem Monitoring Aktif.</p>
+            <p class="mt-6 text-xs text-gray-400 text-center">&copy; 2025 IT SMP Albanna.<br>Sistem Monitoring Aktif.</p>
         </div>
 
         <!-- 1.5. MODAL PERINGATAN -->
@@ -156,18 +159,6 @@
             <div class="bg-red-800 bg-opacity-50 p-6 rounded-xl border border-red-400 max-w-lg"><h3 class="font-bold mb-2 uppercase tracking-wider text-sm">Solusi:</h3><p class="mb-4">Lapor ke <strong>Pengawas Ujian</strong> untuk membuka blokir.</p><div class="bg-white text-red-900 px-4 py-2 rounded font-mono font-bold text-lg">{{ student.nama }}</div></div>
         </div>
 
-        <!-- 4. HALAMAN SELESAI -->
-        <div v-if="isFinished" class="min-h-screen bg-green-50 flex flex-col items-center justify-center p-8 text-center">
-            <div class="bg-white p-6 rounded-full shadow-lg mb-6"><i class="fas fa-check-circle fa-5x text-green-500"></i></div>
-            <h1 class="text-3xl font-bold text-green-800 mb-2">UJIAN SELESAI</h1>
-            <p class="text-gray-600 mb-8">Jawaban Anda telah berhasil disimpan.</p>
-            <div class="bg-white p-6 rounded-xl shadow-md w-full max-w-md border-t-4 border-green-500">
-                <div class="flex justify-between border-b pb-2 mb-2"><span class="text-gray-500 text-sm">Nama</span><span class="font-bold text-gray-800">{{ student.nama }}</span></div>
-                <div class="flex justify-between"><span class="text-gray-500 text-sm">Waktu Kirim</span><span class="font-bold text-gray-800">{{ submitTime }}</span></div>
-            </div>
-            <p class="mt-8 text-xs text-gray-400">Silakan tutup browser ini.</p>
-        </div>
-
     </div>
 
     <script type="module">
@@ -233,18 +224,26 @@
                     }
                     return array;
                 },
-                
                 async checkLogin() {
-                    // VALIDASI IDENTITAS
-                    if(!this.student.nama || !this.student.kelas || !this.selectedExamId) {
-                        return alert("Lengkapi semua data identitas!");
-                    }
+                    if(!this.student.nama || !this.student.kelas || !this.selectedExamId) return alert("Lengkapi data!");
+                    this.isLoading = true;
+                    try {
+                        // Cek Ganda (Manual Filter)
+                        const qSubmit = query(collection(db, "jawaban_siswa"), where("examId", "==", this.selectedExamId));
+                        const snapSubmit = await getDocs(qSubmit);
+                        const isSubmitted = snapSubmit.docs.some(doc => doc.data().student.nama.toUpperCase() === this.student.nama.toUpperCase());
+                        if(isSubmitted) throw new Error("Nama ini SUDAH MENYELESAIKAN ujian ini.");
 
-                    // BYPASS VALIDASI GANDA (Hanya untuk listing)
-                    // Langsung tampilkan modal peringatan
-                    this.showWarningModal = true; 
+                        const qBlock = query(collection(db, "blocked_students"), where("examId", "==", this.selectedExamId));
+                        const snapBlock = await getDocs(qBlock);
+                        const isBlocked = snapBlock.docs.some(doc => doc.data().student.nama.toUpperCase() === this.student.nama.toUpperCase());
+                        if(isBlocked) throw new Error("Nama Anda TERBLOKIR oleh sistem.");
+
+                        this.showWarningModal = true; 
+                    } catch (e) { 
+                        alert("GAGAL LOGIN:\n" + e.message); 
+                    } finally { this.isLoading = false; }
                 },
-
                 startExam() {
                     this.showWarningModal = false;
                     const exam = this.allExams.find(e => e.id === this.selectedExamId);
@@ -295,9 +294,16 @@
                         await addDoc(collection(db, "jawaban_siswa"), {
                             student: this.student, examId: this.activeExam.id, mapel: this.activeExam.config.mapel, answers: this.answers, timestamp: new Date().toISOString()
                         });
-                        this.isExamActive = false; this.isFinished = true; this.submitTime = new Date().toLocaleTimeString();
+                        
+                        // MODIFIKASI: REDIRECT KE JAWABAN.HTML
+                        alert("Jawaban berhasil dikirim! Anda akan diarahkan ke Halaman Hasil.");
+                        
                         if (document.exitFullscreen) document.exitFullscreen();
                         window.onbeforeunload = null;
+                        
+                        // Redirect
+                        window.location.href = 'jawaban.html';
+
                     } catch(e) {
                         alert("Gagal kirim: " + e.message); this.isExamActive = true;
                     } finally { this.isLoading = false; }
