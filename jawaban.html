@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hasil Ujian Siswa - SMP ALBANNA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Montserrat', sans-serif; }</style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <div id="result-app" class="flex h-screen overflow-hidden">
+        
+        <!-- SIDEBAR KELAS -->
+        <div class="w-64 bg-white border-r flex flex-col h-full shadow-lg z-10">
+            <div class="p-6 border-b bg-blue-900 text-white">
+                <h1 class="font-bold text-lg">HASIL UJIAN</h1>
+                <p class="text-xs opacity-75">SMP ALBANNA</p>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-2">
+                <div v-for="(subClasses, grade) in kelasStructure" :key="grade" class="mb-4">
+                    <h3 class="px-4 text-xs font-bold text-gray-400 uppercase mb-2">Kelas {{ grade }}</h3>
+                    <ul>
+                        <li v-for="cls in subClasses" :key="cls">
+                            <button @click="selectedClass = cls" 
+                                :class="['w-full text-left px-4 py-2 rounded mb-1 text-sm font-bold flex justify-between items-center', selectedClass === cls ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-50']">
+                                <span>{{ cls }}</span>
+                                <span class="bg-gray-200 text-gray-600 text-xs px-2 rounded-full">{{ getCount(cls) }}</span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="flex-1 flex flex-col h-full overflow-hidden">
+            
+            <!-- Header Filter Mapel -->
+            <div class="bg-white p-4 shadow-sm border-b flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">
+                        <span v-if="selectedClass">Data Kelas {{ selectedClass }}</span>
+                        <span v-else>Pilih Kelas</span>
+                    </h2>
+                </div>
+                <div>
+                    <select v-model="filterMapel" class="p-2 border rounded bg-gray-50 text-sm">
+                        <option value="">Semua Mata Pelajaran</option>
+                        <option v-for="m in uniqueMapels" :value="m">{{ m }}</option>
+                    </select>
+                    <button @click="resetData" class="ml-2 text-red-500 text-xs hover:underline">Reset Semua Data</button>
+                </div>
+            </div>
+
+            <!-- List Siswa -->
+            <div class="flex-1 overflow-y-auto p-8">
+                
+                <div v-if="filteredStudents.length === 0" class="text-center text-gray-400 mt-20">
+                    <i class="fas fa-users-slash fa-3x mb-4"></i>
+                    <p>Tidak ada data siswa untuk filter ini.</p>
+                </div>
+
+                <div v-else class="grid gap-4">
+                    <div v-for="(res, index) in filteredStudents" :key="index" class="bg-white p-6 rounded-lg shadow border border-gray-200">
+                        <div class="flex justify-between items-start border-b pb-4 mb-4">
+                            <div>
+                                <h3 class="text-lg font-bold text-blue-900">{{ res.student.nama }}</h3>
+                                <p class="text-sm text-gray-500">{{ res.mapel }} | {{ res.timestamp }}</p>
+                            </div>
+                            <button @click="toggleDetail(res.id)" class="text-blue-600 hover:underline text-sm font-bold">
+                                {{ expandedId === res.id ? 'Tutup Detail' : 'Lihat Jawaban' }}
+                            </button>
+                        </div>
+
+                        <!-- DETAIL JAWABAN (EXPANDABLE) -->
+                        <div v-if="expandedId === res.id" class="animate-fade-in bg-gray-50 p-4 rounded mt-2">
+                            <h4 class="font-bold text-sm text-gray-700 mb-2 uppercase">Rincian Jawaban:</h4>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div v-for="(ans, qIndex) in res.answers" :key="qIndex" class="bg-white p-3 rounded border text-sm">
+                                    <div class="font-bold text-gray-500 text-xs mb-1">Soal No. {{ parseInt(qIndex) + 1 }} (Index DB)</div>
+                                    
+                                    <!-- Menampilkan Jawaban Siswa -->
+                                    <div v-if="Array.isArray(ans)">
+                                        <!-- Checkbox -->
+                                        <span class="text-gray-800">Jawaban:</span> 
+                                        <span class="font-mono bg-yellow-100 px-1 rounded">{{ ans.map(i => 'Opsi '+(i+1)).join(', ') }}</span>
+                                    </div>
+                                    <div v-else>
+                                        <span class="text-gray-800">Jawaban:</span> 
+                                        <span class="font-mono bg-yellow-100 px-1 rounded font-bold">{{ ans }}</span>
+                                    </div>
+
+                                    <!-- Disini kita bisa menambahkan logika cek kunci jawaban jika kita meload bank soal juga -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    // Struktur Kelas untuk Sidebar
+                    kelasStructure: {
+                        '7': ['7A','7B','7C','7D','7E','7F'],
+                        '8': ['8A','8B','8C','8D','8E','8F'],
+                        '9': ['9A','9B','9C','9D','9E']
+                    },
+                    selectedClass: '7A', // Default
+                    filterMapel: '',
+                    allResults: [],
+                    expandedId: null
+                }
+            },
+            computed: {
+                // Filter siswa berdasarkan Kelas & Mapel
+                filteredStudents() {
+                    return this.allResults.filter(r => {
+                        const matchClass = r.student.kelas === this.selectedClass;
+                        const matchMapel = this.filterMapel ? r.mapel === this.filterMapel : true;
+                        return matchClass && matchMapel;
+                    });
+                },
+                // Ambil list mapel unik untuk dropdown filter
+                uniqueMapels() {
+                    const mapels = this.allResults.map(r => r.mapel);
+                    return [...new Set(mapels)];
+                },
+            },
+            mounted() {
+                this.loadData();
+            },
+            methods: {
+                loadData() {
+                    const data = localStorage.getItem('smp_albanna_jawaban_siswa');
+                    if(data) {
+                        this.allResults = JSON.parse(data).reverse(); // Terbaru diatas
+                    }
+                },
+                getCount(cls) {
+                    return this.allResults.filter(r => r.student.kelas === cls).length;
+                },
+                toggleDetail(id) {
+                    this.expandedId = this.expandedId === id ? null : id;
+                },
+                resetData() {
+                    if(confirm("Hapus SELURUH data jawaban siswa? Tindakan ini tidak bisa dibatalkan.")) {
+                        localStorage.removeItem('smp_albanna_jawaban_siswa');
+                        location.reload();
+                    }
+                }
+            }
+        }).mount('#result-app');
+    </script>
+</body>
+</html>
