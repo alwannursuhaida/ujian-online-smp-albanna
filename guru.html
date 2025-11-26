@@ -60,7 +60,6 @@
         <div v-if="step === 2">
             
             <div class="bg-white p-6 rounded-lg shadow mb-6 border-l-4 border-blue-900 flex flex-col md:flex-row gap-6 items-center">
-                
                 <div class="border-2 border-dashed border-gray-300 rounded p-2 flex flex-col items-center justify-center w-32 h-32 relative hover:bg-gray-50 bg-white shrink-0">
                     <input type="file" accept="image/*" @change="handleLogoUpload" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
                     <div v-if="sekolah.logoPreview" class="w-full h-full flex items-center justify-center">
@@ -165,7 +164,7 @@
                     lastSaved: null,
                     hasDraft: false,
                     selectedMapel: '',
-                    namaGuru: '', // DATA BARU: NAMA GURU
+                    namaGuru: '',
                     mapelList: [
                         'IPA', 'IPS', 'MATEMATIKA', 'BAHASA BALI', 'BAHASA ARAB', 
                         'BAHASA INDONESIA', 'BAHASA INGGRIS', 'OLAHRAGA', 
@@ -179,7 +178,7 @@
                 }
             },
             mounted() {
-                const savedData = localStorage.getItem('guru_kisi_albanna_v2');
+                const savedData = localStorage.getItem('guru_kisi_albanna_v3');
                 if (savedData) {
                     try {
                         const parsed = JSON.parse(savedData);
@@ -189,13 +188,10 @@
                         this.soalList = parsed.soalList || this.soalList;
                         this.step = parsed.step || 1;
                         this.hasDraft = true;
-                    } catch (e) {
-                        console.error("Error loading draft", e);
-                    }
+                    } catch (e) { console.error(e); }
                 }
             },
             watch: {
-                // Simpan otomatis jika ada perubahan
                 soalList: { handler() { this.saveData(); }, deep: true },
                 sekolah: { handler() { this.saveData(); }, deep: true },
                 selectedMapel() { this.saveData(); },
@@ -211,12 +207,12 @@
                         soalList: this.soalList,
                         step: this.step
                     };
-                    localStorage.setItem('guru_kisi_albanna_v2', JSON.stringify(dataToSave));
+                    localStorage.setItem('guru_kisi_albanna_v3', JSON.stringify(dataToSave));
                     this.lastSaved = new Date().toLocaleTimeString();
                 },
                 resetData() {
-                    if(confirm("Hapus semua data dan mulai baru?")) {
-                        localStorage.removeItem('guru_kisi_albanna_v2');
+                    if(confirm("Hapus semua data?")) {
+                        localStorage.removeItem('guru_kisi_albanna_v3');
                         this.selectedMapel = '';
                         this.namaGuru = '';
                         this.sekolah = { logoBase64: null, logoPreview: null };
@@ -228,14 +224,14 @@
                     }
                 },
                 lanjutKeKisiKisi() {
-                    if (!this.namaGuru.trim()) return alert("Mohon isi Nama Guru Pengampu!");
-                    if (!this.selectedMapel) return alert("Pilih Mata Pelajaran!");
+                    if (!this.namaGuru.trim()) return alert("Mohon isi Nama Guru!");
+                    if (!this.selectedMapel) return alert("Pilih Mapel!");
                     this.step = 2;
                 },
                 handleLogoUpload(event) {
                     const file = event.target.files[0];
                     if (file) {
-                        if(file.size > 500000) return alert("File logo maksimal 500KB!");
+                        if(file.size > 500000) return alert("Maksimal 500KB!");
                         const reader = new FileReader();
                         reader.onload = (e) => {
                             this.sekolah.logoBase64 = e.target.result;
@@ -269,26 +265,21 @@
                     const doc = new jsPDF();
                     const pageWidth = doc.internal.pageSize.getWidth();
 
-                    // --- KOP SURAT (HARDCODED: SMP ALBANNA) ---
+                    // --- KOP SURAT ---
                     const logoX = 15;
                     const logoY = 10;
                     const logoSize = 25;
                     const textX = 45;
 
-                    // 1. Logo
                     if (this.sekolah.logoBase64) {
                         doc.addImage(this.sekolah.logoBase64, 'PNG', logoX, logoY, logoSize, logoSize); 
                     }
 
-                    // 2. Teks Kop (SMP ALBANNA BIRU)
                     doc.setFont("helvetica", "bold");
                     doc.setFontSize(18);
-                    
-                    // Set Warna Biru untuk Nama Sekolah (RGB: 0, 51, 153 - Biru SMP)
                     doc.setTextColor(30, 58, 138); 
                     doc.text("SMP ALBANNA", textX, 18); 
 
-                    // Kembalikan ke Hitam untuk alamat
                     doc.setTextColor(0, 0, 0); 
                     doc.setFont("helvetica", "normal");
                     doc.setFontSize(9);
@@ -300,28 +291,33 @@
                     doc.text("Telepon (0361) 238 4444  |  Surel info@albanna.sch.id", textX, 37);
                     doc.text("www.albanna.sch.id", textX, 41);
 
-                    // 3. Garis Kop
                     doc.setLineWidth(0.5);
                     doc.line(10, 45, pageWidth - 10, 45);
                     doc.setLineWidth(0.1);
                     doc.line(10, 46, pageWidth - 10, 46);
 
-                    // --- JUDUL UTAMA (DINAMIS) ---
+                    // --- JUDUL UTAMA ---
                     doc.setFont("helvetica", "bold");
                     doc.setFontSize(12);
-                    // Judul berubah sesuai mapel
                     doc.text(`KISI-KISI ${this.selectedMapel.toUpperCase()}`, pageWidth / 2, 55, { align: "center" });
                     
-                    // --- IDENTITAS ---
+                    // --- IDENTITAS (DIRAPIKAN DENGAN KOORDINAT) ---
                     doc.setFont("helvetica", "normal");
                     doc.setFontSize(10);
-                    doc.text(`Mata Pelajaran : ${this.selectedMapel}`, 14, 65);
-                    doc.text(`Guru Pengampu  : ${this.namaGuru}`, 14, 70); // Tampilkan Nama Guru
-                    doc.text(`Jumlah Soal    : ${this.soalList.length}`, 14, 75);
+                    
+                    // Label
+                    doc.text("Mata Pelajaran", 14, 65);
+                    doc.text("Guru Pengampu", 14, 70);
+                    doc.text("Jumlah Soal", 14, 75);
+
+                    // Titik Dua & Isi (Rata di koordinat X=50)
+                    doc.text(`: ${this.selectedMapel}`, 50, 65);
+                    doc.text(`: ${this.namaGuru}`, 50, 70);
+                    doc.text(`: ${this.soalList.length}`, 50, 75);
 
                     // --- TABEL ---
                     doc.autoTable({
-                        startY: 80, // Geser ke bawah sedikit karena ada tambahan baris guru
+                        startY: 80, 
                         head: [['No', 'Kompetensi Dasar', 'Level', 'Indikator Soal', 'Bentuk Soal']],
                         body: this.soalList.map((item, i) => [
                             i + 1, item.kd, item.level, item.indikator, item.bentuk
@@ -333,14 +329,17 @@
                             lineColor: [0, 0, 0], 
                             lineWidth: 0.1, 
                             fontStyle: 'bold', 
-                            halign: 'center'
+                            halign: 'center',
+                            valign: 'middle', // <--- FIX NO TUMPANG TINDIH
+                            minCellHeight: 10 // <--- FIX TAMBAHAN
                         },
                         styles: { 
                             lineColor: [0, 0, 0], 
                             lineWidth: 0.1, 
                             fontSize: 10, 
                             cellPadding: 3, 
-                            font: "helvetica" 
+                            font: "helvetica",
+                            valign: 'middle' // ISI TABEL JUGA TENGAH
                         },
                         columnStyles: {
                             0: { cellWidth: 10, halign: 'center' },
@@ -352,17 +351,13 @@
                     // --- TANDA TANGAN ---
                     let finalY = doc.lastAutoTable.finalY + 15;
                     if (finalY > 250) { doc.addPage(); finalY = 20; }
-                    
                     const date = new Date();
                     const tanggalIndo = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-
                     const ttdX = pageWidth - 60;
                     
                     doc.setFontSize(10);
                     doc.text(`Denpasar, ${tanggalIndo}`, ttdX, finalY, { align: 'center' });
                     doc.text("Guru Mata Pelajaran,", ttdX, finalY + 5, { align: 'center' });
-                    
-                    // Nama Guru di Tanda Tangan
                     doc.setFont("helvetica", "bold");
                     doc.text(`( ${this.namaGuru} )`, ttdX, finalY + 30, { align: 'center' });
 
