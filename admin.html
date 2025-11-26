@@ -348,7 +348,10 @@
                         'BAHASA INGGRIS', 'BAHASA INDONESIA', 
                         'BAHASA BALI', 'SENI BUDAYA', 'BAHASA ARAB', 
                         'PJOK', 'IPS', 'PAI', 'INFORMATIKA'
-                    ]
+                    ],
+                    // AUTO LOGOUT VARIABLES
+                    activityTimer: null,
+                    INACTIVITY_MS: 5 * 60 * 1000 // 5 Minutes
                 }
             },
             computed: {
@@ -366,6 +369,7 @@
                 // Cek Session Storage untuk persistensi login (sederhana)
                 if(sessionStorage.getItem('admin_logged_in') === 'true') {
                     this.isLoggedIn = true;
+                    this.startInactivityTimer();
                 }
 
                 const qSoal = query(collection(db, "bank_soal"));
@@ -378,6 +382,16 @@
                 onSnapshot(qHasil, (snapshot) => {
                     this.hasilUjian = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 });
+            },
+            watch: {
+                // Pantau status login untuk mengaktifkan/mematikan listener
+                isLoggedIn(val) {
+                    if (val) {
+                        this.startInactivityTimer();
+                    } else {
+                        this.stopInactivityTimer();
+                    }
+                }
             },
             methods: {
                 // LOGIN & LOGOUT METHODS
@@ -394,6 +408,32 @@
                 logout() {
                     this.isLoggedIn = false;
                     sessionStorage.removeItem('admin_logged_in');
+                    this.stopInactivityTimer();
+                },
+
+                // --- AUTO LOGOUT LOGIC ---
+                startInactivityTimer() {
+                    // Events yang dianggap sebagai aktivitas
+                    ['mousemove', 'keydown', 'click', 'scroll'].forEach(event => {
+                        window.addEventListener(event, this.resetTimer);
+                    });
+                    this.resetTimer(); // Mulai timer pertama kali
+                },
+                stopInactivityTimer() {
+                    ['mousemove', 'keydown', 'click', 'scroll'].forEach(event => {
+                        window.removeEventListener(event, this.resetTimer);
+                    });
+                    clearTimeout(this.activityTimer);
+                },
+                resetTimer() {
+                    clearTimeout(this.activityTimer);
+                    // Jika masih login, set timer lagi
+                    if (this.isLoggedIn) {
+                        this.activityTimer = setTimeout(() => {
+                            alert("Sesi Anda telah berakhir karena tidak ada aktivitas selama 5 menit.");
+                            this.logout();
+                        }, this.INACTIVITY_MS);
+                    }
                 },
 
                 formatTime(isoStr) {
