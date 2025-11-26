@@ -5,8 +5,8 @@
     <title>Rekap Nilai Siswa - SMP ALBANNA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <!-- Library Excel (SheetJS) -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <!-- Library Excel (SheetJS) - Versi Stabil -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -61,7 +61,7 @@
                             <option v-for="m in availableMapels" :value="m">{{ m }}</option>
                         </select>
 
-                        <!-- Tombol Excel -->
+                        <!-- Tombol Excel (FIXED) -->
                         <button @click="exportToExcel" :disabled="!selectedMapel || filteredResults.length === 0" class="bg-green-600 text-white px-6 py-3 rounded-lg font-bold shadow hover:bg-green-700 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                             <i class="fas fa-file-excel"></i> UNDUH EXCEL
                         </button>
@@ -149,7 +149,6 @@
                                 </span>
                             </div>
                             
-                            <!-- Tampilkan Soal (Jika ada di cache) -->
                             <p class="text-sm text-gray-800 mb-2 font-medium">{{ getQuestionText(activeDetail.examId, idx) }}</p>
 
                             <div class="flex gap-4 text-sm bg-gray-50 p-3 rounded">
@@ -179,7 +178,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // --- KONFIGURASI FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyBivREr2y61OYTE0kLxRnkGtPCdLvHn_og",
             authDomain: "cbt-albanna.firebaseapp.com",
@@ -200,17 +198,15 @@
                     selectedClass: '7A',
                     selectedMapel: '',
                     allResults: [],
-                    bankSoalCache: {}, // Cache soal untuk koreksi
+                    bankSoalCache: {},
                     activeDetail: null
                 }
             },
             computed: {
-                // Mapel yang tersedia di kelas yang dipilih
                 availableMapels() {
                     const classResults = this.allResults.filter(r => r.student.kelas === this.selectedClass);
                     return [...new Set(classResults.map(r => r.mapel))].sort();
                 },
-                // Hasil yang sudah difilter
                 filteredResults() {
                     return this.allResults.filter(r => {
                         const matchClass = r.student.kelas === this.selectedClass;
@@ -220,14 +216,12 @@
                 }
             },
             async mounted() {
-                // 1. Load Bank Soal (Untuk Kunci Jawaban)
                 const qSoal = query(collection(db, "bank_soal"));
                 const snapSoal = await getDocs(qSoal);
                 snapSoal.forEach(doc => {
                     this.bankSoalCache[doc.id] = doc.data();
                 });
 
-                // 2. Load Jawaban Siswa (Realtime)
                 const qHasil = query(collection(db, "jawaban_siswa"), orderBy("timestamp", "desc"));
                 onSnapshot(qHasil, (snapshot) => {
                     this.allResults = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -243,37 +237,25 @@
                 },
                 
                 // --- LOGIKA PENILAIAN ---
-                getExamData(examId) {
-                    return this.bankSoalCache[examId];
-                },
+                getExamData(examId) { return this.bankSoalCache[examId]; },
+                
                 calculateScore(result) {
                     const exam = this.getExamData(result.examId);
                     if (!exam) return 0;
-
                     let score = 0;
-                    let maxScore = 0; // Total bobot soal PG/BS
-
                     exam.soal.forEach((q, idx) => {
-                        // Hanya hitung PG & BS (Esai butuh manual)
-                        if (['PG', 'BS'].includes(q.type)) {
-                            maxScore += parseInt(q.poin);
-                            if (result.answers[idx] === q.answer) {
-                                score += parseInt(q.poin);
-                            }
+                        if (['PG', 'BS'].includes(q.type) && result.answers[idx] === q.answer) {
+                            score += parseInt(q.poin);
                         }
                     });
-
-                    // Konversi ke skala 100 (Opsional, disini tampilkan skor mentah akumulasi)
-                    // return Math.round((score / maxScore) * 100) || 0; 
-                    return score; // Menampilkan total poin yang didapat
+                    return score;
                 },
+                
                 calculateStats(result) {
                     const exam = this.getExamData(result.examId);
                     if (!exam) return { correct: 0, total: 0 };
-                    
                     let correct = 0;
                     let totalObj = 0;
-                    
                     exam.soal.forEach((q, idx) => {
                         if (['PG', 'BS'].includes(q.type)) {
                             totalObj++;
@@ -282,6 +264,7 @@
                     });
                     return { correct, total: totalObj };
                 },
+                
                 getScoreClass(score) {
                     let classes = 'score-badge ';
                     if (score >= 80) return classes + 'score-high';
@@ -289,7 +272,7 @@
                     return classes + 'score-low';
                 },
 
-                // --- DETAIL VIEW HELPERS ---
+                // --- DETAIL VIEW ---
                 viewDetail(res) { this.activeDetail = res; },
                 getQuestionText(examId, idx) {
                     const exam = this.getExamData(examId);
@@ -308,14 +291,13 @@
                     if(!exam) return false;
                     const q = exam.soal[idx];
                     if(['PG', 'BS'].includes(q.type)) return ans === q.answer;
-                    return false; // PG Kompleks & Esai dianggap salah dulu (butuh logika kompleks)
+                    return false;
                 },
 
-                // --- EXPORT TO EXCEL ---
-                exportExcel() {
-                    if (this.filteredResults.length === 0) return;
+                // --- EXPORT TO EXCEL (FIXED) ---
+                exportToExcel() {
+                    if (this.filteredResults.length === 0) return alert("Data kosong!");
 
-                    // 1. Siapkan Data
                     const dataToExport = this.filteredResults.map((res, index) => {
                         const stats = this.calculateStats(res);
                         const score = this.calculateScore(res);
@@ -323,30 +305,22 @@
                         return {
                             "No": index + 1,
                             "Nama Siswa": res.student.nama,
-                            "NIS": res.student.nis || '-', // Antisipasi jika NIS kosong
                             "Kelas": res.student.kelas,
                             "Mata Pelajaran": res.mapel,
                             "Waktu Submit": new Date(res.timestamp).toLocaleString('id-ID'),
-                            "Benar (PG)": stats.correct,
-                            "Salah (PG)": stats.total - stats.correct,
+                            "Benar (PG/BS)": stats.correct,
+                            "Salah": stats.total - stats.correct,
                             "Total Nilai": score
                         };
                     });
 
-                    // 2. Buat Workbook
                     const ws = XLSX.utils.json_to_sheet(dataToExport);
                     const wb = XLSX.utils.book_new();
-                    
-                    // Atur lebar kolom
-                    const wscols = [
-                        {wch: 5}, {wch: 30}, {wch: 15}, {wch: 10}, {wch: 20}, {wch: 25}, {wch: 10}, {wch: 10}, {wch: 10}
-                    ];
+                    const wscols = [{wch: 5}, {wch: 30}, {wch: 10}, {wch: 20}, {wch: 25}, {wch: 15}, {wch: 10}, {wch: 10}];
                     ws['!cols'] = wscols;
 
                     XLSX.utils.book_append_sheet(wb, ws, "Nilai Siswa");
-
-                    // 3. Download File
-                    // Nama file: Nilai_MAPEL_KELAS.xlsx
+                    
                     const filename = `Nilai_${this.selectedMapel}_${this.selectedClass}.xlsx`;
                     XLSX.writeFile(wb, filename);
                 }
