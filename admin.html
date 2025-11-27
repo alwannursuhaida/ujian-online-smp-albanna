@@ -22,9 +22,16 @@
         <!-- 1. HALAMAN LOGIN (SECURITY LAYER) -->
         <div v-if="!isLoggedIn" class="fixed inset-0 bg-slate-900 flex flex-col items-center justify-center z-50 p-4 text-white">
             <div class="bg-white text-slate-900 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-2 bg-red-600"></div>
                 
-                <div class="mb-6">
+                <!-- DEKORASI ATAS -->
+                <div class="absolute top-0 left-0 w-full h-2 bg-red-600"></div>
+
+                <!-- TOMBOL KEMBALI KE INDEX (BARU) -->
+                <a href="index.html" class="absolute top-4 left-4 text-slate-400 hover:text-blue-600 transition flex items-center gap-2 text-xs font-bold no-underline" title="Kembali ke Menu Utama">
+                    <i class="fas fa-arrow-left"></i> MENU UTAMA
+                </a>
+                
+                <div class="mb-6 mt-4">
                     <div class="bg-red-100 text-red-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
                         <i class="fas fa-user-lock fa-3x"></i>
                     </div>
@@ -78,9 +85,11 @@
                         </span>
                     </button>
 
-                    <!-- MENU STATUS PENGUMPULAN -->
                     <button @click="activeTab = 'pengumpulan'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'pengumpulan' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
                         <i class="fas fa-clipboard-check w-5"></i> Status Pengumpulan
+                    </button>
+                    <button @click="activeTab = 'hasil'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'hasil' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
+                        <i class="fas fa-poll w-5"></i> Hasil Ujian
                     </button>
                 </nav>
 
@@ -99,7 +108,8 @@
                     <h2 class="text-2xl font-bold text-slate-800">
                         <span v-if="activeTab === 'soal'">Database Bank Soal</span>
                         <span v-else-if="activeTab === 'blocked'" class="text-red-600"><i class="fas fa-exclamation-circle mr-2"></i>Monitoring Siswa Terblokir</span>
-                        <span v-else>Monitoring Pengumpulan Soal</span>
+                        <span v-else-if="activeTab === 'pengumpulan'">Monitoring Pengumpulan Soal</span>
+                        <span v-else>Monitoring Hasil Ujian</span>
                     </h2>
                     <div v-if="isLoading" class="flex items-center gap-2 text-blue-600 font-bold animate-pulse">
                         <i class="fas fa-sync fa-spin"></i> Menghubungkan...
@@ -114,19 +124,32 @@
                         <div v-if="bankSoal.length === 0 && !isLoading" class="text-center text-gray-400 mt-20">
                             <i class="fas fa-folder-open fa-4x mb-4 text-gray-300"></i>
                             <p class="text-lg">Belum ada soal yang masuk dari Guru.</p>
+                            <p class="text-sm">Pastikan guru sudah klik tombol "UPLOAD KE SERVER" di halaman input soal.</p>
                         </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <div v-for="paket in bankSoal" :key="paket.id" class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition group relative flex flex-col">
                                 <div class="flex justify-between items-start mb-3">
-                                    <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded uppercase">Kelas {{ paket.config.kelas }}</span>
+                                    <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded uppercase">
+                                        Kelas {{ paket.config.kelas }}
+                                    </span>
                                     <span class="text-[10px] text-gray-400 font-mono">{{ formatTime(paket.tanggal_buat) }}</span>
                                 </div>
                                 <h3 class="font-bold text-xl text-slate-800 mb-1">{{ paket.config.mapel }}</h3>
-                                <p class="text-sm text-gray-500 mb-4"><i class="fas fa-user-tie mr-1 opacity-70"></i> {{ paket.config.guru }}</p>
+                                <p class="text-sm text-gray-500 mb-4">
+                                    <i class="fas fa-user-tie mr-1 opacity-70"></i> {{ paket.config.guru }}
+                                </p>
+                                
                                 <div class="mt-auto pt-4 border-t border-gray-100 grid grid-cols-3 gap-2">
-                                    <button @click="lihatSoal(paket)" class="flex items-center justify-center gap-1 bg-gray-100 hover:bg-blue-50 text-blue-700 py-2 rounded text-xs font-bold transition"><i class="fas fa-eye"></i> Lihat</button>
-                                    <button @click="downloadPDF(paket)" class="flex items-center justify-center gap-1 bg-gray-100 hover:bg-green-50 text-green-700 py-2 rounded text-xs font-bold transition"><i class="fas fa-file-pdf"></i> PDF</button>
-                                    <button @click="hapusBankSoal(paket.id)" class="flex items-center justify-center gap-1 bg-gray-100 hover:bg-red-50 text-red-600 py-2 rounded text-xs font-bold transition"><i class="fas fa-trash"></i> Hapus</button>
+                                    <button @click="lihatSoal(paket)" class="flex items-center justify-center gap-1 bg-gray-100 hover:bg-blue-50 text-blue-700 py-2 rounded text-xs font-bold transition">
+                                        <i class="fas fa-eye"></i> Lihat
+                                    </button>
+                                    <button @click="downloadPDF(paket)" class="flex items-center justify-center gap-1 bg-gray-100 hover:bg-green-50 text-green-700 py-2 rounded text-xs font-bold transition">
+                                        <i class="fas fa-file-pdf"></i> PDF
+                                    </button>
+                                    <button @click="hapusBankSoal(paket.id)" class="flex items-center justify-center gap-1 bg-gray-100 hover:bg-red-50 text-red-600 py-2 rounded text-xs font-bold transition">
+                                        <i class="fas fa-trash"></i> Hapus
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -137,6 +160,7 @@
                         <div v-if="blockedStudents.length === 0" class="text-center text-green-600 mt-20 bg-green-50 p-10 rounded-xl border border-green-100 max-w-lg mx-auto">
                             <i class="fas fa-check-circle fa-4x mb-4"></i>
                             <p class="text-lg font-bold">Aman! Tidak ada siswa yang terblokir saat ini.</p>
+                            <p class="text-sm mt-2">Semua ujian berjalan lancar.</p>
                         </div>
 
                         <div v-else class="bg-white rounded-lg shadow-lg border border-red-100 overflow-hidden">
@@ -147,11 +171,11 @@
                             <table class="w-full text-left">
                                 <thead class="bg-red-600 text-white text-sm">
                                     <tr>
-                                        <th class="p-4">Waktu</th>
+                                        <th class="p-4">Waktu Kejadian</th>
                                         <th class="p-4">Identitas Siswa</th>
-                                        <th class="p-4">Mapel</th>
-                                        <th class="p-4">Alasan</th>
-                                        <th class="p-4 text-center">Aksi</th>
+                                        <th class="p-4">Mapel Ujian</th>
+                                        <th class="p-4">Alasan Blokir</th>
+                                        <th class="p-4 text-center">Aksi (Admin)</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100">
@@ -189,10 +213,12 @@
                                                 <td class="p-4 font-medium text-gray-700">{{ mapel }}</td>
                                                 <td class="p-4 text-right">
                                                     <div v-if="checkAvailability(grade, mapel)" class="flex items-center justify-end gap-2 text-green-600">
-                                                        <span class="text-xs font-bold bg-green-100 px-2 py-1 rounded">Ada</span><i class="fas fa-check-circle fa-lg"></i>
+                                                        <span class="text-xs font-bold bg-green-100 px-2 py-1 rounded">Ada</span>
+                                                        <i class="fas fa-check-circle fa-lg"></i>
                                                     </div>
                                                     <div v-else class="flex items-center justify-end gap-2 text-red-400 opacity-50">
-                                                        <span class="text-xs">Belum</span><i class="fas fa-times-circle fa-lg"></i>
+                                                        <span class="text-xs">Belum</span>
+                                                        <i class="fas fa-times-circle fa-lg"></i>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -200,10 +226,74 @@
                                     </table>
                                 </div>
                                 <div class="bg-gray-100 p-4 border-t">
-                                    <div class="flex justify-between text-xs font-bold mb-1"><span>Progress</span><span>{{ countProgress(grade) }}/{{ masterMapel.length }}</span></div>
-                                    <div class="w-full bg-gray-300 rounded-full h-2.5"><div class="bg-green-600 h-2.5 rounded-full" :style="{ width: (countProgress(grade) / masterMapel.length * 100) + '%' }"></div></div>
+                                    <div class="flex justify-between text-xs font-bold mb-1">
+                                        <span>Progress</span>
+                                        <span>{{ countProgress(grade) }}/{{ masterMapel.length }}</span>
+                                    </div>
+                                    <div class="w-full bg-gray-300 rounded-full h-2.5">
+                                        <div class="bg-green-600 h-2.5 rounded-full" :style="{ width: (countProgress(grade) / masterMapel.length * 100) + '%' }"></div>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: HASIL UJIAN -->
+                    <div v-if="activeTab === 'hasil'">
+                        <div class="bg-white p-4 rounded-lg shadow-sm border mb-6 flex gap-4">
+                            <div class="flex items-center gap-2 text-sm font-bold text-gray-600">
+                                <i class="fas fa-filter"></i> Filter:
+                            </div>
+                            <select v-model="filterKelas" class="p-2 border rounded bg-gray-50 text-sm">
+                                <option value="">Semua Kelas</option>
+                                <option v-for="c in kelasList" :value="c">{{ c }}</option>
+                            </select>
+                            <select v-model="filterMapel" class="p-2 border rounded bg-gray-50 text-sm">
+                                <option value="">Semua Mapel</option>
+                                <option v-for="m in uniqueMapels" :value="m">{{ m }}</option>
+                            </select>
+                            <div class="ml-auto text-sm text-gray-500 flex items-center">
+                                Total Data: {{ filteredHasil.length }}
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow overflow-hidden">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-slate-800 text-white">
+                                    <tr>
+                                        <th class="p-4 text-sm">Waktu</th>
+                                        <th class="p-4 text-sm">Nama Siswa</th>
+                                        <th class="p-4 text-sm">Kelas</th>
+                                        <th class="p-4 text-sm">Mapel</th>
+                                        <th class="p-4 text-sm text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <tr v-for="res in filteredHasil" :key="res.id" class="hover:bg-blue-50 transition">
+                                        <td class="p-4 text-sm text-gray-600 font-mono">
+                                            {{ formatTime(res.timestamp) }}
+                                        </td>
+                                        <td class="p-4 font-bold text-slate-800 uppercase">{{ res.student.nama }}</td>
+                                        <td class="p-4">
+                                            <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs font-bold border">
+                                                {{ res.student.kelas }}
+                                            </span>
+                                        </td>
+                                        <td class="p-4 text-sm">{{ res.mapel }}</td>
+                                        
+                                        <td class="p-4 text-center">
+                                            <button @click="hapusHasil(res.id)" class="text-red-400 hover:text-red-600 p-2 rounded hover:bg-red-50 transition" title="Hapus Data">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="filteredHasil.length === 0">
+                                        <td colspan="5" class="p-10 text-center text-gray-400">
+                                            Belum ada data siswa yang masuk sesuai filter.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
@@ -216,7 +306,7 @@
                     <div class="p-4 border-b flex justify-between items-center bg-slate-50 rounded-t-xl">
                         <div>
                             <h3 class="font-bold text-lg text-slate-800">{{ modalSoal.config.mapel }} (Kelas {{ modalSoal.config.kelas }})</h3>
-                            <p class="text-xs text-gray-500">Guru: {{ modalSoal.config.guru }}</p>
+                            <p class="text-xs text-gray-500">Total: {{ modalSoal.soal.length }} Butir Soal | Guru: {{ modalSoal.config.guru }}</p>
                         </div>
                         <button @click="modalSoal = null" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button>
                     </div>
@@ -230,10 +320,21 @@
                                         <img v-if="q.image" :src="q.image" class="h-20 object-contain border mb-2 rounded">
                                         <div class="text-xs text-gray-500 mb-2 flex items-center gap-2">
                                             <span class="bg-gray-100 px-2 py-0.5 rounded">{{ q.type }}</span>
-                                            <span class="font-mono text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded border border-green-200">Kunci: {{ q.answer || '-' }}</span>
+                                            <span class="font-mono text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded border border-green-200">
+                                                Kunci: {{ q.answer || '-' }}
+                                            </span>
                                         </div>
-                                        <div v-if="q.type === 'PG'" class="grid grid-cols-2 gap-2 text-xs"><div v-for="(txt, key) in q.options" :class="['p-2 border rounded', key === q.answer ? 'bg-green-50 border-green-300 font-bold' : 'bg-gray-50']">{{ key }}. {{ txt }}</div></div>
-                                        <div v-if="q.type === 'PG_KOMPLEKS'" class="space-y-1 text-xs"><div v-for="opt in q.options" :class="['p-2 border rounded flex items-center gap-2', opt.isCorrect ? 'bg-green-50 border-green-300' : 'bg-gray-50']"><i :class="['fas', opt.isCorrect ? 'fa-check-square text-green-600' : 'fa-square text-gray-300']"></i><span :class="opt.isCorrect ? 'font-bold text-green-800' : ''">{{ opt.text }}</span></div></div>
+                                        <div v-if="q.type === 'PG'" class="grid grid-cols-2 gap-2 text-xs">
+                                            <div v-for="(txt, key) in q.options" :class="['p-2 border rounded', key === q.answer ? 'bg-green-50 border-green-300 font-bold' : 'bg-gray-50']">
+                                                {{ key }}. {{ txt }}
+                                            </div>
+                                        </div>
+                                        <div v-if="q.type === 'PG_KOMPLEKS'" class="space-y-1 text-xs">
+                                            <div v-for="opt in q.options" :class="['p-2 border rounded flex items-center gap-2', opt.isCorrect ? 'bg-green-50 border-green-300' : 'bg-gray-50']">
+                                                <i :class="['fas', opt.isCorrect ? 'fa-check-square text-green-600' : 'fa-square text-gray-300']"></i>
+                                                <span :class="opt.isCorrect ? 'font-bold text-green-800' : ''">{{ opt.text }}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -269,17 +370,36 @@
         createApp({
             data() {
                 return {
-                    isLoggedIn: false, passwordInput: '',
-                    activeTab: 'soal', isLoading: true,
-                    bankSoal: [], blockedStudents: [],
-                    filterKelas: '', filterMapel: '',
+                    isLoggedIn: false,
+                    passwordInput: '',
+                    activeTab: 'soal',
+                    isLoading: true,
+                    bankSoal: [],
+                    hasilUjian: [],
+                    blockedStudents: [],
+                    filterKelas: '',
+                    filterMapel: '',
                     modalSoal: null,
-                    masterMapel: ['MATEMATIKA', 'IPA', 'BAHASA INGGRIS', 'BAHASA INDONESIA', 'BAHASA BALI', 'SENI BUDAYA', 'BAHASA ARAB', 'PJOK', 'IPS', 'PAI', 'INFORMATIKA'],
-                    activityTimer: null, INACTIVITY_MS: 5 * 60 * 1000
+                    masterMapel: [
+                        'MATEMATIKA', 'IPA', 
+                        'BAHASA INGGRIS', 'BAHASA INDONESIA', 
+                        'BAHASA BALI', 'SENI BUDAYA', 'BAHASA ARAB', 
+                        'PJOK', 'IPS', 'PAI', 'INFORMATIKA'
+                    ],
+                    activityTimer: null,
+                    INACTIVITY_MS: 5 * 60 * 1000 // 5 Menit
                 }
             },
             computed: {
-                // Hapus data hasil ujian dari computed jika tidak digunakan
+                kelasList() { return ['7A','7B','7C','7D','7E','7F','8A','8B','8C','8D','8E','8F','9A','9B','9C','9D','9E']; },
+                uniqueMapels() { return [...new Set(this.hasilUjian.map(h => h.mapel))]; },
+                filteredHasil() {
+                    return this.hasilUjian.filter(h => {
+                        const matchK = this.filterKelas ? h.student.kelas === this.filterKelas : true;
+                        const matchM = this.filterMapel ? h.mapel === this.filterMapel : true;
+                        return matchK && matchM;
+                    });
+                }
             },
             mounted() {
                 if(sessionStorage.getItem('admin_logged_in') === 'true') {
@@ -287,29 +407,35 @@
                     this.startInactivityTimer();
                 }
 
-                const qSoal = query(collection(db, "bank_soal"));
-                onSnapshot(qSoal, (snapshot) => {
-                    this.bankSoal = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // 1. Bank Soal
+                onSnapshot(query(collection(db, "bank_soal")), (snap) => {
+                    this.bankSoal = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     this.isLoading = false;
                 }, (err) => { console.error(err); this.isLoading = false; });
 
-                // LISTEN SISWA TERBLOKIR
-                const qBlocked = query(collection(db, "blocked_students"), orderBy("timestamp", "desc"));
-                onSnapshot(qBlocked, (snapshot) => {
-                    this.blockedStudents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // 2. Hasil Ujian
+                onSnapshot(query(collection(db, "jawaban_siswa"), orderBy("timestamp", "desc")), (snap) => {
+                    this.hasilUjian = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                });
+
+                // 3. Siswa Terblokir
+                onSnapshot(query(collection(db, "blocked_students"), orderBy("timestamp", "desc")), (snap) => {
+                    this.blockedStudents = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 });
             },
             watch: {
                 isLoggedIn(val) { val ? this.startInactivityTimer() : this.stopInactivityTimer(); }
             },
             methods: {
+                // LOGIN LOGIC
                 login() {
                     if(this.passwordInput === 'admin123') {
                         this.isLoggedIn = true;
                         sessionStorage.setItem('admin_logged_in', 'true');
                         this.passwordInput = '';
                     } else {
-                        alert("Password Salah!"); this.passwordInput = '';
+                        alert("Password Salah!");
+                        this.passwordInput = '';
                     }
                 },
                 logout() {
@@ -317,6 +443,8 @@
                     sessionStorage.removeItem('admin_logged_in');
                     this.stopInactivityTimer();
                 },
+                
+                // AUTO LOGOUT LOGIC
                 startInactivityTimer() {
                     ['mousemove', 'keydown', 'click', 'scroll'].forEach(e => window.addEventListener(e, this.resetTimer));
                     this.resetTimer();
@@ -329,11 +457,12 @@
                     clearTimeout(this.activityTimer);
                     if (this.isLoggedIn) {
                         this.activityTimer = setTimeout(() => {
-                            alert("Sesi Anda habis (5 menit tanpa aktivitas).");
+                            alert("Sesi Admin habis (5 menit tanpa aktivitas).");
                             this.logout();
                         }, this.INACTIVITY_MS);
                     }
                 },
+
                 formatTime(isoStr) {
                     if(!isoStr) return '-';
                     const d = new Date(isoStr);
@@ -371,14 +500,20 @@
                     doc.save(`SOAL_${paket.config.mapel}.pdf`);
                 },
                 async hapusBankSoal(id) { if(confirm("Hapus paket soal ini?")) await deleteDoc(doc(db, "bank_soal", id)); },
+                async hapusHasil(id) { if(confirm("Hapus data jawaban ini?")) await deleteDoc(doc(db, "jawaban_siswa", id)); },
+                
                 async bukaBlokir(id, nama) {
                     if(confirm(`Buka blokir untuk siswa ${nama}?`)) {
                         try { await deleteDoc(doc(db, "blocked_students", id)); alert("Blokir dibuka."); } 
                         catch(e) { alert("Gagal: " + e.message); }
                     }
                 },
-                checkAvailability(grade, mapel) { return this.bankSoal.some(paket => paket.config.kelas == grade && paket.config.mapel === mapel); },
-                countProgress(grade) { return this.masterMapel.filter(m => this.checkAvailability(grade, m)).length; }
+                checkAvailability(grade, mapel) {
+                    return this.bankSoal.some(paket => paket.config.kelas == grade && paket.config.mapel === mapel);
+                },
+                countProgress(grade) {
+                    return this.masterMapel.filter(m => this.checkAvailability(grade, m)).length;
+                }
             }
         }).mount('#admin-app');
     </script>
