@@ -2,10 +2,10 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Analisis Nilai & Rapor - SMP ALBANNA</title>
+    <title>Manajemen Nilai Siswa - SMP ALBANNA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <!-- Library Excel dengan Style (Warna Sel) -->
+    <!-- Library Excel (SheetJS) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
@@ -24,8 +24,8 @@
         <!-- 1. SIDEBAR: PILIH KELAS -->
         <div class="w-64 bg-white border-r flex flex-col h-full shadow-lg z-10">
             <div class="p-6 border-b bg-blue-900 text-white">
-                <h1 class="font-bold text-lg">ANALISIS NILAI</h1>
-                <p class="text-xs opacity-75">AUTO GRADING & REPORT</p>
+                <h1 class="font-bold text-lg">MANAJEMEN NILAI</h1>
+                <p class="text-xs opacity-75">AUTO GRADING SYSTEM</p>
             </div>
             
             <div class="flex-1 overflow-y-auto p-2">
@@ -42,6 +42,13 @@
                     </ul>
                 </div>
             </div>
+
+            <!-- TOMBOL KEMBALI KE MENU UTAMA (BARU) -->
+            <div class="p-4 border-t border-slate-200 bg-slate-50">
+                <a href="index.html" class="flex items-center justify-center gap-2 w-full bg-white border border-slate-300 text-slate-600 py-2 rounded font-bold text-xs hover:bg-blue-900 hover:text-white transition shadow-sm">
+                    <i class="fas fa-home"></i> MENU UTAMA
+                </a>
+            </div>
         </div>
 
         <!-- 2. MAIN CONTENT -->
@@ -51,8 +58,8 @@
             <div class="bg-white p-6 shadow-sm border-b">
                 <div class="flex justify-between items-center">
                     <div>
-                        <h2 class="text-2xl font-bold text-gray-800 mb-1">Analisis Kelas {{ selectedClass }}</h2>
-                        <p class="text-sm text-gray-500">Pilih mapel untuk mengunduh Analisis Butir Soal (Excel).</p>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-1">Data Kelas {{ selectedClass }}</h2>
+                        <p class="text-sm text-gray-500">Kelola nilai, edit jawaban, dan unduh laporan.</p>
                     </div>
                     <div class="flex items-center gap-3">
                         <!-- Dropdown Mapel -->
@@ -63,25 +70,25 @@
 
                         <!-- Tombol Excel -->
                         <button @click="exportToExcel" :disabled="!selectedMapel || filteredResults.length === 0" class="bg-green-600 text-white px-6 py-3 rounded-lg font-bold shadow hover:bg-green-700 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <i class="fas fa-file-excel"></i> UNDUH ANALISIS RAPOR
+                            <i class="fas fa-file-excel"></i> ANALISIS RAPOR
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Tabel Data Preview -->
+            <!-- Tabel Data -->
             <div class="flex-1 overflow-y-auto p-8">
                 
                 <!-- State Kosong -->
                 <div v-if="filteredResults.length === 0" class="h-full flex flex-col items-center justify-center text-gray-400 -mt-10">
                     <div class="bg-white p-6 rounded-full shadow-sm mb-4">
-                        <i class="fas fa-chart-line fa-4x text-gray-300"></i>
+                        <i class="fas fa-folder-open fa-4x text-gray-300"></i>
                     </div>
-                    <p class="text-lg font-medium">Tidak ada data ujian.</p>
-                    <p class="text-sm" v-if="!selectedMapel">Pilih Mapel di atas untuk melihat data.</p>
+                    <p class="text-lg font-medium">Data tidak ditemukan.</p>
+                    <p class="text-sm" v-if="!selectedMapel">Silakan pilih Mata Pelajaran di atas.</p>
                 </div>
 
-                <!-- Tabel Nilai Ringkas -->
+                <!-- Tabel Nilai -->
                 <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
                     <table class="w-full text-left border-collapse">
                         <thead class="bg-slate-50 text-slate-600 uppercase text-xs font-bold">
@@ -89,13 +96,13 @@
                                 <th class="p-4 border-b w-16 text-center">No</th>
                                 <th class="p-4 border-b">Nama Siswa</th>
                                 <th class="p-4 border-b">Mata Pelajaran</th>
-                                <th class="p-4 border-b text-center">Benar (PG)</th>
+                                <th class="p-4 border-b text-center">Skor (PG)</th>
                                 <th class="p-4 border-b text-center">Nilai Akhir</th>
-                                <th class="p-4 border-b text-center">Detail</th>
+                                <th class="p-4 border-b text-center w-48">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 text-sm">
-                            <tr v-for="(res, index) in sortedResults" :key="res.id" class="hover:bg-blue-50 transition">
+                            <tr v-for="(res, index) in sortedResults" :key="res.id" class="hover:bg-blue-50 transition group">
                                 <td class="p-4 text-center text-gray-500">{{ index + 1 }}</td>
                                 <td class="p-4 font-bold text-gray-800 uppercase">{{ res.student.nama }}</td>
                                 <td class="p-4 text-gray-600">{{ res.mapel }}</td>
@@ -113,9 +120,20 @@
                                 </td>
 
                                 <td class="p-4 text-center">
-                                    <button @click="viewDetail(res)" class="text-blue-600 hover:text-blue-800 hover:bg-blue-100 p-2 rounded transition">
-                                        <i class="fas fa-search"></i>
-                                    </button>
+                                    <div class="flex items-center justify-center gap-2">
+                                        <!-- 1. LIHAT -->
+                                        <button @click="viewDetail(res)" class="bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white p-2 rounded transition" title="Lihat Detail">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <!-- 2. EDIT (BARU) -->
+                                        <button @click="editResult(res)" class="bg-yellow-100 text-yellow-600 hover:bg-yellow-500 hover:text-white p-2 rounded transition" title="Edit Jawaban">
+                                            <i class="fas fa-pen"></i>
+                                        </button>
+                                        <!-- 3. HAPUS (BARU) -->
+                                        <button @click="deleteResult(res.id)" class="bg-red-100 text-red-600 hover:bg-red-600 hover:text-white p-2 rounded transition" title="Hapus Data">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -124,9 +142,9 @@
             </div>
         </div>
 
-        <!-- MODAL DETAIL (SAMA SEPERTI SEBELUMNYA) -->
-        <div v-if="activeDetail" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white w-full max-w-3xl h-[85vh] rounded-xl shadow-2xl flex flex-col overflow-hidden">
+        <!-- MODAL DETAIL (READ ONLY) -->
+        <div v-if="activeDetail && !isEditing" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white w-full max-w-3xl h-[85vh] rounded-xl shadow-2xl flex flex-col overflow-hidden animate-fade-in">
                 <div class="p-5 border-b bg-slate-50 flex justify-between items-center">
                     <div>
                         <h3 class="font-bold text-lg text-slate-800">{{ activeDetail.student.nama }}</h3>
@@ -160,12 +178,52 @@
             </div>
         </div>
 
+        <!-- MODAL EDIT JAWABAN (BARU) -->
+        <div v-if="isEditing && editingData" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+            <div class="bg-white w-full max-w-2xl h-[90vh] rounded-xl shadow-2xl flex flex-col overflow-hidden border-t-8 border-yellow-500 animate-fade-in">
+                <div class="p-5 border-b bg-yellow-50 flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-lg text-yellow-800"><i class="fas fa-edit mr-2"></i>Edit Jawaban Siswa</h3>
+                        <p class="text-xs text-yellow-600">{{ editingData.student.nama }} - {{ editingData.mapel }}</p>
+                    </div>
+                    <button @click="isEditing = false" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto p-6 bg-white">
+                    <div class="bg-yellow-50 p-3 rounded text-xs text-yellow-800 mb-4">
+                        <i class="fas fa-info-circle"></i> <strong>Perhatian:</strong> Mengubah jawaban akan otomatis menghitung ulang nilai siswa. Gunakan fitur ini hanya jika diperlukan (misal: koreksi manual esai atau kesalahan input).
+                    </div>
+
+                    <div class="space-y-4">
+                        <div v-for="(ans, idx) in editingData.answers" :key="idx" class="flex items-center gap-4 p-3 border rounded hover:bg-gray-50">
+                            <div class="w-10 font-bold text-gray-500 text-center">{{ parseInt(idx)+1 }}</div>
+                            <div class="flex-1">
+                                <label class="text-xs font-bold text-gray-400 uppercase">Jawaban Saat Ini</label>
+                                <input type="text" v-model="editingData.answers[idx]" class="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none py-1 font-bold text-slate-800 bg-transparent" placeholder="Isi jawaban (A, B, BENAR, dll)">
+                            </div>
+                            <div class="w-24 text-right">
+                                <span class="text-xs text-gray-400 block">Kunci</span>
+                                <span class="text-xs font-mono font-bold text-green-600">{{ getCorrectAnswer(editingData.examId, idx) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 border-t bg-gray-50 text-right flex justify-end gap-2">
+                    <button @click="isEditing = false" class="px-4 py-2 text-gray-500 font-bold text-sm hover:bg-gray-200 rounded">Batal</button>
+                    <button @click="saveEdit" class="bg-blue-600 text-white px-6 py-2 rounded font-bold text-sm hover:bg-blue-700 shadow flex items-center gap-2">
+                        <i class="fas fa-save"></i> SIMPAN PERUBAHAN
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script type="module">
         import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // --- CONFIG FIREBASE ---
         const firebaseConfig = {
@@ -189,7 +247,10 @@
                     selectedMapel: '',
                     allResults: [],
                     bankSoalCache: {},
-                    activeDetail: null
+                    activeDetail: null,
+                    // EDIT STATE
+                    isEditing: false,
+                    editingData: null
                 }
             },
             computed: {
@@ -204,7 +265,6 @@
                         return matchClass && matchMapel;
                     });
                 },
-                // SORTIR OTOMATIS A-Z
                 sortedResults() {
                     return [...this.filteredResults].sort((a, b) => a.student.nama.localeCompare(b.student.nama));
                 }
@@ -222,35 +282,10 @@
             },
             methods: {
                 getCountPerClass(cls) { return this.allResults.filter(r => r.student.kelas === cls).length; },
+                formatDate(iso) { return new Date(iso).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); },
                 
-                // --- HELPERS ---
+                // --- LOGIKA PENILAIAN ---
                 getExamData(examId) { return this.bankSoalCache[examId]; },
-                formatAnswer(ans) { return Array.isArray(ans) ? (ans.length ? ans.join(',') : '-') : (ans || '-'); },
-                
-                getQuestionText(examId, idx) { 
-                    const e = this.getExamData(examId); return e && e.soal[idx] ? e.soal[idx].text : '?'; 
-                },
-                getCorrectAnswer(examId, idx) {
-                    const e = this.getExamData(examId); return e && e.soal[idx] ? e.soal[idx].answer : '-';
-                },
-                
-                isAnswerCorrect(examId, idx, ans) {
-                    const exam = this.getExamData(examId);
-                    if(!exam || !exam.soal[idx]) return false;
-                    const q = exam.soal[idx];
-                    // Logika Sederhana (PG/BS)
-                    if(['PG', 'BS'].includes(q.type)) return ans === q.answer;
-                    // Logika Kompleks (PG Kompleks)
-                    if(q.type === 'PG_KOMPLEKS') {
-                        // Cek apakah index yg dipilih siswa sama dengan index yg benar di soal
-                        // Ini butuh logika khusus tergantung cara simpan datanya. 
-                        // Untuk simplifikasi di Excel, kita anggap salah jika tidak match 100% array stringnya.
-                        return false; 
-                    }
-                    return false; 
-                },
-
-                // --- KALKULASI NILAI ---
                 calculateScore(result) {
                     const exam = this.getExamData(result.examId);
                     if (!exam) return 0;
@@ -277,148 +312,130 @@
                     if (score >= 60) return 'score-badge score-med';
                     return 'score-badge score-low';
                 },
-                viewDetail(res) { this.activeDetail = res; },
 
-                // --- EXPORT EXCEL CANGGIH (ANALISIS BUTIR) ---
+                // --- VIEW HELPERS ---
+                viewDetail(res) { this.isEditing = false; this.activeDetail = res; },
+                getQuestionText(examId, idx) { const e = this.getExamData(examId); return e && e.soal[idx] ? e.soal[idx].text : '?'; },
+                getCorrectAnswer(examId, idx) { const e = this.getExamData(examId); return e && e.soal[idx] ? e.soal[idx].answer : '-'; },
+                formatAnswer(ans) { return Array.isArray(ans) ? (ans.length ? ans.join(',') : '-') : (ans || '-'); },
+                isAnswerCorrect(examId, idx, ans) {
+                    const exam = this.getExamData(examId);
+                    if(!exam || !exam.soal[idx]) return false;
+                    const q = exam.soal[idx];
+                    if(['PG', 'BS'].includes(q.type)) return ans === q.answer;
+                    return false;
+                },
+
+                // --- CRUD ACTIONS ---
+                async deleteResult(id) {
+                    if(confirm("PERINGATAN: Data nilai siswa ini akan dihapus permanen dari database. Lanjutkan?")) {
+                        try {
+                            await deleteDoc(doc(db, "jawaban_siswa", id));
+                            alert("Data berhasil dihapus.");
+                        } catch (e) { alert("Gagal menghapus: " + e.message); }
+                    }
+                },
+                
+                editResult(res) {
+                    // Clone object agar tidak merubah tampilan live sebelum disimpan
+                    this.editingData = JSON.parse(JSON.stringify(res));
+                    this.isEditing = true;
+                },
+
+                async saveEdit() {
+                    if(!confirm("Simpan perubahan jawaban siswa ini?")) return;
+                    
+                    try {
+                        const docRef = doc(db, "jawaban_siswa", this.editingData.id);
+                        await updateDoc(docRef, {
+                            answers: this.editingData.answers
+                        });
+                        this.isEditing = false;
+                        this.editingData = null;
+                        alert("Perubahan berhasil disimpan!");
+                    } catch(e) {
+                        alert("Gagal update: " + e.message);
+                    }
+                },
+
+                // --- EXPORT EXCEL LENGKAP ---
                 exportToExcel() {
                     if (this.sortedResults.length === 0) return alert("Data kosong!");
-
-                    // 1. Ambil Data Ujian (Soal Master)
-                    // Asumsi: semua siswa di kelas/mapel ini mengerjakan paket soal yang sama (examId sama)
-                    // Kita ambil examId dari siswa pertama
                     const examId = this.sortedResults[0].examId;
                     const examMaster = this.getExamData(examId);
-                    
-                    if(!examMaster) return alert("Data master soal tidak ditemukan! (Mungkin terhapus)");
+                    if(!examMaster) return alert("Data master soal tidak ditemukan!");
 
                     const jumlahSoal = examMaster.soal.length;
                     const wb = XLSX.utils.book_new();
                     
-                    // --- STRUKTUR DATA UNTUK EXCEL ---
-                    // Header Row 1
                     let header = ["No", "Nama Siswa", "NIS"];
                     for(let i=1; i<=jumlahSoal; i++) header.push(`Q${i}`);
                     header.push("Total Nilai");
 
-                    // Row 2: Kunci Jawaban
                     let keyRow = ["", "KUNCI JAWABAN", ""];
-                    examMaster.soal.forEach(q => {
-                        keyRow.push(q.answer || "-"); // Masukkan kunci
-                    });
-                    keyRow.push(""); // Kolom nilai kosong buat kunci
+                    examMaster.soal.forEach(q => { keyRow.push(q.answer || "-"); });
+                    keyRow.push("");
 
-                    // Row 3 dst: Data Siswa
                     let rows = [];
-                    // Simpan data jawaban mentah untuk analisis nanti
-                    let rawAnswersMatrix = []; // [soalIdx][siswaIdx] = 1 (benar) / 0 (salah)
-
-                    // Inisialisasi Matrix
+                    let rawAnswersMatrix = [];
                     for(let q=0; q<jumlahSoal; q++) rawAnswersMatrix[q] = [];
 
                     this.sortedResults.forEach((res, idx) => {
                         let row = [idx + 1, res.student.nama, res.student.nis || '-'];
-                        
                         examMaster.soal.forEach((q, qIdx) => {
                             const ans = res.answers[qIdx];
                             const formattedAns = this.formatAnswer(ans);
-                            
-                            // Cek Benar/Salah untuk analisis
                             const isCorrect = (['PG','BS'].includes(q.type) && ans === q.answer);
                             rawAnswersMatrix[qIdx].push(isCorrect ? 1 : 0);
-
-                            // Push jawaban ke row (object untuk styling nanti)
-                            // Karena library xlsx-js-style butuh object cell {v: value, s: style}
+                            
                             if (!isCorrect && ['PG','BS'].includes(q.type)) {
-                                // JAWABAN SALAH -> MERAH
                                 row.push({ v: formattedAns, s: { font: { color: { rgb: "FF0000" }, bold: true } } });
                             } else {
-                                row.push({ v: formattedAns }); // Normal
+                                row.push({ v: formattedAns });
                             }
                         });
-
-                        // Total Nilai
                         row.push({ v: this.calculateScore(res), s: { font: { bold: true } } });
                         rows.push(row);
                     });
 
-                    // --- ANALISIS STATISTIK ---
-                    // 1. Tingkat Kesukaran (P) = Jumlah Benar / Jumlah Siswa
                     let difficultyRow = ["", "TINGKAT KESUKARAN", ""];
-                    
-                    // 2. Daya Beda (D)
-                    // Simple method: Upper Group (Top 27%) - Lower Group (Bottom 27%)
                     let discriminatorRow = ["", "DAYA BEDA", ""];
                     
-                    // Urutkan siswa berdasarkan nilai total untuk Daya Beda
                     const sortedByScore = [...this.sortedResults].sort((a, b) => this.calculateScore(b) - this.calculateScore(a));
-                    const nGroup = Math.max(1, Math.floor(sortedByScore.length * 0.27)); // 27%
+                    const nGroup = Math.max(1, Math.floor(sortedByScore.length * 0.27)); 
                     const upperGroup = sortedByScore.slice(0, nGroup);
                     const lowerGroup = sortedByScore.slice(sortedByScore.length - nGroup);
 
-                    // Loop setiap soal untuk hitung P dan D
                     examMaster.soal.forEach((q, qIdx) => {
-                        if (!['PG', 'BS'].includes(q.type)) {
-                            difficultyRow.push("-");
-                            discriminatorRow.push("-");
-                            return;
-                        }
-
-                        // Hitung Kesukaran
+                        if (!['PG', 'BS'].includes(q.type)) { difficultyRow.push("-"); discriminatorRow.push("-"); return; }
                         const totalCorrect = rawAnswersMatrix[qIdx].reduce((a,b)=>a+b, 0);
                         const p = (totalCorrect / this.sortedResults.length).toFixed(2);
                         difficultyRow.push(p);
 
-                        // Hitung Daya Beda
-                        // Helper count correct in group
-                        const countCorrectInGroup = (group) => {
-                            return group.reduce((acc, student) => {
-                                return acc + (student.answers[qIdx] === q.answer ? 1 : 0);
-                            }, 0);
-                        };
-
+                        const countCorrectInGroup = (group) => group.reduce((acc, s) => acc + (s.answers[qIdx] === q.answer ? 1 : 0), 0);
                         const upperCorrect = countCorrectInGroup(upperGroup);
                         const lowerCorrect = countCorrectInGroup(lowerGroup);
-                        
-                        // Rumus D = (Ba/Ja) - (Bb/Jb)
-                        // Karena Ja = Jb = nGroup
                         const d = ((upperCorrect - lowerCorrect) / nGroup).toFixed(2);
                         discriminatorRow.push(d);
                     });
 
-
-                    // --- GABUNGKAN SEMUA DATA ---
-                    // Format AoA (Array of Arrays) untuk SheetJS
-                    const finalData = [
-                        header,
-                        keyRow,
-                        ...rows,
-                        [], // Spacer
-                        difficultyRow,
-                        discriminatorRow
-                    ];
-
-                    // Buat Worksheet
+                    const finalData = [header, keyRow, ...rows, [], difficultyRow, discriminatorRow];
                     const ws = XLSX.utils.aoa_to_sheet(finalData);
 
-                    // Styling Header (Bold & Grey Bg)
+                    // Styling Header
                     const range = XLSX.utils.decode_range(ws['!ref']);
                     for (let C = range.s.c; C <= range.e.c; ++C) {
-                        const address = XLSX.utils.encode_cell({ r: 0, c: C }); // Row 0 (Header)
-                        if (!ws[address]) continue;
-                        ws[address].s = { font: { bold: true }, fill: { fgColor: { rgb: "EFEFEF" } } };
+                        const address = XLSX.utils.encode_cell({ r: 0, c: C });
+                        if (ws[address]) ws[address].s = { font: { bold: true }, fill: { fgColor: { rgb: "EFEFEF" } } };
                     }
-                    
-                    // Styling Key Row (Bold & Yellow Bg)
                     for (let C = range.s.c; C <= range.e.c; ++C) {
-                        const address = XLSX.utils.encode_cell({ r: 1, c: C }); // Row 1 (Key)
-                        if (!ws[address]) continue;
-                        ws[address].s = { font: { bold: true, color: { rgb: "0000FF" } }, fill: { fgColor: { rgb: "FFFFCC" } } };
+                        const address = XLSX.utils.encode_cell({ r: 1, c: C });
+                        if (ws[address]) ws[address].s = { font: { bold: true, color: { rgb: "0000FF" } }, fill: { fgColor: { rgb: "FFFFCC" } } };
                     }
 
-                    // Atur Lebar Kolom
-                    ws['!cols'] = [{wch:5}, {wch:30}, {wch:10}]; // No, Nama, NIS
-                    for(let i=0; i<jumlahSoal; i++) ws['!cols'].push({wch:5}); // Soal kecil-kecil
-                    ws['!cols'].push({wch:10}); // Nilai
+                    ws['!cols'] = [{wch:5}, {wch:30}, {wch:10}]; 
+                    for(let i=0; i<jumlahSoal; i++) ws['!cols'].push({wch:5}); 
+                    ws['!cols'].push({wch:10}); 
 
                     XLSX.utils.book_append_sheet(wb, ws, "Analisis Butir");
                     XLSX.writeFile(wb, `Analisis_${this.selectedMapel}_${this.selectedClass}.xlsx`);
