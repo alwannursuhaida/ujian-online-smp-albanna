@@ -217,26 +217,46 @@
                 <!-- 4. LAPORAN & SUSULAN -->
                 <div v-show="activeTab === 'susulan'">
                     
-                    <div class="bg-white p-6 rounded-xl shadow-sm border mb-6 flex justify-between items-center">
-                        <div class="flex gap-4 items-center">
-                            <div class="border-2 border-dashed border-gray-300 p-2 rounded text-center cursor-pointer hover:bg-gray-50 relative w-32 h-16 flex items-center justify-center">
-                                <input type="file" accept="image/*" @change="handleLogoUpload" class="absolute inset-0 opacity-0 cursor-pointer">
-                                <img v-if="sekolah.logoPreview" :src="sekolah.logoPreview" class="max-h-full max-w-full object-contain">
-                                <span v-else class="text-xs text-gray-400">Upload Logo<br>(Untuk PDF)</span>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border mb-6">
+                        <div class="flex justify-between items-start">
+                            
+                            <!-- Logo Upload -->
+                            <div class="flex gap-4 items-center">
+                                <div class="border-2 border-dashed border-gray-300 p-2 rounded text-center cursor-pointer hover:bg-gray-50 relative w-32 h-16 flex items-center justify-center group">
+                                    <input type="file" accept="image/*" @change="handleLogoUpload" class="absolute inset-0 opacity-0 cursor-pointer z-10">
+                                    <img v-if="sekolah.logoPreview" :src="sekolah.logoPreview" class="max-h-full max-w-full object-contain">
+                                    <span v-else class="text-xs text-gray-400 group-hover:text-blue-500">
+                                        <i class="fas fa-cloud-upload-alt"></i> Upload Logo
+                                    </span>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-800">Filter Laporan</h3>
+                                    <div class="mt-1">
+                                        <!-- FILTER KELAS / SEMUA -->
+                                        <select v-model="filterReportClass" class="p-2 border rounded bg-gray-50 text-sm font-bold text-blue-900">
+                                            <option value="SEMUA">Seluruh Sekolah (Semua Kelas)</option>
+                                            <optgroup label="Pilih Per Kelas">
+                                                <option v-for="c in kelasList" :value="c">Kelas {{ c }}</option>
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <h3 class="font-bold text-gray-800">Laporan Siswa Tidak Hadir</h3>
-                                <p class="text-sm text-gray-500">Unduh PDF daftar siswa yang perlu ujian susulan.</p>
-                            </div>
+
+                            <button @click="downloadPDFReport" class="bg-red-600 text-white px-6 py-3 rounded font-bold shadow hover:bg-red-700 flex items-center gap-2 transition">
+                                <i class="fas fa-file-pdf"></i> UNDUH LAPORAN PDF
+                            </button>
                         </div>
-                        <button @click="downloadPDFReport" class="bg-red-600 text-white px-6 py-3 rounded font-bold shadow hover:bg-red-700 flex items-center gap-2">
-                            <i class="fas fa-file-pdf"></i> UNDUH LAPORAN PDF
-                        </button>
                     </div>
 
-                    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-                        <h3 class="font-bold text-red-800">Daftar Siswa Perlu Ujian Susulan</h3>
-                        <p class="text-sm text-red-600">Siswa yang terdata Sakit (S), Izin (I), atau Alpha (A).</p>
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 flex justify-between items-center">
+                        <div>
+                            <h3 class="font-bold text-red-800">Daftar Siswa Perlu Ujian Susulan</h3>
+                            <p class="text-sm text-red-600">Menampilkan siswa Sakit (S), Izin (I), atau Alpha (A) berdasarkan filter di atas.</p>
+                        </div>
+                        <div class="text-xl font-bold text-red-800 bg-red-200 px-4 py-1 rounded-full">
+                            {{ susulanList.length }} Siswa
+                        </div>
                     </div>
 
                     <div class="bg-white rounded-xl shadow overflow-hidden border">
@@ -269,7 +289,7 @@
                                     </td>
                                 </tr>
                                 <tr v-if="susulanList.length === 0">
-                                    <td colspan="5" class="p-8 text-center text-green-600 font-bold">Semua siswa hadir! Tidak ada susulan.</td>
+                                    <td colspan="5" class="p-8 text-center text-green-600 font-bold">Semua siswa hadir sesuai filter yang dipilih!</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -309,7 +329,10 @@
                     sekolah: { logoBase64: null, logoPreview: null },
                     
                     // DATA BULK INPUT (30 Baris)
-                    bulkInput: new Array(30).fill('')
+                    bulkInput: new Array(30).fill(''),
+                    
+                    // FILTER LAPORAN (BARU)
+                    filterReportClass: 'SEMUA'
                 }
             },
             computed: {
@@ -318,7 +341,19 @@
                     return this.allStudents.filter(s => s.kelas === this.selectedClass).sort((a,b) => a.nama.localeCompare(b.nama));
                 },
                 susulanList() {
-                    return this.allStudents.filter(s => ['S','I','A'].includes(s.status)).sort((a,b) => a.kelas.localeCompare(b.kelas));
+                    // 1. Filter by Status (S/I/A)
+                    let list = this.allStudents.filter(s => ['S','I','A'].includes(s.status));
+                    
+                    // 2. Filter by Class (Dropdown Laporan)
+                    if (this.filterReportClass !== 'SEMUA') {
+                        list = list.filter(s => s.kelas === this.filterReportClass);
+                    }
+
+                    // 3. Sort by Kelas then Nama
+                    return list.sort((a,b) => {
+                        if (a.kelas === b.kelas) return a.nama.localeCompare(b.nama);
+                        return a.kelas.localeCompare(b.kelas);
+                    });
                 },
                 pageTitle() {
                     const titles = { 'dashboard': 'Dashboard Statistik', 'data_siswa': 'Manajemen Data Siswa', 'input_absen': 'Input Absensi Harian', 'susulan': 'Laporan & Jadwal Susulan' };
@@ -442,14 +477,83 @@
                     if (file) { const r = new FileReader(); r.onload = (e) => { this.sekolah.logoBase64 = e.target.result; this.sekolah.logoPreview = e.target.result; }; r.readAsDataURL(file); }
                 },
                 downloadPDFReport() {
-                    if(this.susulanList.length === 0) return alert("Tidak ada data.");
-                    const { jsPDF } = window.jspdf; const doc = new jsPDF();
-                    if (this.sekolah.logoBase64) doc.addImage(this.sekolah.logoBase64, 'PNG', 15, 10, 20, 20); 
-                    doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.text("SMP ALBANNA", 40, 18);
-                    doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.text("Laporan Ketidakhadiran & Ujian Susulan", 40, 24);
-                    doc.setLineWidth(0.5); doc.line(10, 35, 200, 35);
-                    doc.autoTable({ startY: 40, head: [['No', 'Nama', 'Kelas', 'Status', 'Keterangan']], body: this.susulanList.map((s,i)=>[i+1, s.nama, s.kelas, s.status, s.ket_susulan]) });
-                    doc.save("Laporan_Susulan.pdf");
+                    if(this.susulanList.length === 0) return alert("Tidak ada data siswa susulan sesuai filter.");
+                    
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    const pageWidth = doc.internal.pageSize.getWidth();
+
+                    // --- KOP SURAT (SAMA PERSIS DENGAN SOAL/KISI-KISI) ---
+                    const logoX = 15; const logoY = 10; const logoSize = 25; const textX = 45;
+
+                    // 1. Logo
+                    if (this.sekolah.logoBase64) {
+                        doc.addImage(this.sekolah.logoBase64, 'PNG', logoX, logoY, logoSize, logoSize); 
+                    }
+
+                    // 2. Teks Kop (SMP ALBANNA BIRU)
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(18);
+                    doc.setTextColor(30, 58, 138); // Biru
+                    doc.text("SMP ALBANNA", textX, 18); 
+
+                    // Kembalikan ke Hitam untuk alamat
+                    doc.setTextColor(0, 0, 0); 
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(9);
+                    doc.text("Jl. Tukad Yeh Ho III No.10, Denpasar, Bali 80234", textX, 24);
+                    doc.text("Dangin Puri Klod, Denpasar Timur", textX, 28);
+                    doc.text("Telepon (0361) 238 4444  |  www.albanna.sch.id", textX, 33);
+
+                    // 3. Garis Kop (Double Line)
+                    doc.setLineWidth(0.5); doc.line(10, 40, pageWidth - 10, 40);
+                    doc.setLineWidth(0.1); doc.line(10, 41, pageWidth - 10, 41);
+
+                    // --- JUDUL LAPORAN ---
+                    doc.setFont("helvetica", "bold"); 
+                    doc.setFontSize(14);
+                    doc.text("LAPORAN KETIDAKHADIRAN & UJIAN SUSULAN", pageWidth / 2, 55, { align: "center" });
+                    
+                    doc.setFontSize(10);
+                    doc.setFont("helvetica", "normal");
+                    
+                    // Sub-Judul Filter
+                    const subTitle = this.filterReportClass === 'SEMUA' 
+                        ? "Filter: Seluruh Sekolah" 
+                        : `Filter: Kelas ${this.filterReportClass}`;
+                    
+                    doc.text(subTitle, 14, 65);
+                    doc.text(`Dicetak pada: ${new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`, pageWidth - 14, 65, { align: "right" });
+
+                    // --- TABEL DATA ---
+                    doc.autoTable({
+                        startY: 70,
+                        head: [['No', 'Nama Siswa', 'Kelas', 'Status', 'Keterangan Susulan']],
+                        body: this.susulanList.map((s, i) => [
+                            i+1, 
+                            s.nama, 
+                            s.kelas, 
+                            s.status === 'S' ? 'Sakit' : (s.status === 'I' ? 'Izin' : 'Alpha'),
+                            s.ket_susulan || '-'
+                        ]),
+                        theme: 'grid',
+                        headStyles: { fillColor: [220, 38, 38], fontStyle: 'bold' }, // Merah Header
+                        styles: { fontSize: 10, cellPadding: 3 },
+                        columnStyles: {
+                            0: { cellWidth: 10, halign: 'center' },
+                            2: { cellWidth: 20, halign: 'center' },
+                            3: { cellWidth: 20, halign: 'center' }
+                        }
+                    });
+
+                    // Footer (Optional Tanda Tangan)
+                    let finalY = doc.lastAutoTable.finalY + 20;
+                    if (finalY > 250) { doc.addPage(); finalY = 20; }
+                    
+                    doc.text("Mengetahui,", pageWidth - 50, finalY, { align: 'center' });
+                    doc.text("Panitia Ujian", pageWidth - 50, finalY + 20, { align: 'center' });
+
+                    doc.save(`Laporan_Susulan_${this.filterReportClass}.pdf`);
                 },
                 updateStats() {
                     this.stats.total = this.allStudents.length;
