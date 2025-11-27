@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 min-h-screen pb-20">
 
-    <div id="app" class="max-w-5xl mx-auto pt-10 px-4">
+    <div id="app" class="max-w-6xl mx-auto pt-10 px-4">
         
         <!-- NOTIFIKASI AUTO SAVE -->
         <div v-if="lastSaved" class="fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded shadow-lg text-xs z-50 flex items-center gap-2 animate-pulse">
@@ -60,18 +60,12 @@
 
             <h2 class="text-xl font-bold mb-6 text-gray-800 text-center mt-4">1. Identitas Ujian</h2>
             
-            <!-- Alert Draft -->
             <div v-if="hasDraft" class="mb-6 bg-yellow-50 border border-yellow-200 p-4 rounded text-sm text-yellow-800 flex justify-between items-center">
                 <div class="flex items-center gap-2">
                     <i class="fas fa-history text-lg"></i>
-                    <div>
-                        <strong>Draft Ditemukan!</strong><br>
-                        Melanjutkan pekerjaan terakhir Anda.
-                    </div>
+                    <div><strong>Draft Ditemukan!</strong><br>Melanjutkan pekerjaan terakhir.</div>
                 </div>
-                <button @click="resetDraft" class="bg-red-100 text-red-600 px-3 py-1 rounded hover:bg-red-200 text-xs font-bold">
-                    Hapus & Buat Baru
-                </button>
+                <button @click="resetDraft" class="bg-red-100 text-red-600 px-3 py-1 rounded hover:bg-red-200 text-xs font-bold">Hapus & Buat Baru</button>
             </div>
 
             <div class="space-y-4">
@@ -118,7 +112,7 @@
                 </div>
             </div>
             <button @click="generateTemplate" class="w-full mt-8 bg-blue-900 text-white py-3 rounded-lg font-bold hover:bg-blue-800 transition shadow-lg flex justify-center items-center gap-2">
-                BUAT SLOT SOAL <i class="fas fa-arrow-right"></i>
+                LOAD TEMPLATE SOAL <i class="fas fa-arrow-right"></i>
             </button>
         </div>
 
@@ -128,7 +122,12 @@
                 <div>
                     <h2 class="font-bold text-xl text-blue-900">{{ config.mapel }}</h2>
                     <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-1 rounded">Kelas {{ config.kelas }}</span>
-                    <div class="text-xs text-gray-500 mt-1">Total: {{ questions.length }} Soal</div>
+                    <span v-if="matchedKisiKisi" class="ml-2 text-xs font-bold bg-green-100 text-green-800 px-2 py-1 rounded flex items-center gap-1 inline-flex">
+                        <i class="fas fa-link"></i> Kisi-Kisi Terhubung
+                    </span>
+                    <span v-else class="ml-2 text-xs font-bold bg-gray-100 text-gray-500 px-2 py-1 rounded inline-flex">
+                        Tanpa Kisi-Kisi
+                    </span>
                 </div>
                 <div class="flex gap-2">
                     <button @click="step=1" class="px-4 py-2 text-sm text-gray-500 font-bold hover:text-blue-900"><i class="fas fa-edit"></i> Info</button>
@@ -138,40 +137,80 @@
                 </div>
             </div>
 
-            <div v-for="(q, index) in questions" :key="index" class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200 relative group hover:shadow-lg transition">
-                <div class="flex justify-between items-center mb-4 border-b pb-2">
-                    <span class="bg-blue-100 text-blue-900 px-3 py-1 rounded font-bold text-sm">No. {{ index + 1 }} - {{ q.typeLabel }}</span>
-                    <span class="text-sm font-bold text-gray-500">{{ q.poin }} Poin</span>
-                </div>
+            <!-- LOOP SOAL -->
+            <div v-for="(q, index) in questions" :key="index" class="flex flex-col md:flex-row gap-6 mb-8 items-start">
                 
-                <div class="mb-4">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Pertanyaan <span class="text-red-500">*</span></label>
-                    <!-- Upload Gambar -->
-                    <div class="flex items-center gap-4 mb-2">
-                        <input type="file" @change="handleImageUpload($event, index)" class="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                        <div v-if="q.image" class="relative group/img">
-                            <img :src="q.image" class="h-16 object-contain border p-1 rounded bg-gray-50">
-                            <button @click="q.image = null" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shadow hover:bg-red-600" title="Hapus Gambar">x</button>
+                <!-- BAGIAN KIRI: REFERENSI KISI-KISI (Jika Ada) -->
+                <div v-if="matchedKisiKisi && matchedKisiKisi.soalList[index]" class="w-full md:w-1/3 bg-yellow-50 p-5 rounded-lg border border-yellow-200 shadow-sm sticky top-24 self-start">
+                    <div class="text-xs font-bold text-yellow-800 uppercase mb-2 border-b border-yellow-200 pb-1 flex justify-between">
+                        <span>Referensi Kisi-Kisi</span>
+                        <span>No. {{ index + 1 }}</span>
+                    </div>
+                    <div class="space-y-3 text-sm text-gray-700">
+                        <div>
+                            <span class="block text-xs text-gray-400 font-bold">Kompetensi Dasar (KD):</span>
+                            <p class="font-medium">{{ matchedKisiKisi.soalList[index].kd }}</p>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-gray-400 font-bold">Materi / Indikator:</span>
+                            <p class="font-medium">{{ matchedKisiKisi.soalList[index].indikator }}</p>
+                        </div>
+                        <div class="flex justify-between">
+                            <div>
+                                <span class="block text-xs text-gray-400 font-bold">Level:</span>
+                                <span class="bg-white px-2 py-0.5 rounded border text-xs">{{ matchedKisiKisi.soalList[index].level }}</span>
+                            </div>
+                            <div>
+                                <span class="block text-xs text-gray-400 font-bold">Bentuk:</span>
+                                <span class="bg-white px-2 py-0.5 rounded border text-xs">{{ matchedKisiKisi.soalList[index].bentuk }}</span>
+                            </div>
                         </div>
                     </div>
-                    <textarea v-model="q.text" rows="3" class="w-full p-3 border rounded focus:ring-1 focus:ring-blue-900 bg-gray-50 focus:bg-white transition" placeholder="Tulis pertanyaan..."></textarea>
+                </div>
+                <!-- Jika tidak ada kisi-kisi untuk nomor ini -->
+                <div v-else-if="matchedKisiKisi" class="w-full md:w-1/3 bg-gray-50 p-5 rounded-lg border border-gray-200 text-center text-gray-400 text-xs italic">
+                    Tidak ada data kisi-kisi untuk nomor ini.
                 </div>
 
-                <!-- Opsi Jawaban -->
-                <div v-if="q.type === 'PG'" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div v-for="opt in ['A', 'B', 'C', 'D']" :key="opt" class="flex items-center gap-2">
-                        <span class="font-bold w-8 h-8 flex items-center justify-center bg-gray-200 rounded text-gray-700">{{ opt }}</span>
-                        <input v-model="q.options[opt]" type="text" class="w-full p-2 border rounded focus:border-blue-500 outline-none" :placeholder="'Jawaban '+opt">
+                <!-- BAGIAN KANAN: INPUT SOAL -->
+                <div :class="['w-full', matchedKisiKisi ? 'md:w-2/3' : '']">
+                    <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 relative hover:shadow-lg transition">
+                        
+                        <div class="flex justify-between items-center mb-4 border-b pb-2">
+                            <span class="bg-blue-100 text-blue-900 px-3 py-1 rounded font-bold text-sm">Soal No. {{ index + 1 }} - {{ q.typeLabel }}</span>
+                            <span class="text-sm font-bold text-gray-500">{{ q.poin }} Poin</span>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Pertanyaan <span class="text-red-500">*</span></label>
+                            <div class="flex items-center gap-4 mb-2">
+                                <input type="file" @change="handleImageUpload($event, index)" class="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                <div v-if="q.image" class="relative group/img">
+                                    <img :src="q.image" class="h-16 object-contain border p-1 rounded bg-gray-50">
+                                    <button @click="q.image = null" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shadow hover:bg-red-600" title="Hapus Gambar">x</button>
+                                </div>
+                            </div>
+                            <textarea v-model="q.text" rows="3" class="w-full p-3 border rounded focus:ring-1 focus:ring-blue-900 bg-gray-50 focus:bg-white transition" placeholder="Tulis pertanyaan..."></textarea>
+                        </div>
+
+                        <!-- Opsi Jawaban -->
+                        <div v-if="q.type === 'PG'" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div v-for="opt in ['A', 'B', 'C', 'D']" :key="opt" class="flex items-center gap-2">
+                                <span class="font-bold w-8 h-8 flex items-center justify-center bg-gray-200 rounded text-gray-700">{{ opt }}</span>
+                                <input v-model="q.options[opt]" type="text" class="w-full p-2 border rounded focus:border-blue-500 outline-none" :placeholder="'Jawaban '+opt">
+                            </div>
+                        </div>
+                        <div v-if="q.type === 'PG_KOMPLEKS'" class="grid gap-2">
+                            <div v-for="(o, i) in q.options" :key="i" class="flex gap-2 items-center">
+                                <input type="checkbox" disabled class="w-5 h-5 text-gray-300">
+                                <input v-model="o.text" class="w-full p-2 border rounded bg-white focus:border-blue-500 outline-none" placeholder="Tulis Pernyataan...">
+                            </div>
+                        </div>
+                        <div v-if="['URAIAN', 'ESAI'].includes(q.type)" class="text-xs text-gray-400 italic bg-gray-50 p-3 rounded border border-dashed text-center">Area ini untuk jawaban siswa (kosongkan).</div>
+                        <div v-if="q.type === 'BS'" class="text-xs text-gray-400 italic bg-gray-50 p-3 rounded border border-dashed text-center">Siswa akan memilih Benar atau Salah.</div>
                     </div>
                 </div>
-                <div v-if="q.type === 'PG_KOMPLEKS'" class="grid gap-2">
-                    <div v-for="(o, i) in q.options" :key="i" class="flex gap-2 items-center">
-                        <input type="checkbox" disabled class="w-5 h-5 text-gray-300">
-                        <input v-model="o.text" class="w-full p-2 border rounded bg-white focus:border-blue-500 outline-none" placeholder="Tulis Pernyataan...">
-                    </div>
-                </div>
-                <div v-if="['URAIAN', 'ESAI'].includes(q.type)" class="text-xs text-gray-400 italic bg-gray-50 p-3 rounded border border-dashed text-center">Area ini untuk jawaban siswa (kosongkan).</div>
-                <div v-if="q.type === 'BS'" class="text-xs text-gray-400 italic bg-gray-50 p-3 rounded border border-dashed text-center">Siswa akan memilih Benar atau Salah.</div>
+
             </div>
 
             <div class="flex justify-center pb-10">
@@ -185,8 +224,8 @@
         <div v-if="step === 3">
             <div class="sticky top-0 z-40 bg-green-50 p-4 shadow mb-6 rounded flex justify-between items-center border-l-4 border-green-600">
                 <div>
-                    <h2 class="font-bold text-xl text-green-800">Review & Kunci Jawaban</h2>
-                    <p class="text-xs text-gray-600">Pastikan kunci jawaban benar sebelum upload.</p>
+                    <h2 class="font-bold text-xl text-green-800">Kunci Jawaban</h2>
+                    <p class="text-xs text-gray-600">Pastikan kunci jawaban benar.</p>
                 </div>
                 <button @click="step=2" class="text-sm text-gray-500 font-bold hover:text-green-700"><i class="fas fa-arrow-left"></i> EDIT SOAL</button>
             </div>
@@ -198,12 +237,10 @@
                         {{ q.text ? q.text.substring(0, 60) + (q.text.length>60?'...':'') : '(Soal Gambar)' }}
                     </div>
                     
-                    <!-- Validasi Visual (Bintang Merah) -->
                     <div v-if="['PG','BS','PG_KOMPLEKS'].includes(q.type) && !isKeyValid(q)" class="text-xs text-red-500 font-bold mb-2 animate-pulse">
                         <i class="fas fa-exclamation-circle"></i> Wajib pilih kunci jawaban!
                     </div>
 
-                    <!-- Input Kunci -->
                     <div v-if="q.type === 'PG'" class="flex gap-4">
                         <label v-for="opt in ['A', 'B', 'C', 'D']" :class="['cursor-pointer font-bold text-sm px-3 py-1 rounded border transition', q.answer === opt ? 'bg-green-600 text-white border-green-600' : 'hover:bg-gray-100']">
                             <input type="radio" :name="'k'+index" :value="opt" v-model="q.answer" class="hidden"> {{opt}}
@@ -219,32 +256,28 @@
                         </label>
                     </div>
                     <div v-if="['URAIAN', 'ESAI'].includes(q.type)">
-                        <textarea v-model="q.answer" class="w-full p-2 text-xs border bg-green-50 rounded focus:ring-1 focus:ring-green-500" placeholder="Tuliskan kata kunci jawaban (Opsional, untuk pedoman koreksi)..."></textarea>
+                        <textarea v-model="q.answer" class="w-full p-2 text-xs border bg-green-50 rounded focus:ring-1 focus:ring-green-500" placeholder="Kata kunci jawaban..."></textarea>
                     </div>
                 </div>
             </div>
 
             <div class="bg-white p-6 rounded-lg shadow-xl border-t-4 border-blue-900 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <button @click="downloadPDFSoal" class="bg-red-600 text-white py-4 rounded-lg font-bold hover:bg-red-700 flex items-center justify-center gap-2 transition shadow">
-                    <i class="fas fa-file-pdf fa-lg"></i> DOWNLOAD PDF (OFFLINE)
+                    <i class="fas fa-file-pdf fa-lg"></i> DOWNLOAD PDF
                 </button>
                 <button @click="simpanKeFirebase" class="bg-gray-800 text-white py-4 rounded-lg font-bold hover:bg-gray-900 flex items-center justify-center gap-2 transition shadow hover:shadow-lg transform hover:scale-[1.01]">
                     <i class="fas fa-cloud-upload-alt fa-lg"></i> 
                     <span>UPLOAD KE SERVER (ADMIN)</span>
                 </button>
             </div>
-            <p class="text-center mt-4 text-xs text-gray-500">Data draft akan otomatis dihapus setelah berhasil terupload ke server.</p>
         </div>
-
     </div>
 
-    <!-- SCRIPT MODULE FIREBASE -->
     <script type="module">
         import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // --- KONFIGURASI FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyBivREr2y61OYTE0kLxRnkGtPCdLvHn_og",
             authDomain: "cbt-albanna.firebaseapp.com",
@@ -260,41 +293,29 @@
         createApp({
             data() {
                 return {
-                    currentUser: null, // USER LOGIN
-                    storageKey: '',    // UNIQUE STORAGE KEY
-                    step: 1,
-                    isLoading: false,
-                    lastSaved: null,
-                    hasDraft: false,
+                    currentUser: null, storageKey: '', step: 1, isLoading: false, lastSaved: null, hasDraft: false,
                     config: { mapel: '', guru: '', kelas: '', tanggal: '', durasi: '' },
                     sekolah: { logoBase64: null, logoPreview: null },
-                    questions: []
+                    questions: [],
+                    matchedKisiKisi: null // Data Kisi-Kisi yang cocok
                 }
             },
             mounted() {
-                // 1. CEK LOGIN
                 const session = sessionStorage.getItem('cbt_user_session');
-                if (!session) {
-                    alert("Akses Ditolak: Silakan Login dahulu!");
-                    window.location.href = 'index.html';
-                    return;
-                }
+                if (!session) { window.location.href = 'index.html'; return; }
                 this.currentUser = JSON.parse(session);
-                
-                // 2. SET KEY UNIK PER USER
                 this.storageKey = `guru_soal_draft_${this.currentUser.username}`;
-
-                // 3. LOAD DRAFT
+                
                 const draft = localStorage.getItem(this.storageKey);
-                if (draft) {
+                if(draft) {
                     try {
-                        const parsed = JSON.parse(draft);
-                        this.step = parsed.step || 1;
-                        this.config = parsed.config || this.config;
-                        this.sekolah = parsed.sekolah || this.sekolah;
-                        this.questions = parsed.questions || [];
+                        const p = JSON.parse(draft);
+                        this.step = p.step || 1;
+                        this.config = p.config || this.config;
+                        this.sekolah = p.sekolah || this.sekolah;
+                        this.questions = p.questions || [];
                         this.hasDraft = true;
-                    } catch (e) { console.error("Gagal load draft", e); }
+                    } catch (e) { console.error(e); }
                 }
             },
             watch: {
@@ -316,17 +337,38 @@
                         location.reload(); 
                     }
                 },
-                handleLogoUpload(e) {
-                    const f = e.target.files[0];
-                    if(f) { 
-                        if(f.size > 500000) return alert("Ukuran logo maksimal 500KB.");
-                        const r = new FileReader(); 
-                        r.onload = (ev) => { this.sekolah.logoBase64 = ev.target.result; this.sekolah.logoPreview = ev.target.result; };
-                        r.readAsDataURL(f); 
-                    }
-                },
-                generateTemplate() {
+                // --- INTEGRASI KISI-KISI ---
+                async generateTemplate() {
                     if (!this.config.mapel || !this.config.kelas) return alert("Lengkapi Identitas!");
+                    
+                    this.isLoading = true;
+                    this.matchedKisiKisi = null;
+
+                    // 1. Cari Kisi-Kisi di Database
+                    try {
+                        const q = query(collection(db, "bank_kisi_kisi"), 
+                            where("config.mapel", "==", this.config.mapel),
+                            where("config.kelas", "==", this.config.kelas)
+                            // Note: Tambah orderBy timestamp desc perlu index, jadi kita filter manual aja
+                        );
+                        const snap = await getDocs(q);
+                        
+                        if (!snap.empty) {
+                            // Ambil yang terbaru (jika ada multiple)
+                            const allMatches = snap.docs.map(d => d.data());
+                            // Sortir client-side
+                            allMatches.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                            this.matchedKisiKisi = allMatches[0];
+                            console.log("Kisi-Kisi Ditemukan:", this.matchedKisiKisi);
+                        }
+                    } catch (e) {
+                        console.error("Gagal ambil kisi-kisi:", e);
+                        // Lanjut saja walau error, agar guru tetap bisa input
+                    } finally {
+                        this.isLoading = false;
+                    }
+
+                    // 2. Buat Template Soal
                     if(this.questions.length === 0 || confirm("Buat slot baru? Data lama akan hilang.")) {
                         this.questions = [];
                         const m = this.config.mapel;
@@ -352,12 +394,15 @@
                         this.questions.push(q);
                     }
                 },
+                handleLogoUpload(e) {
+                    const f = e.target.files[0];
+                    if(f && f.size < 500000) { const r = new FileReader(); r.onload = (ev) => { this.sekolah.logoBase64 = ev.target.result; this.sekolah.logoPreview = ev.target.result; }; r.readAsDataURL(f); } 
+                    else alert("File Max 500KB");
+                },
                 handleImageUpload(e, i) {
                     const f = e.target.files[0]; 
-                    if(f){ 
-                        if(f.size > 800000) return alert("Ukuran gambar maks 800KB!");
-                        const r=new FileReader(); r.onload=(ev)=>this.questions[i].image=ev.target.result; r.readAsDataURL(f);
-                    }
+                    if(f && f.size < 800000){ const r=new FileReader(); r.onload=(ev)=>this.questions[i].image=ev.target.result; r.readAsDataURL(f); }
+                    else alert("Gambar Max 800KB");
                 },
                 isKeyValid(q) {
                     if (q.type === 'PG' || q.type === 'BS') return !!q.answer;
@@ -365,34 +410,23 @@
                     return true;
                 },
                 async simpanKeFirebase() {
-                    // Final Validation
-                    for(let i=0; i<this.questions.length; i++) {
-                        if(!this.isKeyValid(this.questions[i])) return alert(`Lengkapi Kunci Jawaban Soal No. ${i+1}!`);
+                    for(let q of this.questions) {
+                        if(['PG','BS','PG_KOMPLEKS'].includes(q.type) && !this.isKeyValid(q)) return alert("Lengkapi Kunci Jawaban!");
                     }
-
                     this.isLoading = true;
                     try {
                         const paketSoal = {
                             config: this.config,
                             soal: this.questions,
                             tanggal_buat: new Date().toISOString(),
-                            uploadedBy: this.currentUser.username // TRACK USER UPLOAD
+                            uploadedBy: this.currentUser.username
                         };
-
-                        // UPLOAD KE FIREBASE
                         await addDoc(collection(db, "bank_soal"), paketSoal);
-                        
-                        // BERSIHKAN DRAFT
                         localStorage.removeItem(this.storageKey);
-                        
                         alert("✅ BERHASIL! Soal tersimpan di Server Admin.");
                         window.location.reload();
-                    } catch (e) {
-                        console.error(e);
-                        alert("Gagal menyimpan: " + e.message);
-                    } finally {
-                        this.isLoading = false;
-                    }
+                    } catch (e) { console.error(e); alert("Gagal menyimpan: " + e.message); } 
+                    finally { this.isLoading = false; }
                 },
                 downloadPDFSoal() {
                      const { jsPDF } = window.jspdf;
@@ -400,7 +434,7 @@
                     const pageWidth = doc.internal.pageSize.getWidth();
                     let y = 10;
 
-                    if (this.sekolah.logoBase64) doc.addImage(this.sekolah.logoBase64, 'PNG', 15, 10, 25, 25);
+                    if (this.sekolah.logoBase64) doc.addImage(this.sekolah.logoBase64, 'JPEG', 15, 10, 25, 25);
                     doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.setTextColor(30, 58, 138); 
                     doc.text("SMP ALBANNA", 45, 18);
                     doc.setTextColor(0); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
@@ -411,15 +445,8 @@
                     doc.setFont("helvetica", "bold"); doc.setFontSize(12);
                     doc.text(`NASKAH SOAL: ${this.config.mapel}`, pageWidth/2, y, {align:'center'}); y+=7;
                     doc.setFontSize(10); doc.setFont("helvetica", "normal");
-                    doc.text(`Guru: ${this.config.guru}`, 15, y); 
-                    doc.text(`Kelas: ${this.config.kelas}`, 80, y); 
-                    doc.text(`Waktu: ${this.config.durasi} Menit`, 130, y); y+=10;
+                    doc.text(`Guru: ${this.config.guru}`, 15, y); doc.text(`Kelas: ${this.config.kelas}`, 80, y); doc.text(`Waktu: ${this.config.durasi} m`, 130, y); y+=10;
 
-                    doc.setFillColor(240); doc.rect(15, y-5, pageWidth-30, 20, 'F');
-                    doc.setFontSize(8); doc.text("PERATURAN UJIAN: Berdoalah, Tulis Identitas, Kerjakan dengan Jujur.", 18, y+5);
-                    y+=25;
-
-                    doc.setFontSize(10);
                     this.questions.forEach((q, idx) => {
                         if (y > 250) { doc.addPage(); y = 20; }
                         doc.setFont("helvetica", "bold"); doc.text(`${idx+1}.`, 15, y);
@@ -427,10 +454,7 @@
                         const splitText = doc.splitTextToSize(q.text || '', 170);
                         doc.text(splitText, 22, y); y += (splitText.length * 5) + 2;
 
-                        if(q.image) { 
-                             if (y > 250) { doc.addPage(); y = 20; }
-                            doc.addImage(q.image, 'JPEG', 25, y, 40, 0); y += 45; 
-                        }
+                        if(q.image) { try { doc.addImage(q.image, 'JPEG', 25, y, 40, 0); y += 45; } catch(e){} }
 
                         if(q.type === 'PG') { ['A','B','C','D'].forEach(opt=>{doc.text(`${opt}. ${q.options[opt]}`, 25, y); y+=5;}); }
                         else if(q.type === 'BS') { doc.text("[ ] Benar   [ ] Salah", 25, y); y+=5; }
