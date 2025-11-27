@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Absensi Ujian - SMP ALBANNA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Chart.js untuk Grafik -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Montserrat', sans-serif; }</style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <div id="app" class="flex h-screen overflow-hidden">
+        
+        <!-- SIDEBAR -->
+        <div class="w-64 bg-slate-900 text-white flex flex-col h-full shadow-2xl z-10">
+            <div class="p-6 text-center border-b border-slate-700 bg-slate-800">
+                <h1 class="font-bold text-xl tracking-wider">ABSENSI CBT</h1>
+                <p class="text-xs text-slate-400 mt-1">SMP ALBANNA</p>
+            </div>
+            
+            <nav class="flex-1 p-4 space-y-2">
+                <button @click="activeTab = 'dashboard'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'dashboard' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
+                    <i class="fas fa-chart-pie w-5"></i> Dashboard
+                </button>
+                <button @click="activeTab = 'data_siswa'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'data_siswa' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
+                    <i class="fas fa-users w-5"></i> Data Siswa
+                </button>
+                <button @click="activeTab = 'input_absen'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'input_absen' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
+                    <i class="fas fa-user-check w-5"></i> Input Absensi
+                </button>
+                <button @click="activeTab = 'susulan'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'susulan' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
+                    <i class="fas fa-clock w-5"></i> Jadwal Susulan
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-slate-800">
+                <a href="admin.html" class="w-full text-center text-xs text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 p-2 hover:bg-slate-800 rounded transition">
+                    <i class="fas fa-arrow-left"></i> KEMBALI KE ADMIN
+                </a>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="flex-1 flex flex-col h-full overflow-hidden bg-gray-50">
+            
+            <!-- TOP BAR -->
+            <div class="bg-white p-4 shadow-sm border-b flex justify-between items-center px-8">
+                <h2 class="text-2xl font-bold text-slate-800 uppercase">
+                    {{ pageTitle }}
+                </h2>
+                <div v-if="isLoading" class="flex items-center gap-2 text-blue-600 font-bold animate-pulse">
+                    <i class="fas fa-sync fa-spin"></i> Sinkronisasi Data...
+                </div>
+            </div>
+
+            <!-- CONTENT AREA -->
+            <div class="flex-1 overflow-y-auto p-8">
+
+                <!-- 1. DASHBOARD GRAFIK -->
+                <div v-show="activeTab === 'dashboard'">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <!-- Grafik Pie -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border">
+                            <h3 class="font-bold text-gray-700 mb-4 text-center">Persentase Kehadiran Total</h3>
+                            <div class="h-64 relative">
+                                <canvas id="attendanceChart"></canvas>
+                            </div>
+                        </div>
+                        <!-- Info Cards -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-green-100 p-6 rounded-xl border border-green-200 text-center flex flex-col justify-center">
+                                <div class="text-4xl font-bold text-green-700">{{ stats.hadir }}</div>
+                                <div class="text-sm text-green-800 font-bold uppercase mt-2">Siswa Hadir</div>
+                            </div>
+                            <div class="bg-red-100 p-6 rounded-xl border border-red-200 text-center flex flex-col justify-center">
+                                <div class="text-4xl font-bold text-red-700">{{ stats.absen }}</div>
+                                <div class="text-sm text-red-800 font-bold uppercase mt-2">Tidak Hadir (S/I/A)</div>
+                            </div>
+                            <div class="bg-blue-100 p-6 rounded-xl border border-blue-200 text-center flex flex-col justify-center col-span-2">
+                                <div class="text-4xl font-bold text-blue-700">{{ stats.total }}</div>
+                                <div class="text-sm text-blue-800 font-bold uppercase mt-2">Total Siswa Terdaftar</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. DATA SISWA (INPUT NAMA) -->
+                <div v-show="activeTab === 'data_siswa'">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border mb-6">
+                        <div class="flex gap-4 items-end">
+                            <div class="flex-1">
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Pilih Kelas</label>
+                                <select v-model="selectedClass" class="w-full p-2 border rounded bg-gray-50">
+                                    <option v-for="c in kelasList" :value="c">{{ c }}</option>
+                                </select>
+                            </div>
+                            <div class="flex-[2]">
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Tambah Siswa Baru</label>
+                                <div class="flex gap-2">
+                                    <input v-model="newStudentName" @keyup.enter="addStudent" placeholder="Ketik Nama Siswa..." class="w-full p-2 border rounded">
+                                    <button @click="addStudent" class="bg-blue-900 text-white px-4 py-2 rounded font-bold hover:bg-blue-800">
+                                        <i class="fas fa-plus"></i> Tambah
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow overflow-hidden">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-800 text-white">
+                                <tr>
+                                    <th class="p-4 w-10">No</th>
+                                    <th class="p-4">Nama Siswa</th>
+                                    <th class="p-4 w-20 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <tr v-for="(s, idx) in filteredStudents" :key="s.id" class="hover:bg-slate-50">
+                                    <td class="p-4 text-center">{{ idx + 1 }}</td>
+                                    <td class="p-4 font-bold text-slate-700">{{ s.nama }}</td>
+                                    <td class="p-4 text-center">
+                                        <button @click="deleteStudent(s.id)" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr v-if="filteredStudents.length === 0">
+                                    <td colspan="3" class="p-8 text-center text-gray-400">Belum ada data siswa di kelas ini.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 3. INPUT ABSENSI -->
+                <div v-show="activeTab === 'input_absen'">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="w-64">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Pilih Kelas untuk Absen</label>
+                            <select v-model="selectedClass" class="w-full p-2 border rounded bg-white shadow-sm">
+                                <option v-for="c in kelasList" :value="c">{{ c }}</option>
+                            </select>
+                        </div>
+                        <button @click="saveAttendance" class="bg-green-600 text-white px-6 py-3 rounded shadow-lg font-bold hover:bg-green-700 transition transform hover:scale-105">
+                            <i class="fas fa-save mr-2"></i> SIMPAN ABSEN KELAS {{ selectedClass }}
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow overflow-hidden border">
+                        <table class="w-full text-left">
+                            <thead class="bg-blue-100 text-blue-900 uppercase text-xs font-bold">
+                                <tr>
+                                    <th class="p-4 border-b w-10">No</th>
+                                    <th class="p-4 border-b">Nama Siswa</th>
+                                    <th class="p-4 border-b text-center w-20">Hadir</th>
+                                    <th class="p-4 border-b text-center w-20">Sakit</th>
+                                    <th class="p-4 border-b text-center w-20">Izin</th>
+                                    <th class="p-4 border-b text-center w-20">Alpha</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <tr v-for="(s, idx) in filteredStudents" :key="s.id" class="hover:bg-blue-50 transition">
+                                    <td class="p-4 text-center font-mono text-gray-500">{{ idx + 1 }}</td>
+                                    <td class="p-4 font-bold text-gray-800">{{ s.nama }}</td>
+                                    
+                                    <!-- Radio Buttons -->
+                                    <td class="p-4 text-center bg-green-50 cursor-pointer" @click="s.status = 'H'">
+                                        <input type="radio" :name="'absen_'+s.id" value="H" v-model="s.status" class="w-5 h-5 accent-green-600 cursor-pointer">
+                                    </td>
+                                    <td class="p-4 text-center bg-yellow-50 cursor-pointer" @click="s.status = 'S'">
+                                        <input type="radio" :name="'absen_'+s.id" value="S" v-model="s.status" class="w-5 h-5 accent-yellow-600 cursor-pointer">
+                                    </td>
+                                    <td class="p-4 text-center bg-blue-50 cursor-pointer" @click="s.status = 'I'">
+                                        <input type="radio" :name="'absen_'+s.id" value="I" v-model="s.status" class="w-5 h-5 accent-blue-600 cursor-pointer">
+                                    </td>
+                                    <td class="p-4 text-center bg-red-50 cursor-pointer" @click="s.status = 'A'">
+                                        <input type="radio" :name="'absen_'+s.id" value="A" v-model="s.status" class="w-5 h-5 accent-red-600 cursor-pointer">
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 4. MENU SUSULAN -->
+                <div v-show="activeTab === 'susulan'">
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+                        <h3 class="font-bold text-red-800">Daftar Siswa Perlu Ujian Susulan</h3>
+                        <p class="text-sm text-red-600">Siswa yang terdata Sakit (S), Izin (I), atau Alpha (A) pada absensi terakhir.</p>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow overflow-hidden border">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-800 text-white">
+                                <tr>
+                                    <th class="p-4">Nama Siswa</th>
+                                    <th class="p-4">Kelas</th>
+                                    <th class="p-4 text-center">Status Absen</th>
+                                    <th class="p-4">Keterangan / Jadwal Susulan</th>
+                                    <th class="p-4 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <tr v-for="s in susulanList" :key="s.id" class="hover:bg-red-50">
+                                    <td class="p-4 font-bold">{{ s.nama }}</td>
+                                    <td class="p-4"><span class="bg-gray-200 px-2 py-1 rounded text-xs font-bold">{{ s.kelas }}</span></td>
+                                    <td class="p-4 text-center">
+                                        <span v-if="s.status === 'S'" class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded font-bold">SAKIT</span>
+                                        <span v-if="s.status === 'I'" class="bg-blue-100 text-blue-800 px-3 py-1 rounded font-bold">IZIN</span>
+                                        <span v-if="s.status === 'A'" class="bg-red-100 text-red-800 px-3 py-1 rounded font-bold">ALPHA</span>
+                                    </td>
+                                    <td class="p-4">
+                                        <input v-model="s.ket_susulan" class="w-full border-b-2 border-gray-300 focus:border-blue-600 outline-none bg-transparent py-1" placeholder="Contoh: Senin, 10.00 di Lab">
+                                    </td>
+                                    <td class="p-4 text-center">
+                                        <button @click="updateSusulan(s)" class="text-blue-600 hover:text-blue-800 font-bold text-xs border border-blue-600 px-3 py-1 rounded hover:bg-blue-50">
+                                            SIMPAN
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr v-if="susulanList.length === 0">
+                                    <td colspan="5" class="p-8 text-center text-green-600 font-bold">Semua siswa hadir! Tidak ada susulan.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBivREr2y61OYTE0kLxRnkGtPCdLvHn_og",
+            authDomain: "cbt-albanna.firebaseapp.com",
+            projectId: "cbt-albanna",
+            storageBucket: "cbt-albanna.firebasestorage.app",
+            messagingSenderId: "740622197344",
+            appId: "1:740622197344:web:6112adf59edfbe496ed905"
+        };
+
+        const appFirebase = initializeApp(firebaseConfig);
+        const db = getFirestore(appFirebase);
+
+        createApp({
+            data() {
+                return {
+                    activeTab: 'dashboard',
+                    isLoading: true,
+                    selectedClass: '7A',
+                    newStudentName: '',
+                    allStudents: [],
+                    chartInstance: null,
+                    stats: { hadir: 0, absen: 0, total: 0 }
+                }
+            },
+            computed: {
+                kelasList() { return ['7A','7B','7C','7D','7E','7F','8A','8B','8C','8D','8E','8F','9A','9B','9C','9D','9E']; },
+                filteredStudents() {
+                    // Urutkan nama A-Z
+                    return this.allStudents
+                        .filter(s => s.kelas === this.selectedClass)
+                        .sort((a,b) => a.nama.localeCompare(b.nama));
+                },
+                susulanList() {
+                    // Filter siswa yang tidak hadir (S/I/A)
+                    return this.allStudents
+                        .filter(s => ['S','I','A'].includes(s.status))
+                        .sort((a,b) => a.kelas.localeCompare(b.kelas));
+                },
+                pageTitle() {
+                    const titles = {
+                        'dashboard': 'Dashboard Statistik',
+                        'data_siswa': 'Manajemen Data Siswa',
+                        'input_absen': 'Input Absensi Harian',
+                        'susulan': 'Daftar Ujian Susulan'
+                    };
+                    return titles[this.activeTab];
+                }
+            },
+            watch: {
+                activeTab(val) {
+                    if(val === 'dashboard') setTimeout(this.renderChart, 100);
+                },
+                allStudents: {
+                    handler() { this.updateStats(); }, deep: true
+                }
+            },
+            mounted() {
+                // LOAD DATA REALTIME
+                const q = query(collection(db, "data_absensi"));
+                onSnapshot(q, (snapshot) => {
+                    this.allStudents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    this.isLoading = false;
+                    this.updateStats();
+                    if(this.activeTab === 'dashboard') this.renderChart();
+                });
+            },
+            methods: {
+                // --- MANAJEMEN SISWA ---
+                async addStudent() {
+                    if(!this.newStudentName.trim()) return alert("Nama kosong!");
+                    try {
+                        await addDoc(collection(db, "data_absensi"), {
+                            nama: this.newStudentName.toUpperCase(),
+                            kelas: this.selectedClass,
+                            status: 'H', // Default Hadir
+                            ket_susulan: ''
+                        });
+                        this.newStudentName = '';
+                        // alert("Siswa ditambahkan!");
+                    } catch(e) { alert("Gagal: "+e.message); }
+                },
+                async deleteStudent(id) {
+                    if(confirm("Hapus siswa ini?")) await deleteDoc(doc(db, "data_absensi", id));
+                },
+
+                // --- ABSENSI ---
+                async saveAttendance() {
+                    this.isLoading = true;
+                    // Update status semua siswa di kelas yang dipilih
+                    const batchPromises = this.filteredStudents.map(s => {
+                        const sRef = doc(db, "data_absensi", s.id);
+                        return updateDoc(sRef, { status: s.status });
+                    });
+
+                    try {
+                        await Promise.all(batchPromises);
+                        alert(`Absensi Kelas ${this.selectedClass} Berhasil Disimpan!`);
+                    } catch(e) {
+                        alert("Gagal menyimpan: " + e.message);
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+
+                // --- SUSULAN ---
+                async updateSusulan(student) {
+                    try {
+                        await updateDoc(doc(db, "data_absensi", student.id), {
+                            ket_susulan: student.ket_susulan
+                        });
+                        alert("Keterangan tersimpan.");
+                    } catch(e) { alert("Gagal: "+e.message); }
+                },
+
+                // --- DASHBOARD & CHART ---
+                updateStats() {
+                    this.stats.total = this.allStudents.length;
+                    this.stats.hadir = this.allStudents.filter(s => s.status === 'H').length;
+                    this.stats.absen = this.stats.total - this.stats.hadir;
+                },
+                renderChart() {
+                    const ctx = document.getElementById('attendanceChart');
+                    if(!ctx) return;
+                    
+                    if(this.chartInstance) this.chartInstance.destroy();
+
+                    this.chartInstance = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Hadir', 'Tidak Hadir (S/I/A)'],
+                            datasets: [{
+                                data: [this.stats.hadir, this.stats.absen],
+                                backgroundColor: ['#16a34a', '#dc2626'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: 'bottom' }
+                            }
+                        }
+                    });
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
+```
+
+### 2. Update `index.html` (Tambahkan Tombol Menu)
+
+Agar Anda bisa masuk ke halaman absen ini, tambahkan tombol menu di file **`index.html`** Anda (di dalam Grid Menu, sebelum footer).
+
+Tambahkan kode ini di **`index.html`**:
+
+```html
+<!-- 6. ABSENSI & SUSULAN (BARU) -->
+<a href="absen_ujian.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-indigo-500 hover:shadow-xl group">
+    <div class="flex justify-between items-start mb-4">
+        <div class="bg-indigo-100 text-indigo-600 p-3 rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition">
+            <i class="fas fa-clipboard-user fa-2x"></i>
+        </div>
+    </div>
+    <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-indigo-600">Absensi & Susulan</h3>
+    <p class="text-sm text-gray-500">Input kehadiran dan kelola siswa ujian susulan.</p>
+</a>
