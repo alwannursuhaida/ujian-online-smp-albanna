@@ -80,17 +80,17 @@
                         </div>
 
                         <div class="space-y-4">
-                            <!-- Logo Upload -->
+                            <!-- Logo Upload (COMPRESS VERSION) -->
                             <div class="border-2 border-dashed border-gray-300 p-4 rounded text-center bg-gray-50 hover:bg-gray-100 cursor-pointer relative group">
                                 <input type="file" accept="image/*" @change="handleLogoUpload" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
                                 <div v-if="sekolah.logoPreview">
                                     <img :src="sekolah.logoPreview" class="h-16 mx-auto object-contain">
-                                    <p class="text-xs text-gray-400 mt-1">Klik untuk ganti logo</p>
+                                    <p class="text-xs text-green-600 mt-1 font-bold"><i class="fas fa-check"></i> Logo siap (Terkecil)</p>
                                 </div>
                                 <div v-else class="py-4">
                                     <i class="fas fa-cloud-upload-alt fa-2x text-gray-300 mb-2"></i>
                                     <p class="text-sm text-gray-500 font-bold">Upload Logo Sekolah</p>
-                                    <p class="text-xs text-gray-400">(Wajib untuk Kop Surat PDF, Maks 500KB)</p>
+                                    <p class="text-xs text-gray-400">(Otomatis dikompres agar ringan)</p>
                                 </div>
                             </div>
 
@@ -129,7 +129,6 @@
 
                         <div class="mt-8 flex gap-4">
                             <button @click="resetData" class="px-6 py-3 bg-gray-200 text-gray-600 rounded font-bold hover:bg-gray-300 transition">Reset</button>
-                            <!-- TOMBOL LANJUT -->
                             <button @click="lanjutKeKisiKisi" class="flex-1 px-6 py-3 bg-blue-900 text-white rounded font-bold hover:bg-blue-800 shadow-lg transition">
                                 LANJUT ISI BUTIR SOAL <i class="fas fa-arrow-right ml-2"></i>
                             </button>
@@ -297,8 +296,6 @@
         const appFirebase = initializeApp(firebaseConfig);
         const db = getFirestore(appFirebase);
 
-        const KAMUS_BAKU = { "analisa": "analisis", "praktek": "praktik", "resiko": "risiko" };
-
         createApp({
             data() {
                 return {
@@ -321,7 +318,6 @@
                 if(draft) {
                     try {
                         const p = JSON.parse(draft);
-                        // Fallback ke '' mencegah error trim()
                         this.selectedMapel = p.selectedMapel || ''; 
                         this.namaGuru = p.namaGuru || ''; 
                         this.kelas = p.kelas || ''; 
@@ -355,25 +351,40 @@
                         location.reload();
                     }
                 },
-                // --- FIX VALIDASI TOMBOL LANJUT ---
                 lanjutKeKisiKisi() {
-                    // Validasi Spesifik
-                    if(!this.selectedMapel) return alert("Mohon pilih Mata Pelajaran!");
-                    if(!this.namaGuru || !this.namaGuru.trim()) return alert("Mohon isi Nama Guru!");
-                    if(!this.kelas) return alert("Mohon pilih Kelas!");
-                    if(!this.semester) return alert("Mohon pilih Semester!");
-                    
-                    // Jika lolos, lanjut
-                    this.step = 2; 
-                    window.scrollTo(0, 0);
+                    const guru = (this.namaGuru || '').trim();
+                    if (!guru || !this.kelas || !this.semester || !this.selectedMapel) {
+                        return alert("Lengkapi Identitas (Mapel, Guru, Kelas, Semester)!");
+                    }
+                    this.step = 2; window.scrollTo(0, 0);
                 },
                 handleLogoUpload(e) {
                     const f = e.target.files[0];
-                    if(f && f.size < 500000) {
-                        const r = new FileReader();
-                        r.onload = (ev) => { this.sekolah.logoBase64 = ev.target.result; this.sekolah.logoPreview = ev.target.result; };
-                        r.readAsDataURL(f);
-                    } else { alert("File terlalu besar (Max 500KB)"); }
+                    if (!f) return;
+
+                    // KOMPRESI LOGO OTOMATIS (FIX OVERLIMIT ERROR)
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            const MAX_SIZE = 200; // Cukup kecil untuk header PDF
+                            let w = img.width, h = img.height;
+                            
+                            if (w > h) { if(w > MAX_SIZE) { h *= MAX_SIZE/w; w = MAX_SIZE; } }
+                            else { if(h > MAX_SIZE) { w *= MAX_SIZE/h; h = MAX_SIZE; } }
+                            
+                            canvas.width = w; canvas.height = h;
+                            ctx.drawImage(img, 0, 0, w, h);
+                            const compressed = canvas.toDataURL('image/jpeg', 0.7);
+                            
+                            this.sekolah.logoBase64 = compressed;
+                            this.sekolah.logoPreview = compressed;
+                        };
+                        img.src = ev.target.result;
+                    };
+                    reader.readAsDataURL(f);
                 },
                 tambahSoal() { this.soalList.push({ kd: '', level: '', indikator: '', bentuk: '' }); setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 100); },
                 hapusSoal(i) { if(this.soalList.length > 1) this.soalList.splice(i, 1); },
@@ -386,13 +397,16 @@
                     try {
                         const dataToSave = {
                             config: { mapel: this.selectedMapel, kelas: this.kelas, semester: this.semester, guru: this.namaGuru },
-                            sekolah: this.sekolah, soalList: this.soalList, uploadedBy: this.currentUser.username, timestamp: new Date().toISOString()
+                            sekolah: { logoBase64: this.sekolah.logoBase64 }, // Hanya simpan Base64 penting
+                            soalList: this.soalList,
+                            uploadedBy: this.currentUser.username,
+                            timestamp: new Date().toISOString()
                         };
                         await addDoc(collection(db, "bank_kisi_kisi"), dataToSave);
                         this.generatePDF(dataToSave);
                         localStorage.removeItem(this.storageKey);
                         alert("✅ Berhasil disimpan!");
-                        location.reload();
+                        this.resetData(); // Otomatis reset agar bersih
                     } catch(e) { alert("Gagal: " + e.message); } finally { this.isLoading = false; }
                 },
 
@@ -402,7 +416,7 @@
                         const doc = new jsPDF();
                         const pageWidth = doc.internal.pageSize.getWidth();
 
-                        if (data.sekolah.logoBase64) doc.addImage(data.sekolah.logoBase64, 'PNG', 15, 10, 25, 25);
+                        if (data.sekolah && data.sekolah.logoBase64) doc.addImage(data.sekolah.logoBase64, 'JPEG', 15, 10, 25, 25);
                         doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.setTextColor(30, 58, 138); 
                         doc.text("SMP ALBANNA", 45, 18);
                         doc.setTextColor(0); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
