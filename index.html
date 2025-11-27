@@ -22,7 +22,10 @@
         <div v-if="!currentUser" class="flex-1 flex flex-col items-center justify-center p-4">
             <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border-t-8 border-blue-900">
                 <div class="text-center mb-8">
-                    <img src="https://img.icons8.com/fluency/96/null/teacher.png" class="h-20 mx-auto mb-2">
+                    <!-- Ikon Guru -->
+                    <div class="bg-blue-100 text-blue-900 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-chalkboard-teacher fa-3x"></i>
+                    </div>
                     <h1 class="text-2xl font-bold text-blue-900">PORTAL GURU</h1>
                     <p class="text-sm text-gray-500">SMP ALBANNA CBT SYSTEM</p>
                 </div>
@@ -32,7 +35,7 @@
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Username</label>
                         <div class="relative">
                             <i class="fas fa-user absolute left-3 top-3 text-gray-400"></i>
-                            <input v-model="loginForm.username" type="text" class="w-full pl-10 p-2 border rounded focus:ring-2 focus:ring-blue-900 outline-none" placeholder="username">
+                            <input v-model="loginForm.username" type="text" class="w-full pl-10 p-2 border rounded focus:ring-2 focus:ring-blue-900 outline-none" placeholder="Contoh: guru01">
                         </div>
                     </div>
                     <div>
@@ -42,114 +45,127 @@
                             <input v-model="loginForm.password" type="password" class="w-full pl-10 p-2 border rounded focus:ring-2 focus:ring-blue-900 outline-none" placeholder="Password">
                         </div>
                     </div>
-                    <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg font-bold hover:bg-blue-800 shadow-lg transition">
-                        MASUK <i class="fas fa-sign-in-alt ml-1"></i>
+                    <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg font-bold hover:bg-blue-800 shadow-lg transition flex items-center justify-center gap-2">
+                        MASUK <i class="fas fa-sign-in-alt"></i>
                     </button>
                 </form>
 
-                <div class="mt-6 text-xs text-center text-gray-400">
-                    <p>Gunakan akun yang telah didaftarkan oleh Admin.</p>
+                <div class="mt-6 text-xs text-center text-gray-400 border-t pt-4">
+                    <p>Gunakan akun yang telah didaftarkan oleh Admin IT.</p>
+                    <p class="mt-1 italic">(Default: guru01 - guru30 / Pass: albanna)</p>
                 </div>
             </div>
         </div>
 
         <!-- 2. DASHBOARD MENU UTAMA (Jika Login Berhasil) -->
         <div v-else class="flex flex-col min-h-screen">
+            
             <!-- Navbar -->
-            <nav class="bg-blue-900 text-white p-4 shadow-lg">
+            <nav class="bg-blue-900 text-white p-4 shadow-lg sticky top-0 z-50">
                 <div class="max-w-6xl mx-auto flex justify-between items-center">
                     <div class="flex items-center gap-3">
-                        <i class="fas fa-graduation-cap fa-2x"></i>
+                        <div class="bg-white text-blue-900 p-2 rounded-lg">
+                            <i class="fas fa-graduation-cap fa-lg"></i>
+                        </div>
                         <div>
                             <h1 class="font-bold text-xl leading-none">CBT SYSTEM</h1>
-                            <p class="text-xs text-blue-200">Halo, {{ currentUser.name }}</p>
+                            <p class="text-xs text-blue-200">Selamat Datang, {{ currentUser.name }}</p>
                         </div>
                     </div>
-                    <button @click="logout" class="text-sm bg-red-600 hover:bg-red-700 px-4 py-2 rounded transition font-bold">
-                        LOGOUT <i class="fas fa-sign-out-alt"></i>
+                    <button @click="logout" class="text-sm bg-red-600 hover:bg-red-700 px-4 py-2 rounded transition font-bold flex items-center gap-2 shadow">
+                        <i class="fas fa-sign-out-alt"></i> LOGOUT
                     </button>
                 </div>
             </nav>
 
             <!-- Main Content -->
             <main class="flex-1 max-w-6xl mx-auto w-full p-6">
-                <div class="text-center mb-12 mt-8">
-                    <h2 class="text-3xl font-bold text-gray-800">Dashboard Guru</h2>
-                    <p class="text-gray-600 mt-2">Pilih menu untuk mulai bekerja. Draft Anda tersimpan otomatis di akun ini.</p>
+                
+                <div class="text-center mb-10 mt-6">
+                    <h2 class="text-3xl font-bold text-gray-800">Dashboard Aplikasi</h2>
+                    <p class="text-gray-600 mt-2">Pilih menu di bawah ini untuk memulai pekerjaan Anda.</p>
                 </div>
 
                 <!-- GRID MENU -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    
                     <!-- 1. KISI-KISI -->
-                    <a href="guru.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-purple-500 hover:shadow-xl group relative">
+                    <a href="guru.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-purple-500 hover:shadow-xl group relative flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-purple-100 text-purple-600 p-3 rounded-lg group-hover:bg-purple-600 group-hover:text-white transition">
                                 <i class="fas fa-list-alt fa-2x"></i>
                             </div>
+                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">ADMINISTRASI</span>
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-purple-600">Generator Kisi-Kisi</h3>
-                        <p class="text-sm text-gray-500">Buat kisi-kisi soal ujian standar.</p>
+                        <p class="text-sm text-gray-500 mt-auto">Buat dokumen kisi-kisi soal ujian standar secara otomatis (PDF).</p>
                     </a>
 
                     <!-- 2. SOAL GENERATOR -->
-                    <a href="soal.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-blue-500 hover:shadow-xl group">
+                    <a href="soal.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-blue-500 hover:shadow-xl group flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-blue-100 text-blue-600 p-3 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition">
                                 <i class="fas fa-file-signature fa-2x"></i>
                             </div>
+                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">BANK SOAL</span>
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600">Input Soal (Upload)</h3>
-                        <p class="text-sm text-gray-500">Input soal dan upload ke server ujian.</p>
+                        <p class="text-sm text-gray-500 mt-auto">Input butir soal, kunci jawaban, dan upload ke server ujian online.</p>
                     </a>
 
                     <!-- 3. HASIL UJIAN -->
-                    <a href="jawaban.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-orange-500 hover:shadow-xl group">
+                    <a href="jawaban.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-orange-500 hover:shadow-xl group flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-orange-100 text-orange-600 p-3 rounded-lg group-hover:bg-orange-600 group-hover:text-white transition">
                                 <i class="fas fa-chart-pie fa-2x"></i>
                             </div>
+                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">LAPORAN</span>
                         </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-orange-600">Rekap Nilai</h3>
-                        <p class="text-sm text-gray-500">Unduh analisis nilai dan excel.</p>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-orange-600">Rekap Nilai & Analisis</h3>
+                        <p class="text-sm text-gray-500 mt-auto">Lihat hasil ujian siswa, analisis butir soal, dan unduh Excel.</p>
                     </a>
 
-                    <!-- 4. ADMIN (Khusus) -->
-                    <a href="admin.html" class="btn-card bg-slate-800 p-6 rounded-xl shadow-md border-l-8 border-slate-600 hover:shadow-xl group">
+                    <!-- 4. ABSENSI & SUSULAN (BARU) -->
+                    <a href="absen_ujian.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-indigo-500 hover:shadow-xl group flex flex-col">
                         <div class="flex justify-between items-start mb-4">
-                            <div class="bg-slate-700 text-white p-3 rounded-lg">
+                            <div class="bg-indigo-100 text-indigo-600 p-3 rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition">
+                                <i class="fas fa-clipboard-user fa-2x"></i>
+                            </div>
+                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">ADMINISTRASI</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-indigo-600">Absensi & Susulan</h3>
+                        <p class="text-sm text-gray-500 mt-auto">Input kehadiran harian dan kelola jadwal siswa ujian susulan.</p>
+                    </a>
+
+                    <!-- 5. ADMIN PANEL (IT) -->
+                    <a href="admin.html" class="btn-card bg-slate-800 p-6 rounded-xl shadow-md border-l-8 border-slate-600 hover:shadow-xl group flex flex-col">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="bg-slate-700 text-white p-3 rounded-lg group-hover:bg-slate-600 transition">
                                 <i class="fas fa-server fa-2x"></i>
                             </div>
-                            <span class="text-xs bg-red-600 text-white px-2 py-1 rounded">IT ONLY</span>
+                            <span class="bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded">RESTRICTED</span>
                         </div>
                         <h3 class="text-xl font-bold text-white mb-2">Admin Panel</h3>
-                        <p class="text-sm text-slate-400">Monitoring server dan keamanan.</p>
+                        <p class="text-sm text-slate-400 mt-auto">Monitoring server, buka blokir siswa, dan manajemen database.</p>
                     </a>
                     
-                    <!-- 5. SISWA (Link Cepat) -->
-                    <a href="siswa.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-green-500 hover:shadow-xl group">
+                    <!-- 6. UJIAN SISWA (LINK) -->
+                    <a href="siswa.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-green-500 hover:shadow-xl group flex flex-col opacity-80 hover:opacity-100">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-green-100 text-green-600 p-3 rounded-lg group-hover:bg-green-600 group-hover:text-white transition">
                                 <i class="fas fa-laptop-code fa-2x"></i>
                             </div>
+                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">CLIENT</span>
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-green-600">Halaman Ujian Siswa</h3>
-                        <p class="text-sm text-gray-500">Tampilan peserta ujian.</p>
+                        <p class="text-sm text-gray-500 mt-auto">Tampilan layar ujian untuk peserta didik (Client Side).</p>
                     </a>
-<!-- 6. ABSENSI & SUSULAN (BARU) -->
-<a href="absen_ujian.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-indigo-500 hover:shadow-xl group">
-    <div class="flex justify-between items-start mb-4">
-        <div class="bg-indigo-100 text-indigo-600 p-3 rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition">
-            <i class="fas fa-clipboard-user fa-2x"></i>
-        </div>
-    </div>
-    <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-indigo-600">Absensi & Susulan</h3>
-    <p class="text-sm text-gray-500">Input kehadiran dan kelola siswa ujian susulan.</p>
-</a>
+
                 </div>
             </main>
 
-            <footer class="bg-gray-800 text-gray-400 text-center p-4 text-xs mt-auto">
-                <p>&copy; 2025 SMP ALBANNA - Computer Based Test System.</p>
+            <footer class="bg-gray-800 text-gray-400 text-center p-4 text-xs mt-10">
+                <p>&copy; 2025 SMP ALBANNA - Computer Based Test System. All rights reserved.</p>
             </footer>
         </div>
 
@@ -158,7 +174,7 @@
     <script>
         const { createApp } = Vue;
 
-        // 1. GENERATE 30 AKUN (guru01 - guru30)
+        // 1. GENERATE AKUN DUMMY (guru01 - guru30)
         const generatedUsers = [];
         for (let i = 1; i <= 30; i++) {
             const num = i < 10 ? '0' + i : i;
@@ -168,9 +184,8 @@
                 name: `Guru Mapel ${num}`
             });
         }
-
-        // Tambahan akun admin/it manual jika perlu
-        generatedUsers.push({ username: 'admin', password: 'admin123', name: 'Administrator' });
+        // Akun Admin Tambahan
+        generatedUsers.push({ username: 'admin', password: 'admin123', name: 'Administrator IT' });
 
         createApp({
             data() {
@@ -190,12 +205,12 @@
                 handleLogin() {
                     const { username, password } = this.loginForm;
                     
-                    // Cari user di database dummy
+                    // Cari user di array dummy
                     const user = generatedUsers.find(u => u.username === username && u.password === password);
 
                     if (user) {
                         this.currentUser = user;
-                        // Simpan ke Session Storage (Hilang saat browser ditutup)
+                        // Simpan ke Session Storage (Akan hilang saat browser ditutup total)
                         sessionStorage.setItem('cbt_user_session', JSON.stringify(user));
                         this.loginForm = { username: '', password: '' };
                     } else {
@@ -203,9 +218,11 @@
                     }
                 },
                 logout() {
-                    if(confirm("Yakin ingin keluar?")) {
+                    if(confirm("Yakin ingin keluar dari akun ini?")) {
                         this.currentUser = null;
                         sessionStorage.removeItem('cbt_user_session');
+                        // Opsional: Bersihkan draft lokal jika diperlukan keamanan ekstra
+                        // localStorage.clear(); 
                     }
                 }
             }
