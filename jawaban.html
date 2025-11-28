@@ -40,10 +40,10 @@
                     <h3 class="px-4 text-xs font-bold text-gray-400 uppercase mb-2 mt-2">Kelas {{ grade }}</h3>
                     <ul>
                         <li v-for="cls in subClasses" :key="cls">
-                            <button @click="selectedClass = cls; selectedMapel = ''" 
-                                :class="['w-full text-left px-4 py-2 rounded mb-1 text-sm font-bold flex justify-between items-center transition', selectedClass === cls ? 'bg-blue-100 text-blue-800 border-l-4 border-blue-600' : 'text-gray-600 hover:bg-gray-50']">
+                            <button @click="switchClass(cls)" 
+                                :class="['w-full text-left px-4 py-2 rounded mb-1 text-sm font-bold flex justify-between items-center transition duration-150', selectedClass === cls ? 'bg-blue-100 text-blue-800 border-l-4 border-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600']">
                                 <span>{{ cls }}</span>
-                                <span class="bg-gray-200 text-gray-600 text-xs px-2 rounded-full">{{ getCountPerClass(cls) }}</span>
+                                <span :class="['text-xs px-2 py-0.5 rounded-full', selectedClass === cls ? 'bg-blue-200 text-blue-900' : 'bg-gray-200 text-gray-600']">{{ getCountPerClass(cls) }}</span>
                             </button>
                         </li>
                     </ul>
@@ -103,7 +103,7 @@
                         <tbody class="divide-y divide-gray-100 text-sm">
                             <tr v-for="(res, index) in sortedResults" :key="res.id" class="hover:bg-blue-50 transition group">
                                 <td class="p-4 text-center text-gray-500">{{ index + 1 }}</td>
-                                <td class="p-4 font-bold text-gray-800 uppercase">{{ res.student.nama }}</td>
+                                <td class="p-4 font-bold text-gray-800 uppercase">{{ res.student?.nama || 'Tanpa Nama' }}</td>
                                 <td class="p-4 text-gray-600">{{ res.mapel }}</td>
                                 
                                 <!-- Status Koreksi (Cek apakah nilai manual sudah masuk) -->
@@ -145,7 +145,7 @@
                 <div class="p-5 border-b bg-blue-50 flex justify-between items-center">
                     <div>
                         <h3 class="font-bold text-lg text-blue-900"><i class="fas fa-edit mr-2"></i>Koreksi Nilai Siswa</h3>
-                        <p class="text-xs text-blue-700">{{ correctionData.student.nama }} | {{ correctionData.mapel }}</p>
+                        <p class="text-xs text-blue-700">{{ correctionData.student?.nama }} | {{ correctionData.mapel }}</p>
                     </div>
                     <button @click="isCorrecting = false" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button>
                 </div>
@@ -280,17 +280,25 @@
             },
             computed: {
                 availableMapels() {
-                    const classResults = this.allResults.filter(r => r.student.kelas === this.selectedClass);
+                    // Safe check: Pastikan r.student ada
+                    const classResults = this.allResults.filter(r => r.student && r.student.kelas === this.selectedClass);
                     return [...new Set(classResults.map(r => r.mapel))].sort();
                 },
                 filteredResults() {
                     return this.allResults.filter(r => {
+                        if (!r.student) return false; // Skip corrupted data
                         const matchClass = r.student.kelas === this.selectedClass;
                         const matchMapel = this.selectedMapel ? r.mapel === this.selectedMapel : true;
                         return matchClass && matchMapel;
                     });
                 },
-                sortedResults() { return [...this.filteredResults].sort((a, b) => a.student.nama.localeCompare(b.student.nama)); },
+                sortedResults() { 
+                    return [...this.filteredResults].sort((a, b) => {
+                        const nameA = a.student?.nama || '';
+                        const nameB = b.student?.nama || '';
+                        return nameA.localeCompare(nameB);
+                    }); 
+                },
                 
                 // Hitung statistik sementara saat di modal koreksi
                 tempStats() {
@@ -327,7 +335,13 @@
                 });
             },
             methods: {
-                getCountPerClass(cls) { return this.allResults.filter(r => r.student.kelas === cls).length; },
+                switchClass(cls) {
+                    this.selectedClass = cls;
+                    this.selectedMapel = ''; // Reset filter mapel saat ganti kelas
+                },
+                getCountPerClass(cls) { 
+                    return this.allResults.filter(r => r.student && r.student.kelas === cls).length; 
+                },
                 
                 // --- HELPERS SOAL ---
                 getExamData(examId) { return this.bankSoalCache[examId]; },
@@ -349,14 +363,11 @@
                 needsManualCorrection(res) {
                     const exam = this.getExamData(res.examId);
                     if(!exam) return false;
-                    // Cek apakah ada soal uraian/esai yang belum punya skor di manualScores
                     const hasEssay = exam.soal.some(q => ['URAIAN', 'ESAI'].includes(q.type));
                     if (!hasEssay) return false;
 
-                    // Jika ada esai tapi belum ada data manualScores, atau nilainya belum lengkap
                     if (!res.manualScores) return true;
                     
-                    // Cek per butir
                     return exam.soal.some((q, idx) => {
                         return ['URAIAN', 'ESAI'].includes(q.type) && res.manualScores[idx] === undefined;
                     });
