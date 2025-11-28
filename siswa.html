@@ -28,7 +28,9 @@
         <div v-if="!isExamActive && !isLocked && !isFinished && !isLoading && !showWarningModal" class="flex flex-col items-center justify-center min-h-screen px-4 bg-gray-100">
             <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md border-t-8 border-blue-900">
                 <div class="text-center mb-6">
-                    <img src="https://img.icons8.com/fluency/96/null/student-male.png" class="h-16 mx-auto mb-2">
+                    <div class="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-900">
+                        <i class="fas fa-user-graduate fa-3x"></i>
+                    </div>
                     <h1 class="text-2xl font-bold text-blue-900">LOGIN PESERTA</h1>
                     <p class="text-xs text-gray-500 tracking-widest">CBT SMP ALBANNA</p>
                 </div>
@@ -60,8 +62,10 @@
                                 {{ exam.config.mapel }} ({{ exam.config.durasi }} Menit)
                             </option>
                         </select>
-                        <p v-if="availableExams.length === 0 && student.kelas" class="text-xs text-red-400 mt-1 italic">
-                            * Belum ada soal aktif untuk kelas {{ student.kelas }}
+                        
+                        <!-- Pesan jika tidak ada soal -->
+                        <p v-if="availableExams.length === 0 && student.kelas" class="text-xs text-red-500 mt-2 italic bg-red-50 p-2 rounded border border-red-100">
+                            <i class="fas fa-info-circle"></i> Tidak ada ujian aktif untuk kelas {{ student.kelas }}.<br>Hubungi pengawas jika soal belum dibuka.
                         </p>
                     </div>
 
@@ -159,6 +163,18 @@
             <div class="bg-red-800 bg-opacity-50 p-6 rounded-xl border border-red-400 max-w-lg"><h3 class="font-bold mb-2 uppercase tracking-wider text-sm">Solusi:</h3><p class="mb-4">Lapor ke <strong>Pengawas Ujian</strong> untuk membuka blokir.</p><div class="bg-white text-red-900 px-4 py-2 rounded font-mono font-bold text-lg">{{ student.nama }}</div></div>
         </div>
 
+        <!-- 4. HALAMAN SELESAI -->
+        <div v-if="isFinished" class="min-h-screen bg-green-50 flex flex-col items-center justify-center p-8 text-center">
+            <div class="bg-white p-6 rounded-full shadow-lg mb-6"><i class="fas fa-check-circle fa-5x text-green-500"></i></div>
+            <h1 class="text-3xl font-bold text-green-800 mb-2">UJIAN SELESAI</h1>
+            <p class="text-gray-600 mb-8">Jawaban Anda telah berhasil disimpan.</p>
+            <div class="bg-white p-6 rounded-xl shadow-md w-full max-w-md border-t-4 border-green-500">
+                <div class="flex justify-between border-b pb-2 mb-2"><span class="text-gray-500 text-sm">Nama</span><span class="font-bold text-gray-800">{{ student.nama }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500 text-sm">Waktu Kirim</span><span class="font-bold text-gray-800">{{ submitTime }}</span></div>
+            </div>
+            <p class="mt-8 text-xs text-gray-400">Mengalihkan ke Halaman Hasil...</p>
+        </div>
+
     </div>
 
     <script type="module">
@@ -183,7 +199,7 @@
                 return {
                     loadingMessage: 'Menghubungkan ke Server...',
                     isLoading: true,
-                    student: { nama: '', nis: '', kelas: '', mapel: '' },
+                    student: { nama: '', kelas: '', mapel: '' },
                     allExams: [], selectedExamId: '',
                     isExamActive: false, isLocked: false, isFinished: false, showWarningModal: false,
                     agreed: false,
@@ -195,7 +211,8 @@
                 availableExams() {
                     if(!this.student.kelas) return [];
                     const grade = this.student.kelas.charAt(0);
-                    return this.allExams.filter(e => e.config.kelas == grade);
+                    // FILTER: Hanya tampilkan soal yg kelasnya cocok DAN Gembok Terbuka (isLocked == false)
+                    return this.allExams.filter(e => e.config.kelas == grade && e.isLocked === false);
                 },
                 timerDisplay() {
                     const m = Math.floor(this.timerSeconds/60); const s = this.timerSeconds%60;
@@ -227,6 +244,8 @@
                 async checkLogin() {
                     if(!this.student.nama || !this.student.kelas || !this.selectedExamId) return alert("Lengkapi data!");
                     this.isLoading = true;
+                    this.loadingMessage = "Memeriksa Data Siswa...";
+
                     try {
                         // Cek Ganda (Manual Filter)
                         const qSubmit = query(collection(db, "jawaban_siswa"), where("examId", "==", this.selectedExamId));
@@ -237,7 +256,7 @@
                         const qBlock = query(collection(db, "blocked_students"), where("examId", "==", this.selectedExamId));
                         const snapBlock = await getDocs(qBlock);
                         const isBlocked = snapBlock.docs.some(doc => doc.data().student.nama.toUpperCase() === this.student.nama.toUpperCase());
-                        if(isBlocked) throw new Error("Nama Anda TERBLOKIR oleh sistem.");
+                        if(isBlocked) throw new Error("Nama Anda TERBLOKIR oleh sistem. Hubungi Pengawas.");
 
                         this.showWarningModal = true; 
                     } catch (e) { 
@@ -295,15 +314,16 @@
                             student: this.student, examId: this.activeExam.id, mapel: this.activeExam.config.mapel, answers: this.answers, timestamp: new Date().toISOString()
                         });
                         
-                        // MODIFIKASI: REDIRECT KE JAWABAN.HTML
-                        alert("Jawaban berhasil dikirim! Anda akan diarahkan ke Halaman Hasil.");
+                        this.isExamActive = false; this.isFinished = true; this.submitTime = new Date().toLocaleTimeString();
                         
                         if (document.exitFullscreen) document.exitFullscreen();
                         window.onbeforeunload = null;
                         
-                        // Redirect
-                        window.location.href = 'jawaban.html';
-
+                        // Redirect ke halaman jawaban setelah 2 detik
+                        setTimeout(() => {
+                            window.location.href = 'jawaban.html';
+                        }, 2000);
+                        
                     } catch(e) {
                         alert("Gagal kirim: " + e.message); this.isExamActive = true;
                     } finally { this.isLoading = false; }
