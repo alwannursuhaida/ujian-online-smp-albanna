@@ -137,7 +137,7 @@
                         <p class="text-sm text-gray-500 mt-auto">Input kehadiran harian dan kelola jadwal siswa ujian susulan.</p>
                     </a>
 
-                    <!-- 5. ADMINISTRASI (BERITA ACARA) - BARU -->
+                    <!-- 5. ADMINISTRASI (BERITA ACARA) -->
                     <a href="administrasi.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-teal-500 hover:shadow-xl group flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-teal-100 text-teal-600 p-3 rounded-lg group-hover:bg-teal-600 group-hover:text-white transition">
@@ -160,9 +160,21 @@
                         <h3 class="text-xl font-bold text-white mb-2">Admin Panel</h3>
                         <p class="text-sm text-slate-400 mt-auto">Monitoring server, buka blokir siswa, dan manajemen database.</p>
                     </a>
+
+                    <!-- 7. PORTAL REMIDI (SISWA) - BARU -->
+                    <a href="remidi.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-pink-500 hover:shadow-xl group flex flex-col">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="bg-pink-100 text-pink-600 p-3 rounded-lg group-hover:bg-pink-600 group-hover:text-white transition">
+                                <i class="fas fa-clipboard-check fa-2x"></i>
+                            </div>
+                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">SISWA</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-pink-600">Cek Kelulusan & Remidi</h3>
+                        <p class="text-sm text-gray-500 mt-auto">Cek status kelulusan mapel dan jadwal ujian remidi.</p>
+                    </a>
                     
-                    <!-- 7. UJIAN SISWA (LINK) -->
-                    <a href="siswa.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-green-500 hover:shadow-xl group flex flex-col opacity-80 hover:opacity-100">
+                    <!-- 8. UJIAN SISWA (LINK) -->
+                    <a href="siswa.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-green-500 hover:shadow-xl group flex flex-col opacity-90 hover:opacity-100">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-green-100 text-green-600 p-3 rounded-lg group-hover:bg-green-600 group-hover:text-white transition">
                                 <i class="fas fa-laptop-code fa-2x"></i>
@@ -233,8 +245,6 @@
                     if(confirm("Yakin ingin keluar dari akun ini?")) {
                         this.currentUser = null;
                         sessionStorage.removeItem('cbt_user_session');
-                        // Opsional: Bersihkan draft lokal jika diperlukan keamanan ekstra
-                        // localStorage.clear(); 
                     }
                 }
             }
