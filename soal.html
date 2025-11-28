@@ -6,7 +6,10 @@
     <title>Input Bank Soal - SMP ALBANNA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- PDF Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Excel Library (SheetJS) - BARU -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -44,7 +47,7 @@
             </div>
         </div>
 
-        <!-- PROGRESS BAR (4 Steps) -->
+        <!-- PROGRESS BAR -->
         <div class="flex justify-between items-center mb-8 relative px-10 max-w-3xl mx-auto">
             <div class="absolute left-0 top-1/2 w-full h-1 bg-gray-300 -z-10"></div>
             <div :class="['w-10 h-10 rounded-full flex items-center justify-center font-bold text-white transition-all', step >= 1 ? 'bg-blue-900 scale-110' : 'bg-gray-400']">1</div>
@@ -101,24 +104,21 @@
             </button>
         </div>
 
-        <!-- STEP 2: KONFIGURASI JUMLAH & SKOR (BARU) -->
+        <!-- STEP 2: KONFIGURASI JUMLAH & SKOR (TETAP) -->
         <div v-if="step === 2" class="bg-white p-8 rounded-lg shadow-lg max-w-3xl mx-auto border-t-8 border-indigo-600">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold text-gray-800">2. Konfigurasi Soal</h2>
                 <button @click="step=1" class="text-sm text-gray-500 font-bold"><i class="fas fa-arrow-left"></i> Kembali</button>
             </div>
             
-            <p class="text-sm text-gray-600 mb-4 bg-indigo-50 p-3 rounded">Tentukan komposisi soal. Anda bisa mengisi hingga 5 jenis soal yang berbeda dalam satu paket ujian.</p>
+            <p class="text-sm text-gray-600 mb-4 bg-indigo-50 p-3 rounded">Tentukan komposisi soal. Anda bisa mengisi hingga 5 jenis soal yang berbeda.</p>
 
             <div class="space-y-3">
-                <!-- Header Tabel -->
                 <div class="grid grid-cols-12 gap-2 font-bold text-xs text-gray-500 uppercase mb-2">
                     <div class="col-span-6">Jenis Soal</div>
-                    <div class="col-span-3">Jumlah Butir</div>
-                    <div class="col-span-3">Skor Per Butir</div>
+                    <div class="col-span-3">Jumlah</div>
+                    <div class="col-span-3">Skor/Butir</div>
                 </div>
-
-                <!-- 5 Baris Konfigurasi -->
                 <div v-for="(row, index) in questionConfig" :key="index" class="grid grid-cols-12 gap-2 items-center bg-gray-50 p-2 rounded border hover:bg-gray-100 transition">
                     <div class="col-span-6">
                         <select v-model="row.type" class="w-full p-2 border rounded text-sm font-bold text-blue-900">
@@ -130,31 +130,37 @@
                             <option value="URAIAN">Uraian / Esai</option>
                         </select>
                     </div>
-                    <div class="col-span-3">
-                        <input type="number" v-model="row.count" class="w-full p-2 border rounded text-center" placeholder="0" min="0">
-                    </div>
-                    <div class="col-span-3">
-                        <input type="number" v-model="row.score" class="w-full p-2 border rounded text-center" placeholder="0" min="0">
-                    </div>
+                    <div class="col-span-3"><input type="number" v-model="row.count" class="w-full p-2 border rounded text-center" placeholder="0" min="0"></div>
+                    <div class="col-span-3"><input type="number" v-model="row.score" class="w-full p-2 border rounded text-center" placeholder="0" min="0"></div>
                 </div>
             </div>
-
             <div class="mt-6 bg-gray-100 p-4 rounded text-right">
                 <p class="text-sm font-bold text-gray-700">Estimasi Total Skor: <span class="text-blue-600 text-xl">{{ totalEstimatedScore }}</span></p>
             </div>
-
             <button @click="generateQuestions" class="w-full mt-6 bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition shadow-lg">
                 GENERATE TEMPLATE SOAL <i class="fas fa-cogs ml-2"></i>
             </button>
         </div>
 
-        <!-- STEP 3: INPUT SOAL -->
+        <!-- STEP 3: INPUT SOAL (FITUR EXCEL & PGK 5 OPSI) -->
         <div v-if="step === 3">
-            <div class="sticky top-0 z-40 bg-white p-4 shadow mb-6 rounded flex justify-between items-center border-l-4 border-blue-900">
+            <div class="sticky top-0 z-40 bg-white p-4 shadow mb-6 rounded flex flex-col md:flex-row justify-between items-center border-l-4 border-blue-900 gap-3">
                 <div>
                     <h2 class="font-bold text-xl text-blue-900">{{ config.mapel }}</h2>
                     <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-1 rounded">{{ questions.length }} Butir Soal</span>
                 </div>
+                
+                <!-- TOMBOL EXCEL (BARU) -->
+                <div class="flex gap-2 flex-wrap justify-center">
+                    <button @click="downloadExcelTemplate" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-xs font-bold flex items-center gap-1 shadow">
+                        <i class="fas fa-file-excel"></i> Download Template
+                    </button>
+                    <label class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-xs font-bold flex items-center gap-1 shadow cursor-pointer">
+                        <i class="fas fa-upload"></i> Upload Excel
+                        <input type="file" accept=".xlsx, .xls" @change="handleExcelUpload" class="hidden">
+                    </label>
+                </div>
+
                 <div class="flex gap-2">
                     <button @click="step=2" class="px-4 py-2 text-sm text-gray-500 font-bold hover:text-blue-900"><i class="fas fa-cog"></i> Config</button>
                     <button @click="validateStep3" class="px-6 py-2 bg-green-600 text-white rounded font-bold hover:bg-green-700 shadow transition">
@@ -189,12 +195,16 @@
                         <input v-model="q.options[opt]" type="text" class="w-full p-2 border rounded focus:border-blue-500 outline-none" :placeholder="'Jawaban '+opt">
                     </div>
                 </div>
+                
+                <!-- PG KOMPLEKS (5 OPSI: 4 Wajib, 1 Opsional) -->
                 <div v-if="q.type === 'PG_KOMPLEKS'" class="grid gap-2">
                     <div v-for="(o, i) in q.options" :key="i" class="flex gap-2 items-center">
                         <input type="checkbox" disabled class="w-5 h-5 text-gray-300">
-                        <input v-model="o.text" class="w-full p-2 border rounded bg-white focus:border-blue-500 outline-none" placeholder="Tulis Pernyataan...">
+                        <input v-model="o.text" class="w-full p-2 border rounded bg-white focus:border-blue-500 outline-none" 
+                            :placeholder="i < 4 ? `Pernyataan ${i+1} (Wajib)` : `Pernyataan ${i+1} (Opsional)`">
                     </div>
                 </div>
+                
                 <div v-if="q.type === 'BS'" class="text-xs text-gray-400 italic bg-gray-50 p-3 rounded border border-dashed text-center">Siswa akan memilih Benar atau Salah.</div>
                 <div v-if="['URAIAN', 'ISIAN'].includes(q.type)" class="text-xs text-gray-400 italic bg-gray-50 p-3 rounded border border-dashed text-center">Area jawaban siswa.</div>
             </div>
@@ -222,28 +232,27 @@
                         No. {{ index + 1 }} <span class="font-normal text-xs text-gray-500">({{ q.typeLabel }})</span>
                     </div>
                     
-                    <!-- KUNCI PG -->
                     <div v-if="q.type === 'PG'" class="flex gap-4">
                         <label v-for="opt in ['A', 'B', 'C', 'D']" :class="['cursor-pointer font-bold text-sm px-3 py-1 rounded border transition', q.answer === opt ? 'bg-green-600 text-white border-green-600' : 'hover:bg-gray-100']">
                             <input type="radio" :name="'k'+index" :value="opt" v-model="q.answer" class="hidden"> {{opt}}
                         </label>
                     </div>
-                    <!-- KUNCI BS -->
                     <div v-if="q.type === 'BS'" class="flex gap-4">
                         <label :class="['cursor-pointer text-sm px-3 py-1 rounded border transition', q.answer === 'BENAR' ? 'bg-green-600 text-white' : 'hover:bg-gray-100']"><input type="radio" :name="'k'+index" value="BENAR" v-model="q.answer" class="hidden"> BENAR</label>
                         <label :class="['cursor-pointer text-sm px-3 py-1 rounded border transition', q.answer === 'SALAH' ? 'bg-red-600 text-white' : 'hover:bg-gray-100']"><input type="radio" :name="'k'+index" value="SALAH" v-model="q.answer" class="hidden"> SALAH</label>
                     </div>
-                    <!-- KUNCI PGK -->
-                    <div v-if="q.type === 'PG_KOMPLEKS'" class="flex gap-2 flex-wrap">
-                        <label v-for="(o, i) in q.options" :key="i" :class="['text-xs flex items-center gap-1 px-2 py-1 rounded border cursor-pointer', o.isCorrect ? 'bg-green-100 border-green-400 text-green-800' : 'bg-white']">
-                            <input type="checkbox" v-model="o.isCorrect" class="accent-green-600"> {{ o.text ? o.text.substring(0, 20)+'...' : 'Opsi '+(i+1) }}
-                        </label>
+                    <!-- KUNCI PG KOMPLEKS (5 OPSI) -->
+                    <div v-if="q.type === 'PG_KOMPLEKS'" class="flex flex-col gap-1">
+                        <div v-for="(o, i) in q.options" :key="i" v-show="o.text">
+                            <label :class="['text-xs flex items-center gap-2 px-2 py-1 rounded border cursor-pointer', o.isCorrect ? 'bg-green-100 border-green-400 text-green-800' : 'bg-white']">
+                                <input type="checkbox" v-model="o.isCorrect" class="accent-green-600"> 
+                                <span>{{ o.text }}</span>
+                            </label>
+                        </div>
                     </div>
-                    <!-- KUNCI ISIAN -->
                     <div v-if="q.type === 'ISIAN'">
                         <input v-model="q.answer" class="w-full p-2 text-sm border rounded bg-green-50" placeholder="Kunci Jawaban Singkat (Tepat)">
                     </div>
-                    <!-- KUNCI URAIAN -->
                     <div v-if="q.type === 'URAIAN'">
                         <textarea v-model="q.answer" class="w-full p-2 text-xs border bg-green-50 rounded" placeholder="Kata Kunci / Rubrik Penilaian..."></textarea>
                     </div>
@@ -282,8 +291,6 @@
                     currentUser: null, storageKey: '', step: 1, isLoading: false, lastSaved: null, hasDraft: false,
                     config: { mapel: '', guru: '', kelas: '7', tanggal: '', durasi: '' },
                     sekolah: { logoBase64: null, logoPreview: null },
-                    
-                    // DATA BARU: CONFIG 5 BARIS
                     questionConfig: [
                         { type: '', count: '', score: '' },
                         { type: '', count: '', score: '' },
@@ -292,7 +299,6 @@
                         { type: '', count: '', score: '' }
                     ],
                     questions: [],
-                    
                     mapelList: ['AGAMA ISLAM', 'BAHASA ARAB', 'BAHASA BALI', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 'INFORMATIKA', 'IPA', 'IPS', 'KKA', 'MATEMATIKA', 'OLAHRAGA', 'PKN', 'SENI BUDAYA']
                 }
             },
@@ -355,12 +361,12 @@
                     this.step = target; window.scrollTo(0,0);
                 },
                 
-                // --- GENERATOR SOAL ---
+                // --- GENERATOR SOAL (UPDATED: 5 Options for PG_KOMPLEKS) ---
                 generateQuestions() {
-                    // Cek apakah ada config yang diisi
                     const hasConfig = this.questionConfig.some(c => c.type && c.count > 0 && c.score > 0);
                     if(!hasConfig) return alert("Isi minimal satu baris konfigurasi soal!");
 
+                    // Jika ingin menambah, bukan reset (opsional), tapi di sini kita reset agar sesuai config
                     this.questions = [];
                     
                     this.questionConfig.forEach(cfg => {
@@ -374,7 +380,10 @@
                                     text: '', image: null, answer: ''
                                 };
                                 if(cfg.type === 'PG') q.options = {A:'',B:'',C:'',D:''};
-                                else if(cfg.type === 'PG_KOMPLEKS') q.options = Array(4).fill().map(()=>({text:'', isCorrect:false}));
+                                else if(cfg.type === 'PG_KOMPLEKS') {
+                                    // UPDATE: 5 Options for PG Kompleks
+                                    q.options = Array(5).fill().map(()=>({text:'', isCorrect:false})); 
+                                }
                                 this.questions.push(q);
                             }
                         }
@@ -390,19 +399,84 @@
                     else alert("Gambar Max 1MB");
                 },
 
+                // --- FITUR EXCEL TEMPLATE ---
+                downloadExcelTemplate() {
+                    if(this.questions.length === 0) return alert("Generate soal dulu di Halaman 2!");
+                    
+                    const data = this.questions.map((q, i) => ({
+                        "No": i + 1,
+                        "Jenis": q.typeLabel,
+                        "Pertanyaan": "",
+                        "Opsi A / Pernyataan 1": "",
+                        "Opsi B / Pernyataan 2": "",
+                        "Opsi C / Pernyataan 3": "",
+                        "Opsi D / Pernyataan 4": "",
+                        "Opsi E / Pernyataan 5 (PGK Only)": ""
+                    }));
+
+                    const ws = XLSX.utils.json_to_sheet(data);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Template Soal");
+                    XLSX.writeFile(wb, `Template_${this.config.mapel}.xlsx`);
+                },
+
+                handleExcelUpload(e) {
+                    const file = e.target.files[0];
+                    if(!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const data = new Uint8Array(ev.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const json = XLSX.utils.sheet_to_json(sheet);
+
+                        // Mapping Data
+                        let updatedCount = 0;
+                        json.forEach((row) => {
+                            const index = row["No"] - 1;
+                            if(this.questions[index]) {
+                                this.questions[index].text = row["Pertanyaan"] || "";
+                                
+                                if(this.questions[index].type === 'PG') {
+                                    this.questions[index].options.A = row["Opsi A / Pernyataan 1"] || "";
+                                    this.questions[index].options.B = row["Opsi B / Pernyataan 2"] || "";
+                                    this.questions[index].options.C = row["Opsi C / Pernyataan 3"] || "";
+                                    this.questions[index].options.D = row["Opsi D / Pernyataan 4"] || "";
+                                }
+                                else if(this.questions[index].type === 'PG_KOMPLEKS') {
+                                    // Handle 5 Opsi
+                                    if(this.questions[index].options[0]) this.questions[index].options[0].text = row["Opsi A / Pernyataan 1"] || "";
+                                    if(this.questions[index].options[1]) this.questions[index].options[1].text = row["Opsi B / Pernyataan 2"] || "";
+                                    if(this.questions[index].options[2]) this.questions[index].options[2].text = row["Opsi C / Pernyataan 3"] || "";
+                                    if(this.questions[index].options[3]) this.questions[index].options[3].text = row["Opsi D / Pernyataan 4"] || "";
+                                    if(this.questions[index].options[4]) this.questions[index].options[4].text = row["Opsi E / Pernyataan 5 (PGK Only)"] || "";
+                                }
+                                updatedCount++;
+                            }
+                        });
+                        alert(`Berhasil mengisi ${updatedCount} soal dari Excel!`);
+                    };
+                    reader.readAsArrayBuffer(file);
+                },
+
                 validateStep3() {
                     for(let i=0; i<this.questions.length; i++) {
                         if(!this.questions[i].text && !this.questions[i].image) return alert(`Soal No. ${i+1} Masih Kosong!`);
-                        if(this.questions[i].type === 'PG') {
+                        
+                        // Validasi PG Kompleks (4 Wajib)
+                        if(this.questions[i].type === 'PG_KOMPLEKS') {
                             const opts = this.questions[i].options;
-                            if(!opts.A || !opts.B || !opts.C || !opts.D) return alert(`Opsi PG Soal ${i+1} belum lengkap!`);
+                            // Cek 4 pertama harus ada text
+                            for(let j=0; j<4; j++) {
+                                if(!opts[j].text) return alert(`Soal No. ${i+1} (PG Kompleks): Pernyataan ke-${j+1} Wajib Diisi!`);
+                            }
                         }
                     }
                     this.step = 4; window.scrollTo(0,0);
                 },
 
                 async saveAndExport() {
-                    // Validasi Kunci
                     for(let q of this.questions) {
                         if(['PG','BS','ISIAN'].includes(q.type) && !q.answer) return alert(`Kunci Jawaban ${q.typeLabel} belum diisi!`);
                         if(q.type === 'PG_KOMPLEKS' && !q.options.some(o=>o.isCorrect)) return alert("PG Kompleks minimal 1 jawaban benar!");
@@ -415,20 +489,14 @@
                             soal: this.questions,
                             tanggal_buat: new Date().toISOString(),
                             uploadedBy: this.currentUser.username,
-                            isLocked: true // Auto Lock Default
+                            isLocked: true
                         };
 
-                        // 1. Simpan ke Firebase
                         await addDoc(collection(db, "bank_soal"), paketSoal);
-
-                        // 2. Generate PDF
                         this.generatePDF();
-
-                        // 3. Cleanup
                         localStorage.removeItem(this.storageKey);
                         alert("✅ Berhasil! Rehat dulu, ada orang-orang yang harus kamu bahagiakan 😊");
                         window.location.reload();
-
                     } catch(e) { alert("Error: "+e.message); } 
                     finally { this.isLoading = false; }
                 },
@@ -436,24 +504,21 @@
                 generatePDF() {
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
-                    const pageWidth = doc.internal.pageSize.getWidth();
-
+                    
                     // KOP
                     if (this.sekolah.logoBase64) doc.addImage(this.sekolah.logoBase64, 'JPEG', 15, 10, 25, 25);
                     doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.text("SMP ALBANNA", 45, 18);
                     doc.setFontSize(10); doc.setFont("helvetica", "normal");
                     doc.text("Jl. Tukad Yeh Ho III No.10, Denpasar, Bali 80234", 45, 24);
                     doc.text("Telepon (0361) 238 4444  |  www.albanna.sch.id", 45, 29);
-                    doc.setLineWidth(0.5); doc.line(10, 35, pageWidth-10, 35);
+                    doc.setLineWidth(0.5); doc.line(10, 35, 200, 35);
 
-                    // Info
                     let y = 45;
                     doc.setFont("helvetica", "bold"); doc.setFontSize(12);
-                    doc.text(`NASKAH SOAL: ${this.config.mapel}`, pageWidth/2, y, {align:'center'}); y+=10;
+                    doc.text(`NASKAH SOAL: ${this.config.mapel}`, 105, y, {align:'center'}); y+=10;
                     doc.setFontSize(10); doc.setFont("helvetica", "normal");
                     doc.text(`Guru: ${this.config.guru}`, 15, y); doc.text(`Kelas: ${this.config.kelas}`, 80, y); doc.text(`Waktu: ${this.config.durasi} m`, 140, y); y+=10;
 
-                    // Loop Soal
                     this.questions.forEach((q, idx) => {
                         if (y > 270) { doc.addPage(); y = 20; }
                         doc.setFont("helvetica", "bold"); doc.text(`${idx+1}.`, 15, y);
@@ -476,13 +541,15 @@
                         }
                         else if(q.type === 'BS') { doc.text("[ ] Benar   [ ] Salah", 25, y); y+=6; }
                         else if(q.type === 'PG_KOMPLEKS') { 
-                            q.options.forEach(o=>{ 
-                                if (y > 280) { doc.addPage(); y = 20; }
-                                doc.rect(25, y-4, 4, 4); doc.text(o.text, 32, y); y+=6; 
+                            q.options.forEach((o, i)=>{ 
+                                if (o.text) { // Hanya tampilkan yg ada teks
+                                    if (y > 280) { doc.addPage(); y = 20; }
+                                    doc.rect(25, y-4, 4, 4); doc.text(o.text, 32, y); y+=6; 
+                                }
                             }); 
                         }
-                        else { y+=5; for(let l=0; l<3; l++) { doc.line(25, y, pageWidth-25, y); y+=8; } }
-                        y+=5; // Spasi antar soal (Double Spacing)
+                        else { y+=5; for(let l=0; l<3; l++) { doc.line(25, y, 180, y); y+=8; } }
+                        y+=5; // Double Spacing
                     });
 
                     doc.save(`SOAL_${this.config.mapel}.pdf`);
