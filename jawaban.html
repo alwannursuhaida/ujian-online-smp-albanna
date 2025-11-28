@@ -11,6 +11,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Montserrat', sans-serif; }
+        .score-badge { @apply px-2 py-1 rounded text-xs font-bold; }
+        .score-high { @apply bg-green-100 text-green-700; }
+        .score-med { @apply bg-yellow-100 text-yellow-700; }
+        .score-low { @apply bg-red-100 text-red-700; }
+        
         /* Custom Radio Button untuk Skor Manual */
         .score-radio:checked + label {
             background-color: #2563eb;
@@ -23,14 +28,25 @@
 
     <div id="grading-app" class="flex h-screen overflow-hidden">
         
-        <!-- 1. SIDEBAR: PILIH KELAS -->
+        <!-- 1. SIDEBAR: MENU & PILIH KELAS -->
         <div class="w-64 bg-white border-r flex flex-col h-full shadow-lg z-10">
             <div class="p-6 border-b bg-blue-900 text-white">
                 <h1 class="font-bold text-lg">REKAP NILAI</h1>
                 <p class="text-xs opacity-75">AUTO & MANUAL GRADING</p>
             </div>
             
-            <div class="flex-1 overflow-y-auto p-2">
+            <!-- MENU NAVIGASI UTAMA -->
+            <div class="p-2 border-b bg-slate-50">
+                <button @click="activeTab = 'rekap'" :class="['w-full text-left px-4 py-3 rounded mb-1 text-sm font-bold flex items-center gap-2 transition', activeTab === 'rekap' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100']">
+                    <i class="fas fa-list-ol w-5"></i> Rekap Per Siswa
+                </button>
+                <button @click="activeTab = 'monitoring'" :class="['w-full text-left px-4 py-3 rounded text-sm font-bold flex items-center gap-2 transition', activeTab === 'monitoring' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100']">
+                    <i class="fas fa-chart-line w-5"></i> Monitoring Koreksi
+                </button>
+            </div>
+            
+            <!-- LIST KELAS (Hanya muncul di tab Rekap) -->
+            <div v-if="activeTab === 'rekap'" class="flex-1 overflow-y-auto p-2">
                 <div v-for="(subClasses, grade) in kelasStructure" :key="grade" class="mb-4">
                     <h3 class="px-4 text-xs font-bold text-gray-400 uppercase mb-2 mt-2">Kelas {{ grade }}</h3>
                     <ul>
@@ -44,6 +60,9 @@
                     </ul>
                 </div>
             </div>
+            <div v-else class="flex-1 bg-slate-50 p-4 text-xs text-gray-400 text-center flex items-center justify-center">
+                <p>Mode Monitoring Aktif</p>
+            </div>
 
             <div class="p-4 border-t border-slate-200 bg-slate-50">
                 <a href="index.html" class="flex items-center justify-center gap-2 w-full bg-white border border-slate-300 text-slate-600 py-2 rounded font-bold text-xs hover:bg-blue-900 hover:text-white transition shadow-sm">
@@ -55,82 +74,112 @@
         <!-- 2. MAIN CONTENT -->
         <div class="flex-1 flex flex-col h-full bg-gray-50 overflow-hidden">
             
-            <!-- Header & Filter Mapel -->
-            <div class="bg-white p-6 shadow-sm border-b">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-800 mb-1">Data Kelas {{ selectedClass }}</h2>
-                        <p class="text-sm text-gray-500">Lakukan koreksi manual untuk soal Uraian/Esai agar nilai akurat.</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <select v-model="selectedMapel" class="p-3 border-2 border-blue-100 rounded-lg bg-gray-50 text-sm font-bold focus:border-blue-500 focus:outline-none transition min-w-[200px]">
-                            <option value="">-- Semua Mata Pelajaran --</option>
-                            <option v-for="m in availableMapels" :value="m">{{ m }}</option>
-                        </select>
+            <!-- --- TAB 1: REKAP NILAI (View Lama) --- -->
+            <div v-if="activeTab === 'rekap'" class="flex flex-col h-full">
+                <!-- Header & Filter Mapel -->
+                <div class="bg-white p-6 shadow-sm border-b">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800 mb-1">Data Kelas {{ selectedClass }}</h2>
+                            <p class="text-sm text-gray-500">Lakukan koreksi manual untuk soal Uraian/Esai agar nilai akurat.</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <select v-model="selectedMapel" class="p-3 border-2 border-blue-100 rounded-lg bg-gray-50 text-sm font-bold focus:border-blue-500 focus:outline-none transition min-w-[200px]">
+                                <option value="">-- Semua Mata Pelajaran --</option>
+                                <option v-for="m in availableMapels" :value="m">{{ m }}</option>
+                            </select>
 
-                        <button @click="exportToExcel" :disabled="!selectedMapel || filteredResults.length === 0" class="bg-green-600 text-white px-6 py-3 rounded-lg font-bold shadow hover:bg-green-700 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <i class="fas fa-file-excel"></i> ANALISIS RAPOR
-                        </button>
+                            <button @click="exportToExcel" :disabled="!selectedMapel || filteredResults.length === 0" class="bg-green-600 text-white px-6 py-3 rounded-lg font-bold shadow hover:bg-green-700 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <i class="fas fa-file-excel"></i> ANALISIS RAPOR
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabel Data -->
+                <div class="flex-1 overflow-y-auto p-8">
+                    <div v-if="filteredResults.length === 0" class="h-full flex flex-col items-center justify-center text-gray-400 -mt-10">
+                        <div class="bg-white p-6 rounded-full shadow-sm mb-4"><i class="fas fa-folder-open fa-4x text-gray-300"></i></div>
+                        <p class="text-lg font-medium">Data tidak ditemukan.</p>
+                    </div>
+                    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-50 text-slate-600 uppercase text-xs font-bold">
+                                <tr>
+                                    <th class="p-4 border-b w-16 text-center">No</th>
+                                    <th class="p-4 border-b">Nama Siswa</th>
+                                    <th class="p-4 border-b">Mata Pelajaran</th>
+                                    <th class="p-4 border-b text-center">Status Koreksi</th>
+                                    <th class="p-4 border-b text-center">Total Nilai</th>
+                                    <th class="p-4 border-b text-center w-48">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 text-sm">
+                                <tr v-for="(res, index) in sortedResults" :key="res.id" class="hover:bg-blue-50 transition group">
+                                    <td class="p-4 text-center text-gray-500">{{ index + 1 }}</td>
+                                    <td class="p-4 font-bold text-gray-800 uppercase">{{ res.student?.nama || 'Tanpa Nama' }}</td>
+                                    <td class="p-4 text-gray-600">{{ res.mapel }}</td>
+                                    <td class="p-4 text-center">
+                                        <span v-if="needsManualCorrection(res)" class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold animate-pulse flex items-center justify-center gap-1">
+                                            <i class="fas fa-exclamation-circle"></i> Butuh Koreksi
+                                        </span>
+                                        <span v-else class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold flex items-center justify-center gap-1">
+                                            <i class="fas fa-check-circle"></i> Selesai
+                                        </span>
+                                    </td>
+                                    <td class="p-4 text-center">
+                                        <span :class="getScoreClass(calculateScore(res))">{{ calculateScore(res) }}</span>
+                                    </td>
+                                    <td class="p-4 text-center">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <button @click="startCorrection(res)" class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded shadow transition" title="Koreksi Jawaban"><i class="fas fa-check-double"></i></button>
+                                            <button @click="deleteResult(res.id)" class="bg-red-100 text-red-600 hover:bg-red-600 hover:text-white p-2 rounded transition" title="Hapus Data"><i class="fas fa-trash"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <!-- Tabel Data -->
-            <div class="flex-1 overflow-y-auto p-8">
+            <!-- --- TAB 2: MONITORING KOREKSI (View Baru) --- -->
+            <div v-if="activeTab === 'monitoring'" class="flex flex-col h-full overflow-y-auto p-8">
+                <h2 class="text-2xl font-bold text-slate-800 mb-6">Monitoring Progres Koreksi</h2>
                 
-                <div v-if="filteredResults.length === 0" class="h-full flex flex-col items-center justify-center text-gray-400 -mt-10">
-                    <div class="bg-white p-6 rounded-full shadow-sm mb-4"><i class="fas fa-folder-open fa-4x text-gray-300"></i></div>
-                    <p class="text-lg font-medium">Data tidak ditemukan.</p>
-                </div>
-
-                <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-50 text-slate-600 uppercase text-xs font-bold">
-                            <tr>
-                                <th class="p-4 border-b w-16 text-center">No</th>
-                                <th class="p-4 border-b">Nama Siswa</th>
-                                <th class="p-4 border-b">Mata Pelajaran</th>
-                                <th class="p-4 border-b text-center">Status Koreksi</th>
-                                <th class="p-4 border-b text-center">Total Nilai</th>
-                                <th class="p-4 border-b text-center w-48">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 text-sm">
-                            <tr v-for="(res, index) in sortedResults" :key="res.id" class="hover:bg-blue-50 transition group">
-                                <td class="p-4 text-center text-gray-500">{{ index + 1 }}</td>
-                                <td class="p-4 font-bold text-gray-800 uppercase">{{ res.student?.nama || 'Tanpa Nama' }}</td>
-                                <td class="p-4 text-gray-600">{{ res.mapel }}</td>
-                                
-                                <!-- Status Koreksi -->
-                                <td class="p-4 text-center">
-                                    <span v-if="needsManualCorrection(res)" class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold animate-pulse flex items-center justify-center gap-1">
-                                        <i class="fas fa-exclamation-circle"></i> Butuh Koreksi
-                                    </span>
-                                    <span v-else class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold flex items-center justify-center gap-1">
-                                        <i class="fas fa-check-circle"></i> Selesai
-                                    </span>
-                                </td>
-
-                                <!-- Nilai Akhir -->
-                                <td class="p-4 text-center">
-                                    <span :class="getScoreClass(calculateScore(res))">{{ calculateScore(res) }}</span>
-                                </td>
-
-                                <td class="p-4 text-center">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <button @click="startCorrection(res)" class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded shadow transition" title="Koreksi Jawaban">
-                                            <i class="fas fa-check-double"></i>
-                                        </button>
-                                        <button @click="deleteResult(res.id)" class="bg-red-100 text-red-600 hover:bg-red-600 hover:text-white p-2 rounded transition" title="Hapus Data">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                <div v-for="(subClasses, grade) in kelasStructure" :key="grade" class="mb-10">
+                    <h3 class="text-xl font-bold text-blue-900 border-b-2 border-blue-200 pb-2 mb-4">KELAS {{ grade }}</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div v-for="cls in subClasses" :key="cls" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="bg-slate-50 px-4 py-3 border-b font-bold text-gray-700 flex justify-between">
+                                <span>{{ cls }}</span>
+                                <span class="text-xs bg-white border px-2 py-0.5 rounded text-gray-500">{{ getCountPerClass(cls) }} Siswa</span>
+                            </div>
+                            <div class="p-4">
+                                <div v-if="getMonitoringStats(cls).length === 0" class="text-center text-xs text-gray-400 py-4 italic">Belum ada data ujian.</div>
+                                <div v-else class="space-y-4">
+                                    <div v-for="stat in getMonitoringStats(cls)" :key="stat.mapel">
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span class="font-bold text-gray-800">{{ stat.mapel }}</span>
+                                            <span :class="stat.percent === 100 ? 'text-green-600' : 'text-orange-600'">
+                                                {{ stat.corrected }} / {{ stat.total }} ({{ stat.percent }}%)
+                                            </span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                            <div :class="['h-2.5 rounded-full transition-all duration-500', stat.percent === 100 ? 'bg-green-600' : 'bg-orange-500']" :style="{ width: stat.percent + '%' }"></div>
+                                        </div>
+                                        <div v-if="stat.percent < 100" class="text-[10px] text-orange-500 mt-0.5 text-right">
+                                            Butuh koreksi manual
+                                        </div>
                                     </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+
         </div>
 
         <!-- MODAL KOREKSI (SCORING) -->
@@ -255,13 +304,12 @@
             data() {
                 return {
                     isLoading: true,
+                    activeTab: 'rekap', // Default tab
                     kelasStructure: {'7': ['7A','7B','7C','7D','7E','7F'], '8': ['8A','8B','8C','8D','8E','8F'], '9': ['9A','9B','9C','9D','9E']},
                     selectedClass: '7A',
                     selectedMapel: '',
                     allResults: [],
                     bankSoalCache: {},
-                    
-                    // KOREKSI STATE
                     isCorrecting: false,
                     correctionData: null
                 }
@@ -286,8 +334,6 @@
                         return nameA.localeCompare(nameB);
                     }); 
                 },
-                
-                // STATISTIK SEMENTARA DI MODAL
                 tempStats() {
                     if (!this.correctionData) return { autoScore: 0, manualScore: 0 };
                     let auto = 0, manual = 0;
@@ -320,20 +366,41 @@
                 switchClass(cls) {
                     this.selectedClass = cls;
                     this.selectedMapel = '';
+                    // Jika di tab monitoring, switchClass hanya ubah highlight di sidebar, logic monitoring handle via loop
                 },
                 getCountPerClass(cls) { return this.allResults.filter(r => r.student && r.student.kelas === cls).length; },
                 formatDate(iso) { return new Date(iso).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); },
                 
                 getExamData(examId) { return this.bankSoalCache[examId]; },
-                
-                // --- UTILITIES ---
                 getQuestionText(examId, idx) { const e = this.getExamData(examId); return e && e.soal[idx] ? e.soal[idx].text : '?'; },
                 getQuestionType(examId, idx) { const e = this.getExamData(examId); return e && e.soal[idx] ? e.soal[idx].type : ''; },
                 getQuestionPoint(examId, idx) { const e = this.getExamData(examId); return e && e.soal[idx] ? e.soal[idx].poin : 0; },
                 getCorrectAnswer(examId, idx) { const e = this.getExamData(examId); return e && e.soal[idx] ? e.soal[idx].answer : '-'; },
                 formatAnswer(ans) { return Array.isArray(ans) ? (ans.length ? ans.join(', ') : '-') : (ans || '-'); },
 
-                // --- SCORE CALCULATIONS ---
+                // --- MONITORING LOGIC (BARU) ---
+                getMonitoringStats(cls) {
+                    const classResults = this.allResults.filter(r => r.student && r.student.kelas === cls);
+                    if (classResults.length === 0) return [];
+
+                    // Group by Mapel
+                    const mapelGroups = {};
+                    classResults.forEach(r => {
+                        if (!mapelGroups[r.mapel]) mapelGroups[r.mapel] = { total: 0, corrected: 0 };
+                        mapelGroups[r.mapel].total++;
+                        if (!this.needsManualCorrection(r)) {
+                            mapelGroups[r.mapel].corrected++;
+                        }
+                    });
+
+                    return Object.keys(mapelGroups).sort().map(m => ({
+                        mapel: m,
+                        total: mapelGroups[m].total,
+                        corrected: mapelGroups[m].corrected,
+                        percent: Math.round((mapelGroups[m].corrected / mapelGroups[m].total) * 100)
+                    }));
+                },
+
                 calculateScore(result) {
                     const exam = this.getExamData(result.examId);
                     if (!exam) return 0;
@@ -356,8 +423,6 @@
                     });
                     return { correct, total: totalObj };
                 },
-                
-                // --- FIXED CSS CLASSES METHOD ---
                 getScoreClass(score) {
                     const base = "px-2 py-1 rounded text-xs font-bold ";
                     if (score >= 80) return base + "bg-green-100 text-green-700";
@@ -382,7 +447,6 @@
                     return exam.soal.some((q, idx) => ['URAIAN', 'ESAI'].includes(q.type) && res.manualScores[idx] === undefined);
                 },
 
-                // --- ACTIONS ---
                 startCorrection(res) {
                     this.correctionData = JSON.parse(JSON.stringify(res));
                     if (!this.correctionData.manualScores) this.correctionData.manualScores = {};
@@ -401,7 +465,6 @@
                     if(confirm("Hapus data ini?")) await deleteDoc(doc(db, "jawaban_siswa", id));
                 },
 
-                // --- EXPORT ---
                 exportToExcel() {
                     if (this.sortedResults.length === 0) return alert("Data kosong!");
                     const examId = this.sortedResults[0].examId;
