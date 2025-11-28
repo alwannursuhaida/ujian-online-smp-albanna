@@ -3,446 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perencanaan Pembelajaran - SMP ALBANNA</title>
+    <title>Portal CBT - SMP ALBANNA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Montserrat', sans-serif; }
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.4s ease; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; }
-        
-        /* ANIMASI VISUAL */
-        .animate-float { animation: float 6s ease-in-out infinite; }
-        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-20px); } 100% { transform: translateY(0px); } }
-        
-        .animate-breathe { animation: breathe 5s infinite ease-in-out; }
-        @keyframes breathe { 
-            0% { transform: scale(1); opacity: 0.6; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-            50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 0 20px rgba(59, 130, 246, 0); }
-            100% { transform: scale(1); opacity: 0.6; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
-        }
-
-        .bg-glass {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-        }
+        .btn-card { transition: all 0.3s ease; }
+        .btn-card:hover { transform: translateY(-5px); }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen pb-20">
+<body class="bg-gray-100 min-h-screen">
 
-    <div id="app" class="max-w-6xl mx-auto pt-10 px-4">
-        
-        <!-- NAVBAR -->
-        <div class="flex justify-between items-center mb-8">
-            <div class="flex items-center gap-3">
-                <div class="bg-gradient-to-br from-blue-900 to-blue-700 text-white p-3 rounded-xl shadow-lg">
-                    <i class="fas fa-pen-nib fa-lg"></i>
+    <div id="app" class="min-h-screen flex flex-col">
+
+        <!-- 1. HALAMAN LOGIN -->
+        <div v-if="!currentUser" class="flex-1 flex flex-col items-center justify-center p-4">
+            <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border-t-8 border-blue-900">
+                <div class="text-center mb-8">
+                    <!-- Ikon Guru -->
+                    <div class="bg-blue-100 text-blue-900 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-chalkboard-teacher fa-3x"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-blue-900">PORTAL GURU</h1>
+                    <p class="text-sm text-gray-500">SMP ALBANNA CBT SYSTEM</p>
                 </div>
-                <div>
-                    <h1 class="text-2xl font-bold text-slate-800 tracking-tight">PERENCANAAN PEMBELAJARAN</h1>
-                    <p class="text-xs text-gray-500 font-bold tracking-widest">SMP ALBANNA</p>
+
+                <form @submit.prevent="handleLogin" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Username</label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-3 top-3 text-gray-400"></i>
+                            <input v-model="loginForm.username" type="text" class="w-full pl-10 p-2 border rounded focus:ring-2 focus:ring-blue-900 outline-none" placeholder="Contoh: guru01">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i>
+                            <input v-model="loginForm.password" type="password" class="w-full pl-10 p-2 border rounded focus:ring-2 focus:ring-blue-900 outline-none" placeholder="Password">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg font-bold hover:bg-blue-800 shadow-lg transition flex items-center justify-center gap-2">
+                        MASUK <i class="fas fa-sign-in-alt"></i>
+                    </button>
+                </form>
+
+                <div class="mt-6 text-xs text-center text-gray-400 border-t pt-4">
+                    <p>Gunakan akun yang telah didaftarkan oleh Admin IT.</p>
+                    <p class="mt-1 italic">(Default: guru01 - guru30 / Pass: albanna)</p>
                 </div>
-            </div>
-            <div class="flex gap-3">
-                <button v-if="viewMode === 'form'" @click="switchView('list')" class="text-gray-500 hover:text-blue-900 font-bold text-sm flex items-center gap-2 transition px-4 py-2 bg-white rounded-lg border hover:shadow-md">
-                    <i class="fas fa-list"></i> Lihat Arsip
-                </button>
-                <a href="index.html" class="text-gray-500 hover:text-blue-900 font-bold text-sm flex items-center gap-2 transition px-4 py-2 bg-white rounded-lg border hover:shadow-md">
-                    <i class="fas fa-home"></i> Menu Utama
-                </a>
             </div>
         </div>
 
-        <!-- VIEW 1: LIST ARSIP -->
-        <transition name="fade">
-            <div v-if="viewMode === 'list'" class="space-y-6">
-                <div class="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <div>
-                        <h2 class="text-xl font-bold text-slate-800">Arsip Perencanaan Anda</h2>
-                        <p class="text-sm text-gray-500">Kelola draft dan modul ajar yang telah dibuat.</p>
-                    </div>
-                    <button @click="createNew" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 hover:shadow-blue-200 transition transform hover:-translate-y-1 flex items-center gap-2">
-                        <i class="fas fa-plus"></i> BUAT BARU
-                    </button>
-                </div>
-
-                <div v-if="savedPlans.length === 0" class="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
-                    <i class="fas fa-folder-open text-gray-300 text-6xl mb-4"></i>
-                    <p class="text-gray-500 font-medium">Belum ada perencanaan tersimpan.</p>
-                </div>
-
-                <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div v-for="(plan, index) in savedPlans" :key="plan.id" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition group relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-2 h-full bg-blue-500"></div>
-                        <div class="flex justify-between items-start mb-3">
-                            <div class="flex gap-2">
-                                <span class="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded uppercase">{{ plan.fase }}</span>
-                                <span class="bg-indigo-50 text-indigo-700 text-xs font-bold px-2 py-1 rounded uppercase">{{ plan.mapel }}</span>
-                            </div>
-                            <span class="text-[10px] text-gray-400">{{ new Date(plan.lastUpdated).toLocaleDateString() }}</span>
+        <!-- 2. DASHBOARD MENU UTAMA (Jika Login Berhasil) -->
+        <div v-else class="flex flex-col min-h-screen">
+            
+            <!-- Navbar -->
+            <nav class="bg-blue-900 text-white p-4 shadow-lg sticky top-0 z-50">
+                <div class="max-w-6xl mx-auto flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-white text-blue-900 p-2 rounded-lg">
+                            <i class="fas fa-graduation-cap fa-lg"></i>
                         </div>
-                        <h3 class="font-bold text-lg text-slate-800 mb-1 line-clamp-2 h-14">{{ plan.lingkupMateri || 'Tanpa Judul' }}</h3>
-                        <p class="text-xs text-gray-500 mb-4"><i class="fas fa-user-circle mr-1"></i> {{ plan.nama }}</p>
-                        
-                        <div class="flex gap-2 border-t pt-4 mt-2">
-                            <button @click="editPlan(index)" class="flex-1 py-2 bg-yellow-50 text-yellow-600 rounded-lg text-xs font-bold hover:bg-yellow-100 transition"><i class="fas fa-pen"></i> Edit</button>
-                            <button @click="viewPlan(index)" class="flex-1 py-2 bg-green-50 text-green-600 rounded-lg text-xs font-bold hover:bg-green-100 transition"><i class="fas fa-eye"></i> Lihat</button>
-                            <button @click="deletePlan(index)" class="px-3 py-2 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </transition>
-
-        <!-- VIEW 2: FORM WIZARD -->
-        <transition name="fade">
-            <div v-if="viewMode === 'form'">
-                
-                <!-- PROGRESS BAR -->
-                <div class="w-full bg-gray-200 rounded-full h-2 mb-8">
-                    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-500 shadow-sm" :style="{ width: (step / 8) * 100 + '%' }"></div>
-                </div>
-
-                <!-- STEP 1: IDENTITAS -->
-                <div v-if="step === 1" class="bg-white p-8 rounded-2xl shadow-xl border-t-8 border-blue-900 animate-pop">
-                    <h2 class="text-xl font-bold text-gray-800 mb-6 border-b pb-2 flex items-center gap-2"><i class="fas fa-id-card text-blue-600"></i> 1. Identitas Perangkat Ajar</h2>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        
-                        <!-- PILIH MAPEL (BARU) -->
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-bold text-gray-700 mb-2">Mata Pelajaran <span class="text-red-500">*</span></label>
-                            <select v-model="form.mapel" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none font-bold text-blue-900">
-                                <option value="" disabled>-- Pilih Mata Pelajaran --</option>
-                                <option v-for="m in mapelList" :value="m">{{ m }}</option>
-                            </select>
-                        </div>
-
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-bold text-gray-700 mb-2">Lingkup Materi (Judul Modul) <span class="text-red-500">*</span></label>
-                            <input v-model="form.lingkupMateri" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none font-bold text-lg text-blue-900 placeholder-gray-300" placeholder="Contoh: Sistem Pencernaan Manusia">
-                        </div>
-                        <div><label class="block text-sm font-bold text-gray-600 mb-2">Nama Penyusun <span class="text-red-500">*</span></label><input v-model="form.nama" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-900" placeholder="Nama Lengkap"></div>
-                        <div><label class="block text-sm font-bold text-gray-600 mb-2">Institusi</label><input v-model="form.institusi" class="w-full p-3 border rounded-lg bg-gray-50 text-gray-500" readonly></div>
                         <div>
-                            <label class="block text-sm font-bold text-gray-600 mb-2">Fase / Kelas <span class="text-red-500">*</span></label>
-                            <select v-model="form.fase" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-900">
-                                <option value="" disabled>-- Pilih Fase --</option>
-                                <option value="Fase D (Kelas 7)">Fase D (Kelas 7)</option>
-                                <option value="Fase D (Kelas 8)">Fase D (Kelas 8)</option>
-                                <option value="Fase D (Kelas 9)">Fase D (Kelas 9)</option>
-                            </select>
-                        </div>
-                        <div><label class="block text-sm font-bold text-gray-600 mb-2">Alokasi Waktu <span class="text-red-500">*</span></label><input v-model="form.waktu" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-900" placeholder="Contoh: 2 JP"></div>
-                    </div>
-                    <div class="mt-8 flex justify-end"><button @click="nextStep" class="bg-blue-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-800 shadow-lg flex items-center gap-2 transition transform hover:scale-105">LANJUT <i class="fas fa-arrow-right"></i></button></div>
-                </div>
-
-                <!-- STEP 2: MOTIVASI (ANIMATED) -->
-                <div v-if="step === 2" class="flex flex-col items-center justify-center py-16 text-center">
-                    <div class="relative mb-10 animate-float">
-                        <div class="absolute inset-0 bg-yellow-200 rounded-full blur-3xl opacity-30"></div>
-                        <i class="fas fa-star text-yellow-400 text-8xl drop-shadow-xl relative z-10"></i>
-                        <i class="fas fa-heart text-pink-500 text-5xl drop-shadow-md absolute -bottom-2 -right-4 z-20"></i>
-                    </div>
-                    <div class="bg-glass p-10 rounded-3xl shadow-2xl max-w-2xl border border-white/50 backdrop-blur-sm">
-                        <h2 class="text-4xl font-extrabold text-slate-800 mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">Selamat! 🎉</h2>
-                        <p class="text-lg text-gray-600 leading-relaxed mb-8 font-medium">
-                            Anda telah memilih untuk membuat pembelajaran <span class="font-bold text-blue-900">{{ form.mapel }}</span> di SMP Albanna menjadi:
-                        </p>
-                        <div class="flex justify-center gap-4 mb-10">
-                            <span class="bg-teal-100 text-teal-700 px-4 py-2 rounded-full font-bold shadow-sm">🌱 Mindful</span>
-                            <span class="bg-purple-100 text-purple-700 px-4 py-2 rounded-full font-bold shadow-sm">💡 Meaningful</span>
-                            <span class="bg-orange-100 text-orange-700 px-4 py-2 rounded-full font-bold shadow-sm">😄 Joyful</span>
-                        </div>
-                        <button @click="nextStep" class="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-12 py-4 rounded-full font-bold text-lg hover:shadow-orange-200 hover:shadow-xl transition transform hover:-translate-y-1">
-                            SIAP MELANJUTKAN! <i class="fas fa-rocket ml-2"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- STEP 3: IDENTIFIKASI -->
-                <div v-if="step === 3" class="bg-white p-8 rounded-2xl shadow-xl border-t-8 border-blue-900">
-                    <div class="flex justify-between mb-6 border-b pb-4"><h2 class="text-xl font-bold text-gray-800">3. Tahap Identifikasi</h2><button @click="step=1" class="text-sm text-gray-400 font-bold hover:text-blue-600"><i class="fas fa-arrow-left"></i> Kembali</button></div>
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 flex flex-col"><h3 class="font-bold text-blue-800 mb-2 flex items-center gap-2"><i class="fas fa-user-graduate"></i> Peserta Didik</h3><p class="text-xs text-gray-500 mb-3">Kesiapan, minat, latar belakang.</p><textarea v-model="form.pesertaDidik" class="w-full p-3 border rounded-lg h-40 text-sm focus:border-blue-400 outline-none flex-1"></textarea></div>
-                        <div class="bg-purple-50 p-4 rounded-xl border border-purple-100 flex flex-col"><h3 class="font-bold text-purple-800 mb-2 flex items-center gap-2"><i class="fas fa-book"></i> Materi</h3><p class="text-xs text-gray-500 mb-3">Relevansi & tingkat kesulitan.</p><textarea v-model="form.materi" class="w-full p-3 border rounded-lg h-40 text-sm focus:border-purple-400 outline-none flex-1"></textarea></div>
-                        <div class="bg-green-50 p-4 rounded-xl border border-green-100 flex flex-col"><h3 class="font-bold text-green-800 mb-2 flex items-center gap-2"><i class="fas fa-check-circle"></i> Profil Lulusan</h3><div class="h-40 overflow-y-auto bg-white p-2 rounded-lg border flex-1"><label v-for="i in profilOptions" :key="i" class="flex gap-2 mb-2 text-xs cursor-pointer hover:bg-green-50 p-1 rounded"><input type="checkbox" :value="i" v-model="form.profil" class="mt-0.5"> {{i}}</label></div></div>
-                    </div>
-                    <div class="mt-8 flex justify-end gap-3"><button @click="saveDraft()" class="text-gray-500 font-bold px-4 hover:text-blue-600 text-sm">Simpan Draft</button><button @click="nextStep" class="bg-blue-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-800 shadow-lg transition">LANJUT <i class="fas fa-arrow-right"></i></button></div>
-                </div>
-
-                <!-- STEP 4: MOTIVASI MULIA (ANIMATED) -->
-                <div v-if="step === 4" class="flex flex-col items-center justify-center py-20 text-center">
-                    <div class="relative mb-8">
-                        <div class="absolute inset-0 bg-red-200 rounded-full blur-2xl opacity-50 animate-pulse"></div>
-                        <div class="bg-white p-8 rounded-full shadow-2xl relative z-10 animate-float">
-                            <i class="fas fa-hands-holding-heart text-red-500 text-7xl"></i>
+                            <h1 class="font-bold text-xl leading-none">CBT SYSTEM</h1>
+                            <p class="text-xs text-blue-200">Selamat Datang, {{ currentUser.name }}</p>
                         </div>
                     </div>
-                    <h2 class="text-4xl font-bold text-slate-800 mb-4 font-serif italic">"Menjadi guru adalah pekerjaan yang mulia."</h2>
-                    <p class="text-gray-500 max-w-lg mx-auto mb-10 leading-relaxed">Setiap kata yang Anda tulis adalah langkah kecil menuju masa depan gemilang bagi peserta didik Anda.</p>
-                    <button @click="nextStep" class="bg-red-500 text-white px-10 py-3 rounded-full font-bold shadow-lg hover:bg-red-600 hover:shadow-red-200 transition transform hover:-translate-y-1">
-                        Lanjutkan Desain <i class="fas fa-pencil-alt ml-2"></i>
+                    <button @click="logout" class="text-sm bg-red-600 hover:bg-red-700 px-4 py-2 rounded transition font-bold flex items-center gap-2 shadow">
+                        <i class="fas fa-sign-out-alt"></i> LOGOUT
                     </button>
                 </div>
+            </nav>
 
-                <!-- STEP 5: DESAIN PEMBELAJARAN -->
-                <div v-if="step === 5" class="bg-white p-8 rounded-2xl shadow-xl border-t-8 border-teal-600">
-                    <div class="flex justify-between mb-6 border-b pb-4"><h2 class="text-xl font-bold text-gray-800">4. Desain Pembelajaran</h2><button @click="step=3" class="text-sm text-gray-400 font-bold hover:text-teal-600"><i class="fas fa-arrow-left"></i> Kembali</button></div>
-                    <div class="grid gap-6">
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <div><label class="font-bold text-teal-800 text-sm mb-1 block">Capaian Pembelajaran (CP)</label><textarea v-model="form.cp" rows="2" class="w-full p-3 border rounded-lg bg-teal-50/50 focus:bg-white transition text-sm"></textarea></div>
-                            <div><label class="font-bold text-teal-800 text-sm mb-1 block">Lintas Disiplin Ilmu</label><textarea v-model="form.lintasDisiplin" rows="2" class="w-full p-3 border rounded-lg bg-teal-50/50 focus:bg-white transition text-sm"></textarea></div>
-                        </div>
-                        <div><label class="font-bold text-teal-800 text-sm mb-1 block">Tujuan Pembelajaran (TP)</label><textarea v-model="form.tp" rows="3" class="w-full p-3 border rounded-lg bg-teal-50/50 focus:bg-white transition text-sm" placeholder="ABCD / SMART Goals"></textarea></div>
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <div><label class="font-bold text-teal-800 text-sm mb-1 block">Topik Pembelajaran</label><input v-model="form.topik" class="w-full p-3 border rounded-lg bg-teal-50/50 focus:bg-white transition text-sm"></div>
-                            <div><label class="font-bold text-teal-800 text-sm mb-1 block">Praktik Pedagogis</label><input v-model="form.pedagogi" class="w-full p-3 border rounded-lg bg-teal-50/50 focus:bg-white transition text-sm" placeholder="PBL, PjBL, Inkuiri..."></div>
-                        </div>
-                        <div class="grid md:grid-cols-3 gap-4">
-                            <div><label class="font-bold text-teal-800 text-xs mb-1 block">Kemitraan</label><textarea v-model="form.kemitraan" rows="2" class="w-full p-2 border rounded-lg text-xs"></textarea></div>
-                            <div><label class="font-bold text-teal-800 text-xs mb-1 block">Lingkungan</label><textarea v-model="form.lingkungan" rows="2" class="w-full p-2 border rounded-lg text-xs"></textarea></div>
-                            <div><label class="font-bold text-teal-800 text-xs mb-1 block">Digital</label><textarea v-model="form.digital" rows="2" class="w-full p-2 border rounded-lg text-xs"></textarea></div>
-                        </div>
-                    </div>
-                    <div class="mt-8 flex justify-end gap-3"><button @click="saveDraft()" class="text-gray-500 font-bold px-4 hover:text-teal-600 text-sm">Simpan Draft</button><button @click="nextStep" class="bg-teal-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-teal-700 shadow-lg transition">LANJUT <i class="fas fa-arrow-right"></i></button></div>
+            <!-- Main Content -->
+            <main class="flex-1 max-w-6xl mx-auto w-full p-6">
+                
+                <div class="text-center mb-10 mt-6">
+                    <h2 class="text-3xl font-bold text-gray-800">Dashboard Aplikasi</h2>
+                    <p class="text-gray-600 mt-2">Pilih menu di bawah ini untuk memulai pekerjaan Anda.</p>
                 </div>
 
-                <!-- STEP 6: NAFAS (ANIMATED) -->
-                <div v-if="step === 6" class="flex flex-col items-center justify-center py-24 text-center">
-                    <div class="relative w-40 h-40 flex items-center justify-center mb-8">
-                        <div class="absolute inset-0 bg-blue-200 rounded-full animate-breathe opacity-50"></div>
-                        <div class="absolute inset-4 bg-blue-100 rounded-full animate-breathe opacity-80" style="animation-delay: 0.5s"></div>
-                        <i class="fas fa-wind text-blue-600 text-5xl relative z-10"></i>
-                    </div>
-                    <p class="text-2xl text-slate-700 font-medium mb-8 font-serif italic">"Tarik nafas dalam-dalam..."</p>
-                    <p class="text-gray-500 max-w-md mx-auto mb-10">Ingat, hidup bukan hanya untuk diri kita sendiri, melainkan untuk orang-orang yang kita sayangi.</p>
-                    <button @click="nextStep" class="bg-blue-600 text-white px-10 py-3 rounded-full font-bold hover:bg-blue-700 shadow-lg transition transform hover:-translate-y-1">
-                        LANJUTKAN PERJALANAN <i class="fas fa-walking ml-2"></i>
-                    </button>
-                </div>
-
-                <!-- STEP 7: PENGALAMAN BELAJAR -->
-                <div v-if="step === 7" class="bg-white p-8 rounded-2xl shadow-xl border-t-8 border-indigo-600 mb-20">
-                    <div class="flex justify-between items-center mb-8 border-b pb-4">
-                        <h2 class="text-xl font-bold text-gray-800">5. Pengalaman Belajar</h2>
-                        <button @click="step = 5" class="text-sm text-gray-400 hover:text-indigo-700 font-bold"><i class="fas fa-arrow-left"></i> Kembali</button>
-                    </div>
-                    <div class="space-y-6">
-                        <!-- Awal -->
-                        <div class="bg-indigo-50 p-5 rounded-xl border border-indigo-100">
-                            <div class="flex justify-between mb-2 items-center"><h3 class="font-bold text-indigo-900"><i class="fas fa-door-open mr-2"></i>A. Kegiatan Awal</h3><div class="flex gap-2"><label v-for="p in prinsip" :key="'a'+p" class="text-[10px] bg-white px-2 py-0.5 rounded cursor-pointer border"><input type="checkbox" :value="p" v-model="form.pengalamanAwal.prinsip"> {{p}}</label></div></div>
-                            <textarea v-model="form.pengalamanAwal.deskripsi" rows="3" class="w-full p-3 border rounded-lg text-sm" placeholder="Deskripsi kegiatan..."></textarea>
-                        </div>
-                        <!-- Inti -->
-                        <div class="border-2 border-dashed border-gray-300 p-5 rounded-xl space-y-4">
-                            <h3 class="font-bold text-gray-700"><i class="fas fa-layer-group mr-2"></i>B. Kegiatan Inti</h3>
-                            <div v-for="(sec, key) in {Memahami: 'blue', Mengaplikasi: 'yellow', Merefleksi: 'purple'}" :key="key" :class="`pl-4 border-l-4 border-${sec}-400`">
-                                <div class="flex justify-between mb-1"><h4 :class="`font-bold text-${sec}-800 text-sm`">{{ key }}</h4><div class="flex gap-1"><label v-for="p in prinsip" :key="key+p" class="text-[9px] bg-gray-50 px-1 border rounded cursor-pointer"><input type="checkbox" :value="p" v-model="form['pengalamanInti'+key].prinsip"> {{p}}</label></div></div>
-                                <textarea v-model="form['pengalamanInti'+key].deskripsi" rows="2" class="w-full p-2 border rounded text-sm"></textarea>
+                <!-- GRID MENU -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    
+                    <!-- 1. PERENCANAAN PEMBELAJARAN (BARU) -->
+                    <a href="perencanaan.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-cyan-500 hover:shadow-xl group flex flex-col">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="bg-cyan-100 text-cyan-600 p-3 rounded-lg group-hover:bg-cyan-600 group-hover:text-white transition">
+                                <i class="fas fa-pen-nib fa-2x"></i>
                             </div>
+                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">ADMINISTRASI</span>
                         </div>
-                        <!-- Penutup -->
-                        <div class="bg-green-50 p-5 rounded-xl border border-green-100">
-                            <div class="flex justify-between mb-2 items-center"><h3 class="font-bold text-green-900"><i class="fas fa-flag-checkered mr-2"></i>C. Kegiatan Penutup</h3><div class="flex gap-2"><label v-for="p in prinsip" :key="'t'+p" class="text-[10px] bg-white px-2 py-0.5 rounded cursor-pointer border"><input type="checkbox" :value="p" v-model="form.pengalamanPenutup.prinsip"> {{p}}</label></div></div>
-                            <textarea v-model="form.pengalamanPenutup.deskripsi" rows="3" class="w-full p-3 border rounded-lg text-sm" placeholder="Deskripsi kegiatan..."></textarea>
-                        </div>
-                    </div>
-                    <div class="mt-8 flex justify-end gap-3"><button @click="saveDraft()" class="text-gray-500 font-bold px-4 hover:text-indigo-600 text-sm">Simpan Draft</button><button @click="nextStep" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg transition">LANJUT <i class="fas fa-arrow-right"></i></button></div>
-                </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-cyan-600">Perencanaan Ajar</h3>
+                        <p class="text-sm text-gray-500 mt-auto">Generator RPP/Modul Ajar yang Mindful, Meaningful, & Joyful.</p>
+                    </a>
 
-                <!-- STEP 8: ASESMEN -->
-                <div v-if="step === 8" class="bg-white p-8 rounded-2xl shadow-xl border-t-8 border-pink-600 mb-20">
-                    <div class="flex justify-between items-center mb-8 border-b pb-4">
-                        <h2 class="text-xl font-bold text-gray-800">6. Asesmen & Lampiran</h2>
-                        <button @click="step = 7" class="text-sm text-gray-400 hover:text-pink-700 font-bold"><i class="fas fa-arrow-left"></i> Kembali</button>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <div v-for="(type, key) in {Awal: 'pink', Proses: 'purple', Akhir: 'teal'}" :key="key" :class="`bg-${type}-50 p-4 rounded-xl border border-${type}-100`">
-                            <h3 :class="`font-bold text-${type}-800 mb-2 text-center border-b border-${type}-200 pb-2`">Asesmen {{key}}</h3>
-                            <textarea v-model="form['asesmen'+key].deskripsi" rows="4" class="w-full p-2 border rounded text-xs" placeholder="Deskripsi..."></textarea>
+                    <!-- 2. KISI-KISI -->
+                    <a href="guru.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-purple-500 hover:shadow-xl group relative flex flex-col">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="bg-purple-100 text-purple-600 p-3 rounded-lg group-hover:bg-purple-600 group-hover:text-white transition">
+                                <i class="fas fa-list-alt fa-2x"></i>
+                            </div>
+                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">ADMINISTRASI</span>
                         </div>
-                    </div>
-                    <div class="border-t pt-6">
-                        <h3 class="font-bold text-gray-700 mb-3 flex items-center gap-2"><i class="fas fa-paperclip"></i> Lampiran</h3>
-                        <div v-for="(item, index) in form.lampiran" :key="index" class="flex gap-2 mb-2">
-                            <input v-model="item.nama" class="w-1/3 p-2 border rounded text-sm" placeholder="Nama Lampiran">
-                            <input v-model="item.keterangan" class="flex-1 p-2 border rounded text-sm" placeholder="Keterangan / Link">
-                            <button @click="removeLampiran(index)" class="text-red-500 hover:text-red-700 px-2"><i class="fas fa-trash"></i></button>
-                        </div>
-                        <button @click="addLampiran" class="mt-2 text-xs font-bold text-blue-600 hover:underline">+ Tambah Lampiran</button>
-                    </div>
-                    <div class="mt-10 flex justify-end gap-3 border-t pt-6">
-                        <button @click="saveFinal" class="bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 shadow-lg transition transform hover:scale-105 flex items-center gap-2">
-                            <i class="fas fa-check-circle"></i> SELESAI & SIMPAN
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </transition>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-purple-600">Generator Kisi-Kisi</h3>
+                        <p class="text-sm text-gray-500 mt-auto">Buat dokumen kisi-kisi soal ujian standar secara otomatis (PDF).</p>
+                    </a>
 
-        <!-- MODAL VIEW (READ ONLY) -->
-        <transition name="fade">
-            <div v-if="viewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div class="bg-white w-full max-w-4xl h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-                    <div class="p-5 border-b bg-slate-50 flex justify-between items-center">
-                        <div><h3 class="font-bold text-xl text-slate-800">{{ viewModal.lingkupMateri }}</h3><p class="text-xs text-gray-500">{{ viewModal.fase }} | {{ viewModal.nama }}</p></div>
-                        <button @click="viewModal = null" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button>
-                    </div>
-                    <div class="flex-1 overflow-y-auto p-8 bg-gray-50 space-y-6">
-                        <!-- Content Preview Simplifikasi -->
-                        <div class="bg-white p-6 rounded-xl shadow-sm border"><h4 class="font-bold text-blue-800 border-b pb-2 mb-2">I. Identitas</h4>
-                            <p><strong>Mapel:</strong> {{ viewModal.mapel }}</p>
-                            <p><strong>Waktu:</strong> {{ viewModal.waktu }}</p>
+                    <!-- 3. SOAL GENERATOR -->
+                    <a href="soal.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-blue-500 hover:shadow-xl group flex flex-col">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="bg-blue-100 text-blue-600 p-3 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition">
+                                <i class="fas fa-file-signature fa-2x"></i>
+                            </div>
+                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">BANK SOAL</span>
                         </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border"><h4 class="font-bold text-green-800 border-b pb-2 mb-2">II. Tujuan Pembelajaran</h4><p class="whitespace-pre-wrap">{{ viewModal.tp }}</p></div>
-                    </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600">Input Soal (Upload)</h3>
+                        <p class="text-sm text-gray-500 mt-auto">Input butir soal, kunci jawaban, dan upload ke server ujian online.</p>
+                    </a>
+
+                    <!-- 4. HASIL UJIAN -->
+                    <a href="jawaban.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-orange-500 hover:shadow-xl group flex flex-col">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="bg-orange-100 text-orange-600 p-3 rounded-lg group-hover:bg-orange-600 group-hover:text-white transition">
+                                <i class="fas fa-chart-pie fa-2x"></i>
+                            </div>
+                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">LAPORAN</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-orange-600">Rekap Nilai & Analisis</h3>
+                        <p class="text-sm text-gray-500 mt-auto">Lihat hasil ujian siswa, analisis butir soal, dan unduh Excel.</p>
+                    </a>
+
+                    <!-- 5. ABSENSI & SUSULAN -->
+                    <a href="absen_ujian.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-indigo-500 hover:shadow-xl group flex flex-col">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="bg-indigo-100 text-indigo-600 p-3 rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition">
+                                <i class="fas fa-calendar-check fa-2x"></i>
+                            </div>
+                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">ADMINISTRASI</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-indigo-600">Absensi & Susulan</h3>
+                        <p class="text-sm text-gray-500 mt-auto">Input kehadiran harian dan kelola jadwal siswa ujian susulan.</p>
+                    </a>
+
+                    <!-- 6. ADMINISTRASI (BERITA ACARA) -->
+                    <a href="administrasi.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-teal-500 hover:shadow-xl group flex flex-col">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="bg-teal-100 text-teal-600 p-3 rounded-lg group-hover:bg-teal-600 group-hover:text-white transition">
+                                <i class="fas fa-file-contract fa-2x"></i>
+                            </div>
+                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">ADMINISTRASI</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-teal-600">Berita Acara Ujian</h3>
+                        <p class="text-sm text-gray-500 mt-auto">Buat dokumen Berita Acara Pelaksanaan Ujian secara digital.</p>
+                    </a>
+
+                    <!-- 7. ADMIN PANEL (IT) -->
+                    <a href="admin.html" class="btn-card bg-slate-800 p-6 rounded-xl shadow-md border-l-8 border-slate-600 hover:shadow-xl group flex flex-col">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="bg-slate-700 text-white p-3 rounded-lg group-hover:bg-slate-600 transition">
+                                <i class="fas fa-server fa-2x"></i>
+                            </div>
+                            <span class="bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded">RESTRICTED</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">Admin Panel</h3>
+                        <p class="text-sm text-slate-400 mt-auto">Monitoring server, buka blokir siswa, dan manajemen database.</p>
+                    </a>
+
+                    <!-- 8. PORTAL REMIDI (SISWA) -->
+                    <a href="remidi.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-pink-500 hover:shadow-xl group flex flex-col">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="bg-pink-100 text-pink-600 p-3 rounded-lg group-hover:bg-pink-600 group-hover:text-white transition">
+                                <i class="fas fa-clipboard-check fa-2x"></i>
+                            </div>
+                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">SISWA</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-pink-600">Cek Kelulusan & Remidi</h3>
+                        <p class="text-sm text-gray-500 mt-auto">Cek status kelulusan mapel dan jadwal ujian remidi.</p>
+                    </a>
+                    
+                    <!-- 9. UJIAN SISWA (LINK) -->
+                    <a href="siswa.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-green-500 hover:shadow-xl group flex flex-col opacity-80 hover:opacity-100">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="bg-green-100 text-green-600 p-3 rounded-lg group-hover:bg-green-600 group-hover:text-white transition">
+                                <i class="fas fa-laptop-code fa-2x"></i>
+                            </div>
+                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">CLIENT</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-green-600">Halaman Ujian Siswa</h3>
+                        <p class="text-sm text-gray-500 mt-auto">Tampilan layar ujian untuk peserta didik (Client Side).</p>
+                    </a>
+
                 </div>
-            </div>
-        </transition>
+            </main>
+
+            <footer class="bg-gray-800 text-gray-400 text-center p-4 text-xs mt-10">
+                <p>&copy; 2025 SMP ALBANNA - Computer Based Test System. All rights reserved.</p>
+            </footer>
+        </div>
 
     </div>
 
     <script>
         const { createApp } = Vue;
 
+        // 1. GENERATE AKUN DUMMY (guru01 - guru30)
+        const generatedUsers = [];
+        for (let i = 1; i <= 30; i++) {
+            const num = i < 10 ? '0' + i : i;
+            generatedUsers.push({
+                username: `guru${num}`,
+                password: 'albanna', // Password Default
+                name: `Guru Mapel ${num}`
+            });
+        }
+        // Akun Admin Tambahan
+        generatedUsers.push({ username: 'admin', password: 'admin123', name: 'Administrator IT' });
+
         createApp({
             data() {
                 return {
-                    viewMode: 'list', // 'list' or 'form'
-                    step: 1,
-                    savedPlans: [],
-                    viewModal: null,
-                    editingIndex: null, // Jika null berarti Mode Baru
-                    
-                    // LIST MAPEL LENGKAP
-                    mapelList: [
-                        'AGAMA ISLAM', 'BAHASA ARAB', 'BAHASA BALI', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 
-                        'INFORMATIKA', 'IPA', 'IPS', 'KKA', 'MATEMATIKA', 'OLAHRAGA', 'PKN', 'SENI BUDAYA'
-                    ],
-
-                    // FORM DATA
-                    form: {
-                        mapel: '', lingkupMateri: '', nama: '', institusi: 'SMP Albanna', fase: '', waktu: '',
-                        pesertaDidik: '', materi: '', profil: [],
-                        cp: '', lintasDisiplin: '', tp: '', topik: '', pedagogi: '', kemitraan: '', lingkungan: '', digital: '',
-                        pengalamanAwal: { prinsip: [], deskripsi: '' },
-                        pengalamanIntiMemahami: { prinsip: [], deskripsi: '' },
-                        pengalamanIntiMengaplikasi: { prinsip: [], deskripsi: '' },
-                        pengalamanIntiMerefleksi: { prinsip: [], deskripsi: '' },
-                        pengalamanPenutup: { prinsip: [], deskripsi: '' },
-                        asesmenAwal: { metode: [], deskripsi: '' },
-                        asesmenProses: { metode: [], deskripsi: '' },
-                        asesmenAkhir: { metode: [], deskripsi: '' },
-                        lampiran: [{ nama: '', keterangan: '' }]
-                    },
-                    // OPTIONS
-                    prinsip: ['Berkesadaran', 'Bermakna', 'Menggembirakan'],
-                    profilOptions: ["Keimanan dan Ketakwaan", "Kewargaan", "Penalaran Kritis", "Kreativitas", "Kolaborasi", "Kemandirian", "Kesehatan", "Komunikasi"],
-                    methodsAwal: ['Tanya Jawab', 'Kuis'], methodsProses: ['Observasi', 'LKPD'], methodsAkhir: ['Tes Tulis', 'Produk']
+                    currentUser: null,
+                    loginForm: { username: '', password: '' }
                 }
             },
             mounted() {
-                this.loadFromLibrary();
+                // Cek sesi login saat aplikasi dibuka
+                const storedUser = sessionStorage.getItem('cbt_user_session');
+                if (storedUser) {
+                    this.currentUser = JSON.parse(storedUser);
+                }
             },
             methods: {
-                // --- NAVIGATION & STORAGE ---
-                switchView(mode) { this.viewMode = mode; if(mode === 'list') this.resetForm(); },
-                
-                loadFromLibrary() {
-                    const data = localStorage.getItem('rpp_library');
-                    if(data) this.savedPlans = JSON.parse(data);
-                },
-                
-                saveToLibrary(planData) {
-                    if (this.editingIndex !== null) {
-                        // Update existing
-                        this.savedPlans[this.editingIndex] = { ...planData, lastUpdated: new Date().toISOString() };
-                        alert("✅ Perubahan disimpan!");
-                    } else {
-                        // Create new
-                        this.savedPlans.unshift({ ...planData, id: Date.now(), lastUpdated: new Date().toISOString() });
-                        alert("✅ Perencanaan baru berhasil dibuat!");
-                    }
-                    localStorage.setItem('rpp_library', JSON.stringify(this.savedPlans));
-                    this.switchView('list');
-                },
-
-                deletePlan(index) {
-                    if(confirm("Hapus perencanaan ini?")) {
-                        this.savedPlans.splice(index, 1);
-                        localStorage.setItem('rpp_library', JSON.stringify(this.savedPlans));
-                    }
-                },
-
-                editPlan(index) {
-                    this.form = JSON.parse(JSON.stringify(this.savedPlans[index])); // Deep copy
-                    this.editingIndex = index;
-                    this.viewMode = 'form';
-                    this.step = 1;
-                },
-
-                viewPlan(index) {
-                    this.viewModal = this.savedPlans[index];
-                },
-
-                createNew() {
-                    this.resetForm();
-                    this.editingIndex = null;
-                    this.viewMode = 'form';
-                    this.step = 1;
-                },
-
-                // --- FORM LOGIC ---
-                nextStep() {
-                    // VALIDASI PER STEP
-                    if (this.step === 1) {
-                        if (!this.form.mapel || !this.form.lingkupMateri || !this.form.nama || !this.form.fase || !this.form.waktu) 
-                            return alert("Mohon lengkapi semua Identitas Utama!");
-                    }
-                    else if (this.step === 3) {
-                        if (!this.form.pesertaDidik || !this.form.materi) return alert("Mohon isi analisis identifikasi!");
-                    }
-                    else if (this.step === 5) {
-                        if (!this.form.tp || !this.form.topik) return alert("Tujuan Pembelajaran wajib diisi!");
-                    }
+                handleLogin() {
+                    const { username, password } = this.loginForm;
                     
-                    this.step++;
-                    window.scrollTo(0,0);
-                },
+                    // Cari user di array dummy
+                    const user = generatedUsers.find(u => u.username === username && u.password === password);
 
-                saveDraft() {
-                    alert("Progres tersimpan sementara di memori.");
+                    if (user) {
+                        this.currentUser = user;
+                        // Simpan ke Session Storage (Akan hilang saat browser ditutup total)
+                        sessionStorage.setItem('cbt_user_session', JSON.stringify(user));
+                        this.loginForm = { username: '', password: '' };
+                    } else {
+                        alert("Username atau Password salah!");
+                    }
                 },
-
-                saveFinal() {
-                    if (!this.form.lingkupMateri) return alert("Judul Lingkup Materi belum diisi!");
-                    this.saveToLibrary(this.form);
-                },
-
-                resetForm() {
-                    this.form = {
-                        mapel: '', lingkupMateri: '', nama: '', institusi: 'SMP Albanna', fase: '', waktu: '',
-                        pesertaDidik: '', materi: '', profil: [],
-                        cp: '', lintasDisiplin: '', tp: '', topik: '', pedagogi: '', kemitraan: '', lingkungan: '', digital: '',
-                        pengalamanAwal: { prinsip: [], deskripsi: '' },
-                        pengalamanIntiMemahami: { prinsip: [], deskripsi: '' },
-                        pengalamanIntiMengaplikasi: { prinsip: [], deskripsi: '' },
-                        pengalamanIntiMerefleksi: { prinsip: [], deskripsi: '' },
-                        pengalamanPenutup: { prinsip: [], deskripsi: '' },
-                        asesmenAwal: { metode: [], deskripsi: '' },
-                        asesmenProses: { metode: [], deskripsi: '' },
-                        asesmenAkhir: { metode: [], deskripsi: '' },
-                        lampiran: [{ nama: '', keterangan: '' }]
-                    };
-                    this.step = 1;
-                },
-
-                addLampiran() { this.form.lampiran.push({ nama: '', keterangan: '' }); },
-                removeLampiran(index) { if(this.form.lampiran.length > 1) this.form.lampiran.splice(index, 1); }
+                logout() {
+                    if(confirm("Yakin ingin keluar dari akun ini?")) {
+                        this.currentUser = null;
+                        sessionStorage.removeItem('cbt_user_session');
+                    }
+                }
             }
         }).mount('#app');
     </script>
