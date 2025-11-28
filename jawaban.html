@@ -15,6 +15,13 @@
         .score-high { @apply bg-green-100 text-green-700; }
         .score-med { @apply bg-yellow-100 text-yellow-700; }
         .score-low { @apply bg-red-100 text-red-700; }
+        
+        /* Custom Radio Button untuk Skor */
+        .score-radio:checked + label {
+            background-color: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -24,8 +31,8 @@
         <!-- 1. SIDEBAR: PILIH KELAS -->
         <div class="w-64 bg-white border-r flex flex-col h-full shadow-lg z-10">
             <div class="p-6 border-b bg-blue-900 text-white">
-                <h1 class="font-bold text-lg">MANAJEMEN NILAI</h1>
-                <p class="text-xs opacity-75">AUTO GRADING SYSTEM</p>
+                <h1 class="font-bold text-lg">REKAP NILAI</h1>
+                <p class="text-xs opacity-75">AUTO & MANUAL GRADING</p>
             </div>
             
             <div class="flex-1 overflow-y-auto p-2">
@@ -43,7 +50,6 @@
                 </div>
             </div>
 
-            <!-- TOMBOL KEMBALI KE MENU UTAMA (BARU) -->
             <div class="p-4 border-t border-slate-200 bg-slate-50">
                 <a href="index.html" class="flex items-center justify-center gap-2 w-full bg-white border border-slate-300 text-slate-600 py-2 rounded font-bold text-xs hover:bg-blue-900 hover:text-white transition shadow-sm">
                     <i class="fas fa-home"></i> MENU UTAMA
@@ -59,16 +65,14 @@
                 <div class="flex justify-between items-center">
                     <div>
                         <h2 class="text-2xl font-bold text-gray-800 mb-1">Data Kelas {{ selectedClass }}</h2>
-                        <p class="text-sm text-gray-500">Kelola nilai, edit jawaban, dan unduh laporan.</p>
+                        <p class="text-sm text-gray-500">Lakukan koreksi manual untuk soal Uraian/Esai agar nilai akurat.</p>
                     </div>
                     <div class="flex items-center gap-3">
-                        <!-- Dropdown Mapel -->
                         <select v-model="selectedMapel" class="p-3 border-2 border-blue-100 rounded-lg bg-gray-50 text-sm font-bold focus:border-blue-500 focus:outline-none transition min-w-[200px]">
-                            <option value="">-- Pilih Mata Pelajaran --</option>
+                            <option value="">-- Semua Mata Pelajaran --</option>
                             <option v-for="m in availableMapels" :value="m">{{ m }}</option>
                         </select>
 
-                        <!-- Tombol Excel -->
                         <button @click="exportToExcel" :disabled="!selectedMapel || filteredResults.length === 0" class="bg-green-600 text-white px-6 py-3 rounded-lg font-bold shadow hover:bg-green-700 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                             <i class="fas fa-file-excel"></i> ANALISIS RAPOR
                         </button>
@@ -79,16 +83,11 @@
             <!-- Tabel Data -->
             <div class="flex-1 overflow-y-auto p-8">
                 
-                <!-- State Kosong -->
                 <div v-if="filteredResults.length === 0" class="h-full flex flex-col items-center justify-center text-gray-400 -mt-10">
-                    <div class="bg-white p-6 rounded-full shadow-sm mb-4">
-                        <i class="fas fa-folder-open fa-4x text-gray-300"></i>
-                    </div>
+                    <div class="bg-white p-6 rounded-full shadow-sm mb-4"><i class="fas fa-folder-open fa-4x text-gray-300"></i></div>
                     <p class="text-lg font-medium">Data tidak ditemukan.</p>
-                    <p class="text-sm" v-if="!selectedMapel">Silakan pilih Mata Pelajaran di atas.</p>
                 </div>
 
-                <!-- Tabel Nilai -->
                 <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
                     <table class="w-full text-left border-collapse">
                         <thead class="bg-slate-50 text-slate-600 uppercase text-xs font-bold">
@@ -96,8 +95,8 @@
                                 <th class="p-4 border-b w-16 text-center">No</th>
                                 <th class="p-4 border-b">Nama Siswa</th>
                                 <th class="p-4 border-b">Mata Pelajaran</th>
-                                <th class="p-4 border-b text-center">Skor (PG)</th>
-                                <th class="p-4 border-b text-center">Nilai Akhir</th>
+                                <th class="p-4 border-b text-center">Status Koreksi</th>
+                                <th class="p-4 border-b text-center">Total Nilai</th>
                                 <th class="p-4 border-b text-center w-48">Aksi</th>
                             </tr>
                         </thead>
@@ -107,29 +106,27 @@
                                 <td class="p-4 font-bold text-gray-800 uppercase">{{ res.student.nama }}</td>
                                 <td class="p-4 text-gray-600">{{ res.mapel }}</td>
                                 
+                                <!-- Status Koreksi (Cek apakah nilai manual sudah masuk) -->
                                 <td class="p-4 text-center">
-                                    <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded font-bold text-xs">
-                                        {{ calculateStats(res).correct }} / {{ calculateStats(res).total }}
+                                    <span v-if="needsManualCorrection(res)" class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold animate-pulse">
+                                        <i class="fas fa-exclamation-circle"></i> Butuh Koreksi
+                                    </span>
+                                    <span v-else class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">
+                                        <i class="fas fa-check-circle"></i> Selesai
                                     </span>
                                 </td>
 
                                 <td class="p-4 text-center">
-                                    <span :class="getScoreClass(calculateScore(res))">
-                                        {{ calculateScore(res) }}
-                                    </span>
+                                    <span :class="getScoreClass(calculateScore(res))">{{ calculateScore(res) }}</span>
                                 </td>
 
                                 <td class="p-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <!-- 1. LIHAT -->
-                                        <button @click="viewDetail(res)" class="bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white p-2 rounded transition" title="Lihat Detail">
-                                            <i class="fas fa-eye"></i>
+                                        <!-- 1. KOREKSI (UTAMA) -->
+                                        <button @click="startCorrection(res)" class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded shadow transition" title="Koreksi Jawaban">
+                                            <i class="fas fa-check-double"></i>
                                         </button>
-                                        <!-- 2. EDIT (BARU) -->
-                                        <button @click="editResult(res)" class="bg-yellow-100 text-yellow-600 hover:bg-yellow-500 hover:text-white p-2 rounded transition" title="Edit Jawaban">
-                                            <i class="fas fa-pen"></i>
-                                        </button>
-                                        <!-- 3. HAPUS (BARU) -->
+                                        <!-- 2. HAPUS -->
                                         <button @click="deleteResult(res.id)" class="bg-red-100 text-red-600 hover:bg-red-600 hover:text-white p-2 rounded transition" title="Hapus Data">
                                             <i class="fas fa-trash"></i>
                                         </button>
@@ -142,78 +139,107 @@
             </div>
         </div>
 
-        <!-- MODAL DETAIL (READ ONLY) -->
-        <div v-if="activeDetail && !isEditing" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white w-full max-w-3xl h-[85vh] rounded-xl shadow-2xl flex flex-col overflow-hidden animate-fade-in">
-                <div class="p-5 border-b bg-slate-50 flex justify-between items-center">
+        <!-- MODAL KOREKSI (SCORING) -->
+        <div v-if="isCorrecting && correctionData" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+            <div class="bg-white w-full max-w-4xl h-[90vh] rounded-xl shadow-2xl flex flex-col overflow-hidden animate-fade-in">
+                <div class="p-5 border-b bg-blue-50 flex justify-between items-center">
                     <div>
-                        <h3 class="font-bold text-lg text-slate-800">{{ activeDetail.student.nama }}</h3>
-                        <p class="text-xs text-gray-500">{{ activeDetail.mapel }}</p>
+                        <h3 class="font-bold text-lg text-blue-900"><i class="fas fa-edit mr-2"></i>Koreksi Nilai Siswa</h3>
+                        <p class="text-xs text-blue-700">{{ correctionData.student.nama }} | {{ correctionData.mapel }}</p>
                     </div>
-                    <button @click="activeDetail = null" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button>
-                </div>
-                <div class="flex-1 overflow-y-auto p-6 bg-white">
-                    <div class="grid gap-4">
-                        <div v-for="(ans, idx) in activeDetail.answers" :key="idx" class="border rounded-lg p-4">
-                            <div class="flex justify-between mb-2">
-                                <span class="font-bold text-xs text-gray-500 uppercase">Soal {{ parseInt(idx)+1 }}</span>
-                                <span class="text-xs font-bold" :class="isAnswerCorrect(activeDetail.examId, idx, ans) ? 'text-green-600' : 'text-red-500'">
-                                    {{ isAnswerCorrect(activeDetail.examId, idx, ans) ? 'BENAR' : 'SALAH' }}
-                                </span>
-                            </div>
-                            <p class="text-sm text-gray-800 mb-2 font-medium">{{ getQuestionText(activeDetail.examId, idx) }}</p>
-                            <div class="flex gap-4 text-sm bg-gray-50 p-3 rounded">
-                                <div class="flex-1">
-                                    <span class="block text-xs text-gray-400 uppercase">Jawab:</span>
-                                    <span class="font-bold text-slate-800">{{ formatAnswer(ans) }}</span>
-                                </div>
-                                <div class="flex-1 border-l pl-4">
-                                    <span class="block text-xs text-gray-400 uppercase">Kunci:</span>
-                                    <span class="font-bold text-green-700">{{ getCorrectAnswer(activeDetail.examId, idx) }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- MODAL EDIT JAWABAN (BARU) -->
-        <div v-if="isEditing && editingData" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-            <div class="bg-white w-full max-w-2xl h-[90vh] rounded-xl shadow-2xl flex flex-col overflow-hidden border-t-8 border-yellow-500 animate-fade-in">
-                <div class="p-5 border-b bg-yellow-50 flex justify-between items-center">
-                    <div>
-                        <h3 class="font-bold text-lg text-yellow-800"><i class="fas fa-edit mr-2"></i>Edit Jawaban Siswa</h3>
-                        <p class="text-xs text-yellow-600">{{ editingData.student.nama }} - {{ editingData.mapel }}</p>
-                    </div>
-                    <button @click="isEditing = false" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button>
+                    <button @click="isCorrecting = false" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button>
                 </div>
                 
-                <div class="flex-1 overflow-y-auto p-6 bg-white">
-                    <div class="bg-yellow-50 p-3 rounded text-xs text-yellow-800 mb-4">
-                        <i class="fas fa-info-circle"></i> <strong>Perhatian:</strong> Mengubah jawaban akan otomatis menghitung ulang nilai siswa. Gunakan fitur ini hanya jika diperlukan (misal: koreksi manual esai atau kesalahan input).
+                <div class="flex-1 overflow-y-auto p-6 bg-gray-50">
+                    
+                    <!-- INFO SKOR -->
+                    <div class="flex justify-between mb-6 bg-white p-4 rounded shadow-sm">
+                        <div class="text-center w-1/2 border-r">
+                            <p class="text-xs text-gray-500 font-bold uppercase">Nilai Otomatis (PG/BS)</p>
+                            <p class="text-2xl font-bold text-slate-700">{{ tempStats.autoScore }}</p>
+                        </div>
+                        <div class="text-center w-1/2">
+                            <p class="text-xs text-gray-500 font-bold uppercase">Nilai Manual (Esai)</p>
+                            <p class="text-2xl font-bold text-blue-600">{{ tempStats.manualScore }}</p>
+                        </div>
                     </div>
 
-                    <div class="space-y-4">
-                        <div v-for="(ans, idx) in editingData.answers" :key="idx" class="flex items-center gap-4 p-3 border rounded hover:bg-gray-50">
-                            <div class="w-10 font-bold text-gray-500 text-center">{{ parseInt(idx)+1 }}</div>
-                            <div class="flex-1">
-                                <label class="text-xs font-bold text-gray-400 uppercase">Jawaban Saat Ini</label>
-                                <input type="text" v-model="editingData.answers[idx]" class="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none py-1 font-bold text-slate-800 bg-transparent" placeholder="Isi jawaban (A, B, BENAR, dll)">
+                    <div class="space-y-6">
+                        <div v-for="(ans, idx) in correctionData.answers" :key="idx" class="bg-white border rounded-lg shadow-sm p-4">
+                            
+                            <!-- Header Soal -->
+                            <div class="flex justify-between mb-3 border-b pb-2">
+                                <span class="font-bold text-sm text-gray-600">
+                                    Soal No. {{ parseInt(idx)+1 }} 
+                                    <span class="text-xs bg-gray-200 px-2 py-0.5 rounded ml-2 text-gray-600">{{ getQuestionType(correctionData.examId, idx) }}</span>
+                                </span>
+                                <!-- Bobot -->
+                                <span class="text-xs font-bold text-gray-400">Bobot: {{ getQuestionPoint(correctionData.examId, idx) }}</span>
                             </div>
-                            <div class="w-24 text-right">
-                                <span class="text-xs text-gray-400 block">Kunci</span>
-                                <span class="text-xs font-mono font-bold text-green-600">{{ getCorrectAnswer(editingData.examId, idx) }}</span>
+
+                            <!-- Teks Soal -->
+                            <p class="text-sm text-gray-800 mb-4 italic bg-gray-50 p-3 rounded">"{{ getQuestionText(correctionData.examId, idx) }}"</p>
+
+                            <!-- AREA KOREKSI -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                
+                                <!-- Jawaban Siswa & Kunci -->
+                                <div class="text-sm space-y-2">
+                                    <div>
+                                        <span class="block text-xs font-bold text-gray-400 uppercase">Jawaban Siswa:</span>
+                                        <div class="font-bold text-slate-800 whitespace-pre-wrap border-l-4 border-blue-400 pl-2">{{ formatAnswer(ans) }}</div>
+                                    </div>
+                                    <div v-if="['URAIAN', 'ESAI'].includes(getQuestionType(correctionData.examId, idx))">
+                                        <span class="block text-xs font-bold text-gray-400 uppercase mt-2">Kunci Guru:</span>
+                                        <div class="text-green-700 text-xs whitespace-pre-wrap border-l-4 border-green-400 pl-2">{{ getCorrectAnswer(correctionData.examId, idx) }}</div>
+                                    </div>
+                                </div>
+
+                                <!-- Panel Skor Manual -->
+                                <div v-if="['URAIAN', 'ESAI'].includes(getQuestionType(correctionData.examId, idx))" class="bg-blue-50 p-3 rounded border border-blue-100">
+                                    <p class="text-xs font-bold text-blue-800 mb-2 text-center uppercase">Berikan Skor</p>
+                                    
+                                    <!-- PILIHAN SKOR URAIAN (0-3) -->
+                                    <div v-if="getQuestionType(correctionData.examId, idx) === 'URAIAN'" class="flex justify-center gap-2">
+                                        <template v-for="s in [0,1,2,3]" :key="s">
+                                            <input type="radio" :name="'score_'+idx" :id="'s_'+idx+'_'+s" :value="s" v-model="correctionData.manualScores[idx]" class="hidden score-radio">
+                                            <label :for="'s_'+idx+'_'+s" class="w-8 h-8 flex items-center justify-center border border-blue-300 rounded cursor-pointer hover:bg-blue-200 font-bold text-blue-800 transition">{{ s }}</label>
+                                        </template>
+                                    </div>
+
+                                    <!-- PILIHAN SKOR ESAI (0-4) -->
+                                    <div v-else-if="getQuestionType(correctionData.examId, idx) === 'ESAI'" class="flex justify-center gap-2">
+                                        <template v-for="s in [0,1,2,3,4]" :key="s">
+                                            <input type="radio" :name="'score_'+idx" :id="'s_'+idx+'_'+s" :value="s" v-model="correctionData.manualScores[idx]" class="hidden score-radio">
+                                            <label :for="'s_'+idx+'_'+s" class="w-8 h-8 flex items-center justify-center border border-blue-300 rounded cursor-pointer hover:bg-blue-200 font-bold text-blue-800 transition">{{ s }}</label>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Info Nilai Otomatis -->
+                                <div v-else class="flex items-center justify-center">
+                                    <div :class="['px-4 py-2 rounded font-bold text-sm flex items-center gap-2', isAnswerCorrect(correctionData.examId, idx, ans) ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700']">
+                                        <i :class="['fas', isAnswerCorrect(correctionData.examId, idx, ans) ? 'fa-check' : 'fa-times']"></i>
+                                        {{ isAnswerCorrect(correctionData.examId, idx, ans) ? 'Benar (Otomatis)' : 'Salah (0 Poin)' }}
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="p-4 border-t bg-gray-50 text-right flex justify-end gap-2">
-                    <button @click="isEditing = false" class="px-4 py-2 text-gray-500 font-bold text-sm hover:bg-gray-200 rounded">Batal</button>
-                    <button @click="saveEdit" class="bg-blue-600 text-white px-6 py-2 rounded font-bold text-sm hover:bg-blue-700 shadow flex items-center gap-2">
-                        <i class="fas fa-save"></i> SIMPAN PERUBAHAN
-                    </button>
+                <div class="p-4 border-t bg-white text-right flex justify-between items-center">
+                    <div class="text-left">
+                        <p class="text-xs text-gray-500">Total Nilai Akhir:</p>
+                        <p class="text-2xl font-bold text-blue-900">{{ tempStats.autoScore + tempStats.manualScore }}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button @click="isCorrecting = false" class="px-6 py-2 text-gray-500 font-bold hover:bg-gray-100 rounded">Batal</button>
+                        <button @click="saveCorrection" class="bg-blue-600 text-white px-8 py-2 rounded font-bold shadow hover:bg-blue-700 flex items-center gap-2">
+                            <i class="fas fa-save"></i> SIMPAN NILAI
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -225,7 +251,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, query, orderBy, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // --- CONFIG FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyBivREr2y61OYTE0kLxRnkGtPCdLvHn_og",
             authDomain: "cbt-albanna.firebaseapp.com",
@@ -247,10 +272,10 @@
                     selectedMapel: '',
                     allResults: [],
                     bankSoalCache: {},
-                    activeDetail: null,
-                    // EDIT STATE
-                    isEditing: false,
-                    editingData: null
+                    
+                    // KOREKSI STATE
+                    isCorrecting: false,
+                    correctionData: null // { ...result, manualScores: {0:2, 1:3} }
                 }
             },
             computed: {
@@ -265,8 +290,29 @@
                         return matchClass && matchMapel;
                     });
                 },
-                sortedResults() {
-                    return [...this.filteredResults].sort((a, b) => a.student.nama.localeCompare(b.student.nama));
+                sortedResults() { return [...this.filteredResults].sort((a, b) => a.student.nama.localeCompare(b.student.nama)); },
+                
+                // Hitung statistik sementara saat di modal koreksi
+                tempStats() {
+                    if (!this.correctionData) return { autoScore: 0, manualScore: 0 };
+                    
+                    let auto = 0;
+                    let manual = 0;
+                    const exam = this.getExamData(this.correctionData.examId);
+                    
+                    if(exam) {
+                        exam.soal.forEach((q, idx) => {
+                            // Auto
+                            if(['PG','BS'].includes(q.type) && this.correctionData.answers[idx] === q.answer) {
+                                auto += parseInt(q.poin);
+                            }
+                            // Manual (dari v-model correctionData.manualScores)
+                            if(['URAIAN','ESAI'].includes(q.type) && this.correctionData.manualScores && this.correctionData.manualScores[idx] !== undefined) {
+                                manual += parseInt(this.correctionData.manualScores[idx]);
+                            }
+                        });
+                    }
+                    return { autoScore: auto, manualScore: manual };
                 }
             },
             async mounted() {
@@ -282,42 +328,16 @@
             },
             methods: {
                 getCountPerClass(cls) { return this.allResults.filter(r => r.student.kelas === cls).length; },
-                formatDate(iso) { return new Date(iso).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); },
                 
-                // --- LOGIKA PENILAIAN ---
+                // --- HELPERS SOAL ---
                 getExamData(examId) { return this.bankSoalCache[examId]; },
-                calculateScore(result) {
-                    const exam = this.getExamData(result.examId);
-                    if (!exam) return 0;
-                    let score = 0;
-                    exam.soal.forEach((q, idx) => {
-                        if (['PG', 'BS'].includes(q.type) && result.answers[idx] === q.answer) score += parseInt(q.poin);
-                    });
-                    return score;
-                },
-                calculateStats(result) {
-                    const exam = this.getExamData(result.examId);
-                    if (!exam) return { correct: 0, total: 0 };
-                    let correct = 0, totalObj = 0;
-                    exam.soal.forEach((q, idx) => {
-                        if (['PG', 'BS'].includes(q.type)) {
-                            totalObj++;
-                            if (result.answers[idx] === q.answer) correct++;
-                        }
-                    });
-                    return { correct, total: totalObj };
-                },
-                getScoreClass(score) {
-                    if (score >= 80) return 'score-badge score-high';
-                    if (score >= 60) return 'score-badge score-med';
-                    return 'score-badge score-low';
-                },
-
-                // --- VIEW HELPERS ---
-                viewDetail(res) { this.isEditing = false; this.activeDetail = res; },
                 getQuestionText(examId, idx) { const e = this.getExamData(examId); return e && e.soal[idx] ? e.soal[idx].text : '?'; },
+                getQuestionType(examId, idx) { const e = this.getExamData(examId); return e && e.soal[idx] ? e.soal[idx].type : ''; },
+                getQuestionPoint(examId, idx) { const e = this.getExamData(examId); return e && e.soal[idx] ? e.soal[idx].poin : 0; },
                 getCorrectAnswer(examId, idx) { const e = this.getExamData(examId); return e && e.soal[idx] ? e.soal[idx].answer : '-'; },
-                formatAnswer(ans) { return Array.isArray(ans) ? (ans.length ? ans.join(',') : '-') : (ans || '-'); },
+                
+                formatAnswer(ans) { return Array.isArray(ans) ? (ans.length ? ans.join(', ') : '-') : (ans || '-'); },
+                
                 isAnswerCorrect(examId, idx, ans) {
                     const exam = this.getExamData(examId);
                     if(!exam || !exam.soal[idx]) return false;
@@ -326,119 +346,120 @@
                     return false;
                 },
 
-                // --- CRUD ACTIONS ---
-                async deleteResult(id) {
-                    if(confirm("PERINGATAN: Data nilai siswa ini akan dihapus permanen dari database. Lanjutkan?")) {
-                        try {
-                            await deleteDoc(doc(db, "jawaban_siswa", id));
-                            alert("Data berhasil dihapus.");
-                        } catch (e) { alert("Gagal menghapus: " + e.message); }
-                    }
-                },
-                
-                editResult(res) {
-                    // Clone object agar tidak merubah tampilan live sebelum disimpan
-                    this.editingData = JSON.parse(JSON.stringify(res));
-                    this.isEditing = true;
+                needsManualCorrection(res) {
+                    const exam = this.getExamData(res.examId);
+                    if(!exam) return false;
+                    // Cek apakah ada soal uraian/esai yang belum punya skor di manualScores
+                    const hasEssay = exam.soal.some(q => ['URAIAN', 'ESAI'].includes(q.type));
+                    if (!hasEssay) return false;
+
+                    // Jika ada esai tapi belum ada data manualScores, atau nilainya belum lengkap
+                    if (!res.manualScores) return true;
+                    
+                    // Cek per butir
+                    return exam.soal.some((q, idx) => {
+                        return ['URAIAN', 'ESAI'].includes(q.type) && res.manualScores[idx] === undefined;
+                    });
                 },
 
-                async saveEdit() {
-                    if(!confirm("Simpan perubahan jawaban siswa ini?")) return;
+                // --- LOGIKA NILAI FINAL ---
+                calculateScore(result) {
+                    const exam = this.getExamData(result.examId);
+                    if (!exam) return 0;
+                    let score = 0;
+                    exam.soal.forEach((q, idx) => {
+                        // 1. Auto Score
+                        if (['PG', 'BS'].includes(q.type) && result.answers[idx] === q.answer) {
+                            score += parseInt(q.poin);
+                        }
+                        // 2. Manual Score (Stored in result)
+                        if (['URAIAN', 'ESAI'].includes(q.type) && result.manualScores && result.manualScores[idx] !== undefined) {
+                            score += parseInt(result.manualScores[idx]);
+                        }
+                    });
+                    return score;
+                },
+
+                // --- START KOREKSI ---
+                startCorrection(res) {
+                    // Clone data agar reaktif di modal tanpa merusak data asli sebelum save
+                    this.correctionData = JSON.parse(JSON.stringify(res));
+                    // Pastikan objek manualScores ada
+                    if (!this.correctionData.manualScores) {
+                        this.correctionData.manualScores = {};
+                    }
+                    this.isCorrecting = true;
+                },
+
+                // --- SAVE KOREKSI ---
+                async saveCorrection() {
+                    if(!confirm("Simpan nilai koreksi ini?")) return;
                     
                     try {
-                        const docRef = doc(db, "jawaban_siswa", this.editingData.id);
+                        const docRef = doc(db, "jawaban_siswa", this.correctionData.id);
                         await updateDoc(docRef, {
-                            answers: this.editingData.answers
+                            manualScores: this.correctionData.manualScores
                         });
-                        this.isEditing = false;
-                        this.editingData = null;
-                        alert("Perubahan berhasil disimpan!");
+                        this.isCorrecting = false;
+                        this.correctionData = null;
+                        alert("✅ Nilai berhasil disimpan!");
                     } catch(e) {
                         alert("Gagal update: " + e.message);
                     }
                 },
 
-                // --- EXPORT EXCEL LENGKAP ---
+                // --- HAPUS ---
+                async deleteResult(id) {
+                    if(confirm("Hapus data ini permanen?")) {
+                        await deleteDoc(doc(db, "jawaban_siswa", id));
+                    }
+                },
+
+                // --- EXPORT EXCEL ---
                 exportToExcel() {
                     if (this.sortedResults.length === 0) return alert("Data kosong!");
                     const examId = this.sortedResults[0].examId;
                     const examMaster = this.getExamData(examId);
-                    if(!examMaster) return alert("Data master soal tidak ditemukan!");
-
-                    const jumlahSoal = examMaster.soal.length;
-                    const wb = XLSX.utils.book_new();
                     
+                    const wb = XLSX.utils.book_new();
+                    const jumlahSoal = examMaster ? examMaster.soal.length : 0;
+
                     let header = ["No", "Nama Siswa", "NIS"];
                     for(let i=1; i<=jumlahSoal; i++) header.push(`Q${i}`);
                     header.push("Total Nilai");
 
-                    let keyRow = ["", "KUNCI JAWABAN", ""];
-                    examMaster.soal.forEach(q => { keyRow.push(q.answer || "-"); });
-                    keyRow.push("");
-
                     let rows = [];
-                    let rawAnswersMatrix = [];
-                    for(let q=0; q<jumlahSoal; q++) rawAnswersMatrix[q] = [];
 
                     this.sortedResults.forEach((res, idx) => {
                         let row = [idx + 1, res.student.nama, res.student.nis || '-'];
-                        examMaster.soal.forEach((q, qIdx) => {
-                            const ans = res.answers[qIdx];
-                            const formattedAns = this.formatAnswer(ans);
-                            const isCorrect = (['PG','BS'].includes(q.type) && ans === q.answer);
-                            rawAnswersMatrix[qIdx].push(isCorrect ? 1 : 0);
-                            
-                            if (!isCorrect && ['PG','BS'].includes(q.type)) {
-                                row.push({ v: formattedAns, s: { font: { color: { rgb: "FF0000" }, bold: true } } });
-                            } else {
-                                row.push({ v: formattedAns });
-                            }
-                        });
+                        
+                        if(examMaster) {
+                            examMaster.soal.forEach((q, qIdx) => {
+                                const ans = res.answers[qIdx];
+                                const formattedAns = this.formatAnswer(ans);
+                                let cell = { v: formattedAns };
+
+                                // Styling Merah jika Salah (PG/BS)
+                                if(['PG','BS'].includes(q.type)) {
+                                    if(ans !== q.answer) cell.s = { font: { color: { rgb: "FF0000" } } };
+                                }
+                                // Styling Biru jika Esai (Manual)
+                                else if(['URAIAN','ESAI'].includes(q.type)) {
+                                    cell.s = { font: { color: { rgb: "0000FF" } } };
+                                    // Tambahkan Skor Manual di sebelah jawaban (opsional, disini kita timpa textnya)
+                                    const skor = (res.manualScores && res.manualScores[qIdx]) || 0;
+                                    cell.v = `${formattedAns} [${skor}]`;
+                                }
+                                row.push(cell);
+                            });
+                        }
                         row.push({ v: this.calculateScore(res), s: { font: { bold: true } } });
                         rows.push(row);
                     });
 
-                    let difficultyRow = ["", "TINGKAT KESUKARAN", ""];
-                    let discriminatorRow = ["", "DAYA BEDA", ""];
-                    
-                    const sortedByScore = [...this.sortedResults].sort((a, b) => this.calculateScore(b) - this.calculateScore(a));
-                    const nGroup = Math.max(1, Math.floor(sortedByScore.length * 0.27)); 
-                    const upperGroup = sortedByScore.slice(0, nGroup);
-                    const lowerGroup = sortedByScore.slice(sortedByScore.length - nGroup);
-
-                    examMaster.soal.forEach((q, qIdx) => {
-                        if (!['PG', 'BS'].includes(q.type)) { difficultyRow.push("-"); discriminatorRow.push("-"); return; }
-                        const totalCorrect = rawAnswersMatrix[qIdx].reduce((a,b)=>a+b, 0);
-                        const p = (totalCorrect / this.sortedResults.length).toFixed(2);
-                        difficultyRow.push(p);
-
-                        const countCorrectInGroup = (group) => group.reduce((acc, s) => acc + (s.answers[qIdx] === q.answer ? 1 : 0), 0);
-                        const upperCorrect = countCorrectInGroup(upperGroup);
-                        const lowerCorrect = countCorrectInGroup(lowerGroup);
-                        const d = ((upperCorrect - lowerCorrect) / nGroup).toFixed(2);
-                        discriminatorRow.push(d);
-                    });
-
-                    const finalData = [header, keyRow, ...rows, [], difficultyRow, discriminatorRow];
-                    const ws = XLSX.utils.aoa_to_sheet(finalData);
-
-                    // Styling Header
-                    const range = XLSX.utils.decode_range(ws['!ref']);
-                    for (let C = range.s.c; C <= range.e.c; ++C) {
-                        const address = XLSX.utils.encode_cell({ r: 0, c: C });
-                        if (ws[address]) ws[address].s = { font: { bold: true }, fill: { fgColor: { rgb: "EFEFEF" } } };
-                    }
-                    for (let C = range.s.c; C <= range.e.c; ++C) {
-                        const address = XLSX.utils.encode_cell({ r: 1, c: C });
-                        if (ws[address]) ws[address].s = { font: { bold: true, color: { rgb: "0000FF" } }, fill: { fgColor: { rgb: "FFFFCC" } } };
-                    }
-
-                    ws['!cols'] = [{wch:5}, {wch:30}, {wch:10}]; 
-                    for(let i=0; i<jumlahSoal; i++) ws['!cols'].push({wch:5}); 
-                    ws['!cols'].push({wch:10}); 
-
-                    XLSX.utils.book_append_sheet(wb, ws, "Analisis Butir");
-                    XLSX.writeFile(wb, `Analisis_${this.selectedMapel}_${this.selectedClass}.xlsx`);
+                    const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+                    XLSX.utils.book_append_sheet(wb, ws, "Nilai Siswa");
+                    XLSX.writeFile(wb, `Nilai_${this.selectedMapel}_${this.selectedClass}.xlsx`);
                 }
             }
         }).mount('#grading-app');
