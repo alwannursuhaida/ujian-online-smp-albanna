@@ -59,6 +59,7 @@
         <!-- 2. DASHBOARD MENU UTAMA -->
         <div v-else class="flex flex-col min-h-screen">
             
+            <!-- Navbar -->
             <nav class="bg-blue-900 text-white p-4 shadow-lg sticky top-0 z-50">
                 <div class="max-w-6xl mx-auto flex justify-between items-center">
                     <div class="flex items-center gap-3">
@@ -76,6 +77,7 @@
                 </div>
             </nav>
 
+            <!-- Main Content -->
             <main class="flex-1 max-w-6xl mx-auto w-full p-6 relative z-10">
                 
                 <div class="text-center mb-10 mt-6">
@@ -86,8 +88,8 @@
                 <!-- GRID MENU -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 menu-grid">
                     
-                    <!-- 1. PERENCANAAN PEMBELAJARAN (DENGAN FORCE REDIRECT JS) -->
-                    <div onclick="window.location.href='perencanaan.html'" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-cyan-500 hover:shadow-xl group flex flex-col">
+                    <!-- 1. PERENCANAAN PEMBELAJARAN -->
+                    <a href="perencanaan.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-cyan-500 hover:shadow-xl group flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-cyan-100 text-cyan-600 p-3 rounded-lg group-hover:bg-cyan-600 group-hover:text-white transition">
                                 <i class="fas fa-pen-nib fa-2x"></i>
@@ -96,9 +98,21 @@
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-cyan-600">Perencanaan Ajar</h3>
                         <p class="text-sm text-gray-500 mt-auto">Generator RPP/Modul Ajar yang Mindful, Meaningful, & Joyful.</p>
-                    </div>
+                    </a>
 
-                    <!-- 2. SOAL GENERATOR -->
+                    <!-- 2. KISI-KISI (POSISI NOMOR 2) -->
+                    <a href="guru.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-purple-500 hover:shadow-xl group relative flex flex-col">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="bg-purple-100 text-purple-600 p-3 rounded-lg group-hover:bg-purple-600 group-hover:text-white transition">
+                                <i class="fas fa-list-alt fa-2x"></i>
+                            </div>
+                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">ADMINISTRASI</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-purple-600">Generator Kisi-Kisi</h3>
+                        <p class="text-sm text-gray-500 mt-auto">Buat dokumen kisi-kisi soal ujian standar secara otomatis (PDF).</p>
+                    </a>
+
+                    <!-- 3. SOAL GENERATOR -->
                     <a href="soal.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-blue-500 hover:shadow-xl group flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-blue-100 text-blue-600 p-3 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition">
@@ -110,7 +124,7 @@
                         <p class="text-sm text-gray-500 mt-auto">Input butir soal, kunci jawaban, dan upload ke server ujian online.</p>
                     </a>
 
-                    <!-- 3. HASIL UJIAN -->
+                    <!-- 4. HASIL UJIAN -->
                     <a href="jawaban.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-orange-500 hover:shadow-xl group flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-orange-100 text-orange-600 p-3 rounded-lg group-hover:bg-orange-600 group-hover:text-white transition">
@@ -122,7 +136,7 @@
                         <p class="text-sm text-gray-500 mt-auto">Lihat hasil ujian siswa, analisis butir soal, dan unduh Excel.</p>
                     </a>
 
-                    <!-- 4. ABSENSI & SUSULAN -->
+                    <!-- 5. ABSENSI & SUSULAN -->
                     <a href="absen_ujian.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-indigo-500 hover:shadow-xl group flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-indigo-100 text-indigo-600 p-3 rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition">
@@ -134,7 +148,7 @@
                         <p class="text-sm text-gray-500 mt-auto">Input kehadiran harian dan kelola jadwal siswa ujian susulan.</p>
                     </a>
 
-                    <!-- 5. ADMINISTRASI (BERITA ACARA) -->
+                    <!-- 6. ADMINISTRASI (BERITA ACARA) -->
                     <a href="administrasi.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-teal-500 hover:shadow-xl group flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-teal-100 text-teal-600 p-3 rounded-lg group-hover:bg-teal-600 group-hover:text-white transition">
@@ -146,7 +160,7 @@
                         <p class="text-sm text-gray-500 mt-auto">Buat dokumen Berita Acara Pelaksanaan Ujian secara digital.</p>
                     </a>
 
-                    <!-- 6. ADMIN PANEL (IT) -->
+                    <!-- 7. ADMIN PANEL (IT) -->
                     <a href="admin.html" class="btn-card bg-slate-800 p-6 rounded-xl shadow-md border-l-8 border-slate-600 hover:shadow-xl group flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-slate-700 text-white p-3 rounded-lg group-hover:bg-slate-600 transition">
@@ -158,7 +172,7 @@
                         <p class="text-sm text-slate-400 mt-auto">Monitoring server, buka blokir siswa, dan manajemen database.</p>
                     </a>
 
-                    <!-- 7. PORTAL REMIDI (SISWA) -->
+                    <!-- 8. PORTAL REMIDI (SISWA) -->
                     <a href="remidi.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-pink-500 hover:shadow-xl group flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-pink-100 text-pink-600 p-3 rounded-lg group-hover:bg-pink-600 group-hover:text-white transition">
@@ -170,7 +184,7 @@
                         <p class="text-sm text-gray-500 mt-auto">Cek status kelulusan mapel dan jadwal ujian remidi.</p>
                     </a>
                     
-                    <!-- 8. UJIAN SISWA (LINK) -->
+                    <!-- 9. UJIAN SISWA (LINK) -->
                     <a href="siswa.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-green-500 hover:shadow-xl group flex flex-col opacity-80 hover:opacity-100">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-green-100 text-green-600 p-3 rounded-lg group-hover:bg-green-600 group-hover:text-white transition">
@@ -180,18 +194,6 @@
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-green-600">Halaman Ujian Siswa</h3>
                         <p class="text-sm text-gray-500 mt-auto">Tampilan layar ujian untuk peserta didik (Client Side).</p>
-                    </a>
-
-                    <!-- 9. KISI-KISI (PINDAH KE TERAKHIR) -->
-                    <a href="guru.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-purple-500 hover:shadow-xl group relative flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-purple-100 text-purple-600 p-3 rounded-lg group-hover:bg-purple-600 group-hover:text-white transition">
-                                <i class="fas fa-list-alt fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">ADMINISTRASI</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-purple-600">Generator Kisi-Kisi</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Buat dokumen kisi-kisi soal ujian standar secara otomatis (PDF).</p>
                     </a>
 
                 </div>
