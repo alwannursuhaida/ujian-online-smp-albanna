@@ -42,19 +42,9 @@
             margin-bottom: 1.5rem; /* Spasi baris 2 */
             align-items: start;
         }
-        .details-label {
-            font-weight: bold;
-            color: #1e3a8a; /* blue-900 */
-        }
-        .details-colon {
-            text-align: center;
-            font-weight: bold;
-            color: #64748b;
-        }
-        .details-value {
-            color: #334155;
-            white-space: pre-wrap;
-        }
+        .details-label { font-weight: bold; color: #1e3a8a; }
+        .details-colon { text-align: center; font-weight: bold; color: #64748b; }
+        .details-value { color: #334155; white-space: pre-wrap; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen pb-20">
@@ -145,53 +135,50 @@
                 <div v-if="step === 1" class="bg-white p-8 rounded-2xl shadow-xl border-t-8 border-blue-900 animate-pop">
                     <h2 class="text-xl font-bold text-gray-800 mb-6 border-b pb-2 flex items-center gap-2"><i class="fas fa-id-card text-blue-600"></i> 1. Identitas Perangkat Ajar</h2>
                     
-                    <div class="space-y-6">
-                        <!-- UPLOAD LOGO -->
-                        <div class="border-2 border-dashed border-gray-300 p-4 rounded text-center bg-gray-50 hover:bg-gray-100 cursor-pointer relative group">
-                            <input type="file" accept="image/*" @change="handleLogoUpload" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                            <div v-if="sekolah.logoPreview">
-                                <img :src="sekolah.logoPreview" class="h-16 mx-auto object-contain mb-2">
-                                <p class="text-xs text-green-600 font-bold"><i class="fas fa-check-circle"></i> Logo Siap</p>
-                            </div>
-                            <div v-else class="py-4">
-                                <i class="fas fa-cloud-upload-alt fa-2x text-gray-400 mb-2 group-hover:text-blue-500 transition"></i>
-                                <p class="text-sm font-bold text-gray-600">Upload Logo Sekolah (Wajib untuk Kop Surat)</p>
-                                <p class="text-xs text-gray-400 mt-1">Klik di sini untuk memilih gambar</p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- PILIH MAPEL -->
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Mata Pelajaran <span class="text-red-500">*</span></label>
-                                <select v-model="form.mapel" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none font-bold text-blue-900">
-                                    <option value="" disabled>-- Pilih Mata Pelajaran --</option>
-                                    <option v-for="m in mapelList" :value="m">{{ m }}</option>
-                                </select>
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Lingkup Materi (Judul Modul) <span class="text-red-500">*</span></label>
-                                <input v-model="form.lingkupMateri" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none font-bold text-lg text-blue-900 placeholder-gray-300" placeholder="Contoh: Sistem Pencernaan Manusia">
-                            </div>
-                            <div><label class="block text-sm font-bold text-gray-600 mb-2">Nama Penyusun <span class="text-red-500">*</span></label><input v-model="form.nama" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-900" placeholder="Nama Lengkap"></div>
-                            <div><label class="block text-sm font-bold text-gray-600 mb-2">Institusi</label><input v-model="form.institusi" class="w-full p-3 border rounded-lg bg-gray-50 text-gray-500" readonly></div>
+                    <div class="mb-6 flex items-center justify-center">
+                        <div class="bg-gray-50 border-2 border-dashed border-blue-200 rounded-xl p-4 flex items-center gap-4 w-full max-w-md">
+                            <img :src="sekolah.logoBase64" class="h-16 object-contain" v-if="sekolah.logoBase64">
+                            <div v-else class="h-16 w-16 bg-gray-200 rounded-full flex items-center justify-center text-gray-400"><i class="fas fa-image"></i></div>
                             <div>
-                                <label class="block text-sm font-bold text-gray-600 mb-2">Fase / Kelas <span class="text-red-500">*</span></label>
-                                <select v-model="form.fase" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-900">
-                                    <option value="" disabled>-- Pilih Fase --</option>
-                                    <option value="Fase D (Kelas 7)">Fase D (Kelas 7)</option>
-                                    <option value="Fase D (Kelas 8)">Fase D (Kelas 8)</option>
-                                    <option value="Fase D (Kelas 9)">Fase D (Kelas 9)</option>
-                                </select>
+                                <p class="text-sm font-bold text-blue-900">Logo Sekolah Otomatis</p>
+                                <p class="text-xs text-gray-500">Terpasang di Kop Surat PDF.</p>
                             </div>
-                            <div><label class="block text-sm font-bold text-gray-600 mb-2">Alokasi Waktu <span class="text-red-500">*</span></label><input v-model="form.waktu" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-900" placeholder="Contoh: 2 JP"></div>
+                            <i class="fas fa-check-circle text-green-500 ml-auto text-xl"></i>
                         </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <!-- PILIH MAPEL -->
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Mata Pelajaran <span class="text-red-500">*</span></label>
+                            <select v-model="form.mapel" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none font-bold text-blue-900">
+                                <option value="" disabled>-- Pilih Mata Pelajaran --</option>
+                                <option v-for="m in mapelList" :value="m">{{ m }}</option>
+                            </select>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Lingkup Materi (Judul Modul) <span class="text-red-500">*</span></label>
+                            <input v-model="form.lingkupMateri" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none font-bold text-lg text-blue-900 placeholder-gray-300" placeholder="Contoh: Sistem Pencernaan Manusia">
+                        </div>
+                        <div><label class="block text-sm font-bold text-gray-600 mb-2">Nama Penyusun <span class="text-red-500">*</span></label><input v-model="form.nama" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-900" placeholder="Nama Lengkap"></div>
+                        <div><label class="block text-sm font-bold text-gray-600 mb-2">Institusi</label><input v-model="form.institusi" class="w-full p-3 border rounded-lg bg-gray-50 text-gray-500" readonly></div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-600 mb-2">Fase / Kelas <span class="text-red-500">*</span></label>
+                            <select v-model="form.fase" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-900">
+                                <option value="" disabled>-- Pilih Fase --</option>
+                                <option value="Fase D (Kelas 7)">Fase D (Kelas 7)</option>
+                                <option value="Fase D (Kelas 8)">Fase D (Kelas 8)</option>
+                                <option value="Fase D (Kelas 9)">Fase D (Kelas 9)</option>
+                            </select>
+                        </div>
+                        <div><label class="block text-sm font-bold text-gray-600 mb-2">Alokasi Waktu <span class="text-red-500">*</span></label><input v-model="form.waktu" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-900" placeholder="Contoh: 2 JP"></div>
                     </div>
                     <div class="mt-8 flex justify-end"><button @click="nextStep" class="bg-blue-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-800 shadow-lg flex items-center gap-2 transition transform hover:scale-105">LANJUT <i class="fas fa-arrow-right"></i></button></div>
                 </div>
 
-                <!-- STEP 2: MOTIVASI (ANIMATED) -->
+                <!-- STEP 2: MOTIVASI -->
                 <div v-if="step === 2" class="flex flex-col items-center justify-center py-16 text-center">
                     <div class="relative mb-10 animate-float">
                         <div class="absolute inset-0 bg-yellow-200 rounded-full blur-3xl opacity-30"></div>
@@ -225,7 +212,7 @@
                     <div class="mt-8 flex justify-end gap-3"><button @click="saveDraft()" class="text-gray-500 font-bold px-4 hover:text-blue-600 text-sm">Simpan Draft</button><button @click="nextStep" class="bg-blue-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-800 shadow-lg transition">LANJUT <i class="fas fa-arrow-right"></i></button></div>
                 </div>
 
-                <!-- STEP 4: MOTIVASI MULIA (ANIMATED) -->
+                <!-- STEP 4: MOTIVASI MULIA -->
                 <div v-if="step === 4" class="flex flex-col items-center justify-center py-20 text-center">
                     <div class="relative mb-8">
                         <div class="absolute inset-0 bg-red-200 rounded-full blur-2xl opacity-50 animate-pulse"></div>
@@ -240,15 +227,49 @@
                     </button>
                 </div>
 
-                <!-- STEP 5: DESAIN PEMBELAJARAN -->
+                <!-- STEP 5: DESAIN PEMBELAJARAN (UPDATED: MULTIPLE TP & ITP) -->
                 <div v-if="step === 5" class="bg-white p-8 rounded-2xl shadow-xl border-t-8 border-teal-600">
                     <div class="flex justify-between mb-6 border-b pb-4"><h2 class="text-xl font-bold text-gray-800">4. Desain Pembelajaran</h2><button @click="step=3" class="text-sm text-gray-400 font-bold hover:text-teal-600"><i class="fas fa-arrow-left"></i> Kembali</button></div>
                     <div class="grid gap-6">
+                        <!-- CP & Disiplin -->
                         <div class="grid md:grid-cols-2 gap-4">
                             <div><label class="font-bold text-teal-800 text-sm mb-1 block">Capaian Pembelajaran (CP)</label><textarea v-model="form.cp" rows="2" class="w-full p-3 border rounded-lg bg-teal-50/50 focus:bg-white transition text-sm"></textarea></div>
                             <div><label class="font-bold text-teal-800 text-sm mb-1 block">Lintas Disiplin Ilmu</label><textarea v-model="form.lintasDisiplin" rows="2" class="w-full p-3 border rounded-lg bg-teal-50/50 focus:bg-white transition text-sm"></textarea></div>
                         </div>
-                        <div><label class="font-bold text-teal-800 text-sm mb-1 block">Tujuan Pembelajaran (TP)</label><textarea v-model="form.tp" rows="3" class="w-full p-3 border rounded-lg bg-teal-50/50 focus:bg-white transition text-sm" placeholder="ABCD / SMART Goals"></textarea></div>
+
+                        <!-- TUJUAN PEMBELAJARAN & INDIKATOR (NEW STRUCTURE) -->
+                        <div class="space-y-4 bg-teal-50 p-4 rounded-xl border border-teal-200">
+                            <h3 class="font-bold text-teal-900 flex items-center gap-2"><i class="fas fa-bullseye"></i> Tujuan Pembelajaran & Indikator</h3>
+                            
+                            <div v-for="(item, index) in form.tujuanPembelajaran" :key="index" class="bg-white p-4 rounded-lg border border-teal-200 shadow-sm relative">
+                                <button v-if="form.tujuanPembelajaran.length > 1" @click="removeTP(index)" class="absolute top-2 right-2 text-red-400 hover:text-red-600 text-xs font-bold"><i class="fas fa-times"></i> Hapus TP</button>
+                                
+                                <!-- Input TP -->
+                                <div class="mb-3">
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tujuan Pembelajaran {{ index + 1 }}</label>
+                                    <textarea v-model="item.text" rows="2" class="w-full p-2 border rounded focus:ring-2 focus:ring-teal-500 outline-none text-sm" placeholder="Contoh: Peserta didik mampu menjelaskan..."></textarea>
+                                </div>
+
+                                <!-- Input Indikator (Nested) -->
+                                <div class="pl-4 border-l-2 border-teal-100">
+                                    <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Indikator (ITP) untuk TP {{ index + 1 }}</label>
+                                    <div v-for="(ind, iIdx) in item.indikators" :key="iIdx" class="flex gap-2 mb-2">
+                                        <span class="text-gray-400 text-xs pt-2">{{ iIdx + 1 }}.</span>
+                                        <input v-model="ind.text" class="flex-1 p-2 border rounded text-xs bg-gray-50 focus:bg-white" placeholder="Indikator pencapaian...">
+                                        <button v-if="item.indikators.length > 1" @click="removeIndikator(index, iIdx)" class="text-gray-400 hover:text-red-500"><i class="fas fa-minus-circle"></i></button>
+                                    </div>
+                                    <button @click="addIndikator(index)" class="text-xs font-bold text-teal-600 hover:text-teal-800 flex items-center gap-1 mt-1">
+                                        <i class="fas fa-plus"></i> Tambah Indikator
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button @click="addTP" class="w-full py-2 border-2 border-dashed border-teal-300 text-teal-600 font-bold rounded-lg hover:bg-teal-50 transition text-sm">
+                                <i class="fas fa-plus-circle"></i> Tambah Tujuan Pembelajaran Baru
+                            </button>
+                        </div>
+
+                        <!-- Topik & Pedagogi -->
                         <div class="grid md:grid-cols-2 gap-4">
                             <div><label class="font-bold text-teal-800 text-sm mb-1 block">Topik Pembelajaran</label><input v-model="form.topik" class="w-full p-3 border rounded-lg bg-teal-50/50 focus:bg-white transition text-sm"></div>
                             <div><label class="font-bold text-teal-800 text-sm mb-1 block">Praktik Pedagogis</label><input v-model="form.pedagogi" class="w-full p-3 border rounded-lg bg-teal-50/50 focus:bg-white transition text-sm" placeholder="PBL, PjBL, Inkuiri..."></div>
@@ -262,7 +283,7 @@
                     <div class="mt-8 flex justify-end gap-3"><button @click="saveDraft()" class="text-gray-500 font-bold px-4 hover:text-teal-600 text-sm">Simpan Draft</button><button @click="nextStep" class="bg-teal-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-teal-700 shadow-lg transition">LANJUT <i class="fas fa-arrow-right"></i></button></div>
                 </div>
 
-                <!-- STEP 6: NAFAS (ANIMATED) -->
+                <!-- STEP 6: NAFAS -->
                 <div v-if="step === 6" class="flex flex-col items-center justify-center py-24 text-center">
                     <div class="relative w-40 h-40 flex items-center justify-center mb-8">
                         <div class="absolute inset-0 bg-blue-200 rounded-full animate-breathe opacity-50"></div>
@@ -352,6 +373,7 @@
                         <button @click="viewModal = null" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button>
                     </div>
                     <div class="flex-1 overflow-y-auto p-8 bg-gray-50 space-y-6">
+                        
                         <!-- 1. IDENTITAS -->
                         <div class="bg-white p-6 rounded-xl shadow-sm border">
                             <h4 class="font-bold text-blue-800 border-b pb-4 mb-4">I. IDENTITAS</h4>
@@ -381,7 +403,18 @@
                             <div class="grid details-grid">
                                 <div class="details-label">Capaian Pembelajaran</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.cp }}</div>
                                 <div class="details-label">Lintas Disiplin Ilmu</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.lintasDisiplin }}</div>
-                                <div class="details-label">Tujuan Pembelajaran</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.tp }}</div>
+                                
+                                <!-- TAMPILKAN TP & ITP SECARA LIST -->
+                                <div class="details-label">Tujuan & Indikator</div> <div class="details-colon">:</div> 
+                                <div class="details-value">
+                                    <div v-for="(t, i) in viewModal.tujuanPembelajaran" :key="i" class="mb-3">
+                                        <p class="font-bold">{{ i+1 }}. {{ t.text }}</p>
+                                        <ul class="list-disc pl-5 text-sm text-gray-600">
+                                            <li v-for="ind in t.indikators">{{ ind.text }}</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
                                 <div class="details-label">Topik Pembelajaran</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.topik }}</div>
                                 <div class="details-label">Praktik Pedagogis</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.pedagogi }}</div>
                                 <div class="details-label">Kemitraan Pembelajaran</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.kemitraan }}</div>
@@ -452,7 +485,10 @@
                     form: {
                         mapel: '', lingkupMateri: '', nama: '', institusi: 'SMP Albanna', fase: '', waktu: '',
                         pesertaDidik: '', materi: '', profil: [],
-                        cp: '', lintasDisiplin: '', tp: '', topik: '', pedagogi: '', kemitraan: '', lingkungan: '', digital: '',
+                        cp: '', lintasDisiplin: '', 
+                        // UPDATE: TP ARRAY
+                        tujuanPembelajaran: [ { text: '', indikators: [{ text: '' }] } ],
+                        topik: '', pedagogi: '', kemitraan: '', lingkungan: '', digital: '',
                         pengalamanAwal: { prinsip: [], deskripsi: '' },
                         pengalamanIntiMemahami: { prinsip: [], deskripsi: '' },
                         pengalamanIntiMengaplikasi: { prinsip: [], deskripsi: '' },
@@ -475,11 +511,12 @@
                 // CEK SESSION
                 const session = sessionStorage.getItem('cbt_user_session');
                 if (!session) {
-                    // Jika tidak ada session, redirect ke index (atau mode tamu untuk testing)
                     try { window.location.href = 'index.html'; } 
                     catch(e) { 
                         this.currentUser = { username: 'tamu', name: 'Mode Tamu' }; 
                         this.storageKey = `rpp_library_tamu`;
+                        // DEFAULT LOGO FOR TAMU
+                        this.sekolah.logoBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="; 
                         this.loadFromLibrary();
                         return;
                     }
@@ -487,9 +524,24 @@
                 }
                 this.currentUser = JSON.parse(session);
                 this.storageKey = `rpp_library_${this.currentUser.username}`;
+                
+                // GENERATE DEFAULT LOGO (TEXT)
+                this.createDefaultLogo();
+
                 this.loadFromLibrary();
             },
             methods: {
+                // --- LOGO AUTOMATION ---
+                createDefaultLogo() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 300; canvas.height = 100;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = "white"; ctx.fillRect(0, 0, 300, 100);
+                    ctx.fillStyle = "#1e3a8a"; ctx.font = "bold 30px Arial";
+                    ctx.fillText("SMP ALBANNA", 20, 60);
+                    this.sekolah.logoBase64 = canvas.toDataURL("image/png");
+                },
+
                 // --- NAVIGATION & STORAGE ---
                 switchView(mode) { this.viewMode = mode; if(mode === 'list') this.resetForm(); },
                 
@@ -500,11 +552,9 @@
                 
                 saveToLibrary(planData) {
                     if (this.editingIndex !== null) {
-                        // Update existing
                         this.savedPlans[this.editingIndex] = { ...planData, lastUpdated: new Date().toISOString() };
                         alert("✅ Perubahan disimpan!");
                     } else {
-                        // Create new
                         this.savedPlans.unshift({ ...planData, id: Date.now(), lastUpdated: new Date().toISOString() });
                         alert("✅ Perencanaan baru berhasil dibuat!");
                     }
@@ -537,19 +587,44 @@
                     this.step = 1;
                 },
 
+                // --- MANAJEMEN TP & INDIKATOR ---
+                addTP() {
+                    this.form.tujuanPembelajaran.push({ text: '', indikators: [{ text: '' }] });
+                },
+                removeTP(index) {
+                    if (this.form.tujuanPembelajaran.length > 1) {
+                        this.form.tujuanPembelajaran.splice(index, 1);
+                    }
+                },
+                addIndikator(tpIndex) {
+                    this.form.tujuanPembelajaran[tpIndex].indikators.push({ text: '' });
+                },
+                removeIndikator(tpIndex, indIndex) {
+                    if (this.form.tujuanPembelajaran[tpIndex].indikators.length > 1) {
+                        this.form.tujuanPembelajaran[tpIndex].indikators.splice(indIndex, 1);
+                    }
+                },
+
+
                 // --- FORM LOGIC ---
                 nextStep() {
                     // VALIDASI PER STEP
                     if (this.step === 1) {
                         if (!this.form.lingkupMateri || !this.form.nama || !this.form.fase || !this.form.mapel) 
                             return alert("Mohon lengkapi Identitas Utama & Judul Modul!");
-                        if (!this.sekolah.logoBase64) return alert("Mohon upload logo sekolah!");
                     }
                     else if (this.step === 3) {
                         if (!this.form.pesertaDidik || !this.form.materi) return alert("Mohon isi analisis identifikasi!");
                     }
                     else if (this.step === 5) {
-                        if (!this.form.tp || !this.form.topik) return alert("Tujuan Pembelajaran wajib diisi!");
+                        // Validasi TP
+                        for (let t of this.form.tujuanPembelajaran) {
+                            if (!t.text) return alert("Isi teks Tujuan Pembelajaran!");
+                            for (let i of t.indikators) {
+                                if (!i.text) return alert("Isi semua Indikator!");
+                            }
+                        }
+                        if (!this.form.topik) return alert("Topik Pembelajaran wajib diisi!");
                     }
                     
                     this.step++;
@@ -557,22 +632,23 @@
                 },
 
                 saveDraft() {
-                    // Hanya simpan ke LocalStorage sementara (bukan ke Library utama)
-                    // Fitur ini opsional, bisa diimplementasikan jika ingin 'auto-save' saat mengetik
                     alert("Progres tersimpan sementara di memori.");
                 },
 
                 saveFinal() {
-                    // Validasi akhir
                     if (!this.form.lingkupMateri) return alert("Judul Lingkup Materi belum diisi!");
                     this.saveToLibrary(this.form);
+                    this.generatePDF(this.form); // Auto download
+                    this.switchView('list');
                 },
 
                 resetForm() {
                     this.form = {
                         mapel: '', lingkupMateri: '', nama: '', institusi: 'SMP Albanna', fase: '', waktu: '',
                         pesertaDidik: '', materi: '', profil: [],
-                        cp: '', lintasDisiplin: '', tp: '', topik: '', pedagogi: '', kemitraan: '', lingkungan: '', digital: '',
+                        cp: '', lintasDisiplin: '', 
+                        tujuanPembelajaran: [ { text: '', indikators: [{ text: '' }] } ],
+                        topik: '', pedagogi: '', kemitraan: '', lingkungan: '', digital: '',
                         pengalamanAwal: { prinsip: [], deskripsi: '' },
                         pengalamanIntiMemahami: { prinsip: [], deskripsi: '' },
                         pengalamanIntiMengaplikasi: { prinsip: [], deskripsi: '' },
@@ -589,46 +665,21 @@
                 addLampiran() { this.form.lampiran.push({ nama: '', keterangan: '' }); },
                 removeLampiran(index) { if(this.form.lampiran.length > 1) this.form.lampiran.splice(index, 1); },
                 
-                handleLogoUpload(e) {
-                    const f = e.target.files[0];
-                    if (f) {
-                        const reader = new FileReader();
-                        reader.onload = (ev) => {
-                            const img = new Image();
-                            img.onload = () => {
-                                const canvas = document.createElement('canvas');
-                                const ctx = canvas.getContext('2d');
-                                const MAX_SIZE = 200;
-                                let w = img.width, h = img.height;
-                                if (w > h) { if (w > MAX_SIZE) { h *= MAX_SIZE / w; w = MAX_SIZE; } } 
-                                else { if (h > MAX_SIZE) { w *= MAX_SIZE / h; h = MAX_SIZE; } }
-                                canvas.width = w; canvas.height = h;
-                                ctx.drawImage(img, 0, 0, w, h);
-                                const compressed = canvas.toDataURL('image/jpeg', 0.7);
-                                this.sekolah.logoBase64 = compressed;
-                                this.sekolah.logoPreview = compressed;
-                            };
-                            img.src = ev.target.result;
-                        };
-                        reader.readAsDataURL(f);
-                    }
-                },
-
                 // --- PDF GENERATION ---
                 generatePDF(data) {
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
                     
-                    // KOP SURAT
+                    // KOP SURAT (OTOMATIS)
                     if (this.sekolah.logoBase64) {
-                        doc.addImage(this.sekolah.logoBase64, 'JPEG', 15, 10, 25, 25);
+                        doc.addImage(this.sekolah.logoBase64, 'PNG', 15, 10, 40, 15);
                     }
                     
                     doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.setTextColor(30, 58, 138); 
-                    doc.text("SMP ALBANNA", 45, 18);
+                    doc.text("SMP ALBANNA", 60, 18);
                     doc.setTextColor(0); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-                    doc.text("Jl. Tukad Yeh Ho III No.10, Denpasar, Bali 80234", 45, 24);
-                    doc.text("Telepon (0361) 238 4444  |  www.albanna.sch.id", 45, 29);
+                    doc.text("Jl. Tukad Yeh Ho III No.10, Denpasar, Bali 80234", 60, 24);
+                    doc.text("Telepon (0361) 238 4444  |  www.albanna.sch.id", 60, 29);
                     doc.setLineWidth(0.5); doc.line(10, 35, 200, 35);
                     doc.setLineWidth(0.1); doc.line(10, 36, 200, 36);
 
@@ -644,6 +695,16 @@
                     doc.text(`Judul: ${data.lingkupMateri}`, 14, 62);
                     doc.text(`Fase: ${data.fase}  |  Waktu: ${data.waktu}`, 14, 67);
                     doc.text(`Guru: ${data.nama}`, 14, 72);
+
+                    // FORMAT TP UNTUK TABEL
+                    let tpString = '';
+                    data.tujuanPembelajaran.forEach((t, i) => {
+                        tpString += `${i+1}. ${t.text}\n`;
+                        t.indikators.forEach((ind) => {
+                            tpString += `   - ${ind.text}\n`;
+                        });
+                        tpString += '\n';
+                    });
 
                     // HELPER: FORMAT PRINSIP
                     const fmtPrinsip = (title, prinsip) => {
@@ -663,7 +724,7 @@
                         [{content: '2. DESAIN PEMBELAJARAN', colSpan: 2, styles: {fillColor: [220, 220, 220], fontStyle: 'bold'}}],
                         ['Capaian Pembelajaran', data.cp],
                         ['Lintas Disiplin Ilmu', data.lintasDisiplin],
-                        ['Tujuan Pembelajaran', data.tp],
+                        ['Tujuan & Indikator', tpString], // TP UPDATE
                         ['Topik Pembelajaran', data.topik],
                         ['Praktik Pedagogis', data.pedagogi],
                         ['Kemitraan Pembelajaran', data.kemitraan],
