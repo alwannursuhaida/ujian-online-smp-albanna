@@ -10,8 +10,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Montserrat', sans-serif; }
-        .btn-card { transition: all 0.3s ease; }
+        .btn-card { transition: all 0.3s ease; cursor: pointer; }
         .btn-card:hover { transform: translateY(-5px); }
+        /* Pastikan card selalu di atas layer background */
+        .menu-grid { position: relative; z-index: 10; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -22,7 +24,6 @@
         <div v-if="!currentUser" class="flex-1 flex flex-col items-center justify-center p-4">
             <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border-t-8 border-blue-900">
                 <div class="text-center mb-8">
-                    <!-- Ikon Guru -->
                     <div class="bg-blue-100 text-blue-900 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
                         <i class="fas fa-chalkboard-teacher fa-3x"></i>
                     </div>
@@ -49,15 +50,13 @@
                         MASUK <i class="fas fa-sign-in-alt"></i>
                     </button>
                 </form>
-
                 <div class="mt-6 text-xs text-center text-gray-400 border-t pt-4">
                     <p>Gunakan akun yang telah didaftarkan oleh Admin IT.</p>
-                    <p class="mt-1 italic">(Default: guru01 - guru30 / Pass: albanna)</p>
                 </div>
             </div>
         </div>
 
-        <!-- 2. DASHBOARD MENU UTAMA (Jika Login Berhasil) -->
+        <!-- 2. DASHBOARD MENU UTAMA (Login Berhasil) -->
         <div v-else class="flex flex-col min-h-screen">
             
             <!-- Navbar -->
@@ -69,7 +68,7 @@
                         </div>
                         <div>
                             <h1 class="font-bold text-xl leading-none">CBT SYSTEM</h1>
-                            <p class="text-xs text-blue-200">Selamat Datang, {{ currentUser.name }}</p>
+                            <p class="text-xs text-blue-200">Halo, {{ currentUser.name }}</p>
                         </div>
                     </div>
                     <button @click="logout" class="text-sm bg-red-600 hover:bg-red-700 px-4 py-2 rounded transition font-bold flex items-center gap-2 shadow">
@@ -79,18 +78,18 @@
             </nav>
 
             <!-- Main Content -->
-            <main class="flex-1 max-w-6xl mx-auto w-full p-6">
+            <main class="flex-1 max-w-6xl mx-auto w-full p-6 relative z-10">
                 
                 <div class="text-center mb-10 mt-6">
                     <h2 class="text-3xl font-bold text-gray-800">Dashboard Aplikasi</h2>
                     <p class="text-gray-600 mt-2">Pilih menu di bawah ini untuk memulai pekerjaan Anda.</p>
                 </div>
 
-                <!-- GRID MENU -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- GRID MENU (Menggunakan @click handler untuk navigasi lebih stabil) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 menu-grid">
                     
-                    <!-- 1. PERENCANAAN PEMBELAJARAN (BARU) -->
-                    <a href="perencanaan.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-cyan-500 hover:shadow-xl group flex flex-col">
+                    <!-- 1. PERENCANAAN PEMBELAJARAN (FIXED) -->
+                    <div @click="navigate('perencanaan.html')" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-cyan-500 hover:shadow-xl group flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-cyan-100 text-cyan-600 p-3 rounded-lg group-hover:bg-cyan-600 group-hover:text-white transition">
                                 <i class="fas fa-pen-nib fa-2x"></i>
@@ -99,10 +98,10 @@
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-cyan-600">Perencanaan Ajar</h3>
                         <p class="text-sm text-gray-500 mt-auto">Generator RPP/Modul Ajar yang Mindful, Meaningful, & Joyful.</p>
-                    </a>
+                    </div>
 
                     <!-- 2. KISI-KISI -->
-                    <a href="guru.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-purple-500 hover:shadow-xl group relative flex flex-col">
+                    <div @click="navigate('guru.html')" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-purple-500 hover:shadow-xl group relative flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-purple-100 text-purple-600 p-3 rounded-lg group-hover:bg-purple-600 group-hover:text-white transition">
                                 <i class="fas fa-list-alt fa-2x"></i>
@@ -111,10 +110,10 @@
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-purple-600">Generator Kisi-Kisi</h3>
                         <p class="text-sm text-gray-500 mt-auto">Buat dokumen kisi-kisi soal ujian standar secara otomatis (PDF).</p>
-                    </a>
+                    </div>
 
                     <!-- 3. SOAL GENERATOR -->
-                    <a href="soal.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-blue-500 hover:shadow-xl group flex flex-col">
+                    <div @click="navigate('soal.html')" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-blue-500 hover:shadow-xl group flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-blue-100 text-blue-600 p-3 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition">
                                 <i class="fas fa-file-signature fa-2x"></i>
@@ -123,10 +122,10 @@
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600">Input Soal (Upload)</h3>
                         <p class="text-sm text-gray-500 mt-auto">Input butir soal, kunci jawaban, dan upload ke server ujian online.</p>
-                    </a>
+                    </div>
 
                     <!-- 4. HASIL UJIAN -->
-                    <a href="jawaban.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-orange-500 hover:shadow-xl group flex flex-col">
+                    <div @click="navigate('jawaban.html')" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-orange-500 hover:shadow-xl group flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-orange-100 text-orange-600 p-3 rounded-lg group-hover:bg-orange-600 group-hover:text-white transition">
                                 <i class="fas fa-chart-pie fa-2x"></i>
@@ -135,10 +134,10 @@
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-orange-600">Rekap Nilai & Analisis</h3>
                         <p class="text-sm text-gray-500 mt-auto">Lihat hasil ujian siswa, analisis butir soal, dan unduh Excel.</p>
-                    </a>
+                    </div>
 
                     <!-- 5. ABSENSI & SUSULAN -->
-                    <a href="absen_ujian.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-indigo-500 hover:shadow-xl group flex flex-col">
+                    <div @click="navigate('absen_ujian.html')" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-indigo-500 hover:shadow-xl group flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-indigo-100 text-indigo-600 p-3 rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition">
                                 <i class="fas fa-calendar-check fa-2x"></i>
@@ -147,10 +146,10 @@
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-indigo-600">Absensi & Susulan</h3>
                         <p class="text-sm text-gray-500 mt-auto">Input kehadiran harian dan kelola jadwal siswa ujian susulan.</p>
-                    </a>
+                    </div>
 
                     <!-- 6. ADMINISTRASI (BERITA ACARA) -->
-                    <a href="administrasi.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-teal-500 hover:shadow-xl group flex flex-col">
+                    <div @click="navigate('administrasi.html')" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-teal-500 hover:shadow-xl group flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-teal-100 text-teal-600 p-3 rounded-lg group-hover:bg-teal-600 group-hover:text-white transition">
                                 <i class="fas fa-file-contract fa-2x"></i>
@@ -159,10 +158,10 @@
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-teal-600">Berita Acara Ujian</h3>
                         <p class="text-sm text-gray-500 mt-auto">Buat dokumen Berita Acara Pelaksanaan Ujian secara digital.</p>
-                    </a>
+                    </div>
 
                     <!-- 7. ADMIN PANEL (IT) -->
-                    <a href="admin.html" class="btn-card bg-slate-800 p-6 rounded-xl shadow-md border-l-8 border-slate-600 hover:shadow-xl group flex flex-col">
+                    <div @click="navigate('admin.html')" class="btn-card bg-slate-800 p-6 rounded-xl shadow-md border-l-8 border-slate-600 hover:shadow-xl group flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-slate-700 text-white p-3 rounded-lg group-hover:bg-slate-600 transition">
                                 <i class="fas fa-server fa-2x"></i>
@@ -171,10 +170,10 @@
                         </div>
                         <h3 class="text-xl font-bold text-white mb-2">Admin Panel</h3>
                         <p class="text-sm text-slate-400 mt-auto">Monitoring server, buka blokir siswa, dan manajemen database.</p>
-                    </a>
+                    </div>
 
                     <!-- 8. PORTAL REMIDI (SISWA) -->
-                    <a href="remidi.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-pink-500 hover:shadow-xl group flex flex-col">
+                    <div @click="navigate('remidi.html')" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-pink-500 hover:shadow-xl group flex flex-col">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-pink-100 text-pink-600 p-3 rounded-lg group-hover:bg-pink-600 group-hover:text-white transition">
                                 <i class="fas fa-clipboard-check fa-2x"></i>
@@ -183,10 +182,10 @@
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-pink-600">Cek Kelulusan & Remidi</h3>
                         <p class="text-sm text-gray-500 mt-auto">Cek status kelulusan mapel dan jadwal ujian remidi.</p>
-                    </a>
+                    </div>
                     
                     <!-- 9. UJIAN SISWA (LINK) -->
-                    <a href="siswa.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-green-500 hover:shadow-xl group flex flex-col opacity-80 hover:opacity-100">
+                    <div @click="navigate('siswa.html')" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-green-500 hover:shadow-xl group flex flex-col opacity-80 hover:opacity-100">
                         <div class="flex justify-between items-start mb-4">
                             <div class="bg-green-100 text-green-600 p-3 rounded-lg group-hover:bg-green-600 group-hover:text-white transition">
                                 <i class="fas fa-laptop-code fa-2x"></i>
@@ -195,7 +194,7 @@
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-green-600">Halaman Ujian Siswa</h3>
                         <p class="text-sm text-gray-500 mt-auto">Tampilan layar ujian untuk peserta didik (Client Side).</p>
-                    </a>
+                    </div>
 
                 </div>
             </main>
@@ -210,17 +209,12 @@
     <script>
         const { createApp } = Vue;
 
-        // 1. GENERATE AKUN DUMMY (guru01 - guru30)
+        // 1. GENERATE AKUN (guru01 - guru30)
         const generatedUsers = [];
         for (let i = 1; i <= 30; i++) {
             const num = i < 10 ? '0' + i : i;
-            generatedUsers.push({
-                username: `guru${num}`,
-                password: 'albanna', // Password Default
-                name: `Guru Mapel ${num}`
-            });
+            generatedUsers.push({ username: `guru${num}`, password: 'albanna', name: `Guru Mapel ${num}` });
         }
-        // Akun Admin Tambahan
         generatedUsers.push({ username: 'admin', password: 'admin123', name: 'Administrator IT' });
 
         createApp({
@@ -231,22 +225,21 @@
                 }
             },
             mounted() {
-                // Cek sesi login saat aplikasi dibuka
                 const storedUser = sessionStorage.getItem('cbt_user_session');
                 if (storedUser) {
                     this.currentUser = JSON.parse(storedUser);
                 }
             },
             methods: {
+                // Navigasi Stabil dengan JavaScript
+                navigate(url) {
+                    window.location.href = url;
+                },
                 handleLogin() {
                     const { username, password } = this.loginForm;
-                    
-                    // Cari user di array dummy
                     const user = generatedUsers.find(u => u.username === username && u.password === password);
-
                     if (user) {
                         this.currentUser = user;
-                        // Simpan ke Session Storage (Akan hilang saat browser ditutup total)
                         sessionStorage.setItem('cbt_user_session', JSON.stringify(user));
                         this.loginForm = { username: '', password: '' };
                     } else {
