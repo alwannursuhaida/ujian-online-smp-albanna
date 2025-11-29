@@ -41,29 +41,44 @@
             </div>
         </nav>
 
-        <!-- 1. HALAMAN LOGIN (INPUT NAMA & KELAS) -->
+        <!-- 1. HALAMAN LOGIN (KELAS -> NAMA) -->
         <div v-if="!isLoggedIn" class="flex-1 flex flex-col items-center justify-center p-4 animate-fade-in">
             <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-t-8 border-blue-600">
                 <div class="text-center mb-6">
                     <h2 class="text-2xl font-bold text-gray-800">CEK KELULUSAN</h2>
-                    <p class="text-sm text-gray-500">Masukkan identitas untuk melihat status remidi.</p>
+                    <p class="text-sm text-gray-500">Pilih kelas dan nama untuk melihat status.</p>
                 </div>
 
                 <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nama Lengkap</label>
-                        <input v-model="form.nama" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-600 outline-none uppercase" placeholder="Sesuai Absen">
-                    </div>
+                    <!-- 1. Pilih Kelas (Paling Atas) -->
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Kelas</label>
-                        <select v-model="form.kelas" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-600 outline-none">
+                        <select v-model="form.kelas" @change="fetchStudents" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-600 outline-none">
                             <option value="" disabled>-- Pilih Kelas --</option>
                             <optgroup label="Kelas 7"><option v-for="c in 'ABCDEF'" :value="'7'+c">7{{c}}</option></optgroup>
                             <optgroup label="Kelas 8"><option v-for="c in 'ABCDEF'" :value="'8'+c">8{{c}}</option></optgroup>
                             <optgroup label="Kelas 9"><option v-for="c in 'ABCDE'" :value="'9'+c">9{{c}}</option></optgroup>
                         </select>
                     </div>
-                    <button @click="checkStatus" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 shadow-lg transition flex justify-center items-center gap-2">
+
+                    <!-- 2. Pilih Nama (Dropdown dari Absensi) -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nama Lengkap</label>
+                        <select v-model="form.nama" :disabled="!form.kelas || studentList.length === 0" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-600 outline-none disabled:bg-gray-200 disabled:text-gray-400">
+                            <option value="" disabled>-- Pilih Nama Siswa --</option>
+                            <option v-for="s in studentList" :key="s.id" :value="s.nama">{{ s.nama }}</option>
+                        </select>
+                        
+                        <!-- Status Loading / Kosong -->
+                        <p v-if="isLoadingList" class="text-xs text-blue-500 mt-1 animate-pulse">
+                            <i class="fas fa-spinner fa-spin"></i> Memuat daftar siswa...
+                        </p>
+                        <p v-if="!isLoadingList && form.kelas && studentList.length === 0" class="text-xs text-red-400 mt-1 italic">
+                            * Data siswa kelas {{ form.kelas }} belum diinput di menu Absensi.
+                        </p>
+                    </div>
+
+                    <button @click="checkStatus" :disabled="!form.nama" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 shadow-lg transition flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                         <span v-if="isLoading"><i class="fas fa-circle-notch fa-spin"></i> Memuat...</span>
                         <span v-else>LIHAT HASIL <i class="fas fa-search"></i></span>
                     </button>
@@ -206,10 +221,12 @@
             data() {
                 return {
                     isLoading: false,
+                    isLoadingList: false, // Loading dropdown nama
                     isLoggedIn: false,
                     activeTab: 'rapor',
                     isAdminMode: false,
                     form: { nama: '', kelas: '' },
+                    studentList: [], // List nama siswa dari DB Absen
                     
                     // DATA
                     studentResults: [], // Hasil ujian siswa ini
@@ -217,7 +234,7 @@
                     scheduleList: [],   // Jadwal remidi
                     newSchedule: { mapel: '', hari: '', waktu: '' },
                     
-                    masterMapel: ['MATEMATIKA', 'IPA', 'BAHASA INGGRIS', 'BAHASA INDONESIA', 'BAHASA BALI', 'SENI BUDAYA', 'BAHASA ARAB', 'PJOK', 'IPS', 'PAI', 'INFORMATIKA']
+                    masterMapel: ['MATEMATIKA', 'IPA', 'BAHASA INGGRIS', 'BAHASA INDONESIA', 'BAHASA BALI', 'SENI BUDAYA', 'BAHASA ARAB', 'PJOK', 'IPS', 'PAI', 'INFORMATIKA', 'PKN', 'KKA']
                 }
             },
             mounted() {
@@ -237,13 +254,31 @@
                     snap.forEach(doc => { this.bankSoalCache[doc.id] = doc.data(); });
                 },
 
+                // --- FETCH NAMA SISWA DARI DB ABSENSI ---
+                async fetchStudents() {
+                    if(!this.form.kelas) return;
+                    this.isLoadingList = true;
+                    this.studentList = [];
+                    this.form.nama = ''; // Reset nama
+
+                    try {
+                        const q = query(collection(db, "data_absensi"), where("kelas", "==", this.form.kelas), orderBy("nama"));
+                        const snap = await getDocs(q);
+                        this.studentList = snap.docs.map(doc => doc.data());
+                    } catch (e) {
+                        console.error("Gagal load siswa:", e);
+                        // Fallback: Biarkan kosong agar user tahu harus diinput dulu di absensi
+                    } finally {
+                        this.isLoadingList = false;
+                    }
+                },
+
                 async checkStatus() {
                     if(!this.form.nama || !this.form.kelas) return alert("Lengkapi identitas!");
                     this.isLoading = true;
 
                     try {
-                        // Query manual (ambil semua lalu filter nama di client-side untuk hindari masalah case sensitive/index)
-                        // Tapi untuk performa, kita coba filter kelas dulu
+                        // Query manual (ambil semua lalu filter nama di client-side)
                         const q = query(collection(db, "jawaban_siswa"), where("student.kelas", "==", this.form.kelas));
                         const snap = await getDocs(q);
                         
@@ -253,10 +288,10 @@
                             .filter(d => d.student.nama.trim().toUpperCase() === this.form.nama.trim().toUpperCase());
 
                         if(this.studentResults.length === 0) {
-                            alert("Data tidak ditemukan. Pastikan Nama dan Kelas sesuai saat ujian.");
-                        } else {
-                            this.isLoggedIn = true;
+                            // Tetap login, tapi tampilkan data kosong
+                            // alert("Data ujian belum ditemukan. Anda akan masuk ke dashboard kosong.");
                         }
+                        this.isLoggedIn = true;
                     } catch(e) {
                         alert("Gagal memuat data: " + e.message);
                     } finally {
@@ -267,15 +302,14 @@
                 logout() {
                     this.isLoggedIn = false;
                     this.studentResults = [];
+                    this.studentList = []; // Reset list dropdown
                     this.form = { nama: '', kelas: '' };
                     this.isAdminMode = false;
                 },
 
-                // --- KALKULASI NILAI (SAMA DENGAN JAWABAN.HTML) ---
+                // --- KALKULASI NILAI ---
                 getStudentScore(mapelName) {
-                    // Cari hasil ujian untuk mapel ini
                     const result = this.studentResults.find(r => r.mapel === mapelName);
-                    
                     if (!result) return null; // Belum ujian
 
                     const exam = this.bankSoalCache[result.examId];
