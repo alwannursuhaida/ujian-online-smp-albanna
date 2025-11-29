@@ -145,33 +145,48 @@
                 <div v-if="step === 1" class="bg-white p-8 rounded-2xl shadow-xl border-t-8 border-blue-900 animate-pop">
                     <h2 class="text-xl font-bold text-gray-800 mb-6 border-b pb-2 flex items-center gap-2"><i class="fas fa-id-card text-blue-600"></i> 1. Identitas Perangkat Ajar</h2>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        
-                        <!-- PILIH MAPEL -->
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-bold text-gray-700 mb-2">Mata Pelajaran <span class="text-red-500">*</span></label>
-                            <select v-model="form.mapel" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none font-bold text-blue-900">
-                                <option value="" disabled>-- Pilih Mata Pelajaran --</option>
-                                <option v-for="m in mapelList" :value="m">{{ m }}</option>
-                            </select>
+                    <div class="space-y-6">
+                        <!-- UPLOAD LOGO -->
+                        <div class="border-2 border-dashed border-gray-300 p-4 rounded text-center bg-gray-50 hover:bg-gray-100 cursor-pointer relative group">
+                            <input type="file" accept="image/*" @change="handleLogoUpload" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                            <div v-if="sekolah.logoPreview">
+                                <img :src="sekolah.logoPreview" class="h-16 mx-auto object-contain mb-2">
+                                <p class="text-xs text-green-600 font-bold"><i class="fas fa-check-circle"></i> Logo Siap</p>
+                            </div>
+                            <div v-else class="py-4">
+                                <i class="fas fa-cloud-upload-alt fa-2x text-gray-400 mb-2 group-hover:text-blue-500 transition"></i>
+                                <p class="text-sm font-bold text-gray-600">Upload Logo Sekolah (Wajib untuk Kop Surat)</p>
+                                <p class="text-xs text-gray-400 mt-1">Klik di sini untuk memilih gambar</p>
+                            </div>
                         </div>
 
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-bold text-gray-700 mb-2">Lingkup Materi (Judul Modul) <span class="text-red-500">*</span></label>
-                            <input v-model="form.lingkupMateri" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none font-bold text-lg text-blue-900 placeholder-gray-300" placeholder="Contoh: Sistem Pencernaan Manusia">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- PILIH MAPEL -->
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Mata Pelajaran <span class="text-red-500">*</span></label>
+                                <select v-model="form.mapel" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none font-bold text-blue-900">
+                                    <option value="" disabled>-- Pilih Mata Pelajaran --</option>
+                                    <option v-for="m in mapelList" :value="m">{{ m }}</option>
+                                </select>
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Lingkup Materi (Judul Modul) <span class="text-red-500">*</span></label>
+                                <input v-model="form.lingkupMateri" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none font-bold text-lg text-blue-900 placeholder-gray-300" placeholder="Contoh: Sistem Pencernaan Manusia">
+                            </div>
+                            <div><label class="block text-sm font-bold text-gray-600 mb-2">Nama Penyusun <span class="text-red-500">*</span></label><input v-model="form.nama" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-900" placeholder="Nama Lengkap"></div>
+                            <div><label class="block text-sm font-bold text-gray-600 mb-2">Institusi</label><input v-model="form.institusi" class="w-full p-3 border rounded-lg bg-gray-50 text-gray-500" readonly></div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-600 mb-2">Fase / Kelas <span class="text-red-500">*</span></label>
+                                <select v-model="form.fase" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-900">
+                                    <option value="" disabled>-- Pilih Fase --</option>
+                                    <option value="Fase D (Kelas 7)">Fase D (Kelas 7)</option>
+                                    <option value="Fase D (Kelas 8)">Fase D (Kelas 8)</option>
+                                    <option value="Fase D (Kelas 9)">Fase D (Kelas 9)</option>
+                                </select>
+                            </div>
+                            <div><label class="block text-sm font-bold text-gray-600 mb-2">Alokasi Waktu <span class="text-red-500">*</span></label><input v-model="form.waktu" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-900" placeholder="Contoh: 2 JP"></div>
                         </div>
-                        <div><label class="block text-sm font-bold text-gray-600 mb-2">Nama Penyusun <span class="text-red-500">*</span></label><input v-model="form.nama" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-900" placeholder="Nama Lengkap"></div>
-                        <div><label class="block text-sm font-bold text-gray-600 mb-2">Institusi</label><input v-model="form.institusi" class="w-full p-3 border rounded-lg bg-gray-50 text-gray-500" readonly></div>
-                        <div>
-                            <label class="block text-sm font-bold text-gray-600 mb-2">Fase / Kelas <span class="text-red-500">*</span></label>
-                            <select v-model="form.fase" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-900">
-                                <option value="" disabled>-- Pilih Fase --</option>
-                                <option value="Fase D (Kelas 7)">Fase D (Kelas 7)</option>
-                                <option value="Fase D (Kelas 8)">Fase D (Kelas 8)</option>
-                                <option value="Fase D (Kelas 9)">Fase D (Kelas 9)</option>
-                            </select>
-                        </div>
-                        <div><label class="block text-sm font-bold text-gray-600 mb-2">Alokasi Waktu <span class="text-red-500">*</span></label><input v-model="form.waktu" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-900" placeholder="Contoh: 2 JP"></div>
                     </div>
                     <div class="mt-8 flex justify-end"><button @click="nextStep" class="bg-blue-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-800 shadow-lg flex items-center gap-2 transition transform hover:scale-105">LANJUT <i class="fas fa-arrow-right"></i></button></div>
                 </div>
@@ -379,14 +394,14 @@
                         <div class="bg-white p-6 rounded-xl shadow-sm border">
                             <h4 class="font-bold text-blue-800 border-b pb-4 mb-4">IV. PENGALAMAN BELAJAR</h4>
                             <div class="grid details-grid">
-                                <div class="details-label">A. Kegiatan Awal</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.pengalamanAwal.deskripsi }}</div>
+                                <div class="details-label">A. Kegiatan Awal</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.pengalamanAwal.deskripsi }} ({{ viewModal.pengalamanAwal.prinsip.join(', ') }})</div>
                                 <div class="details-label">B. Kegiatan Inti</div> <div class="details-colon">:</div> 
                                 <div class="details-value">
-                                    1. Memahami: {{ viewModal.pengalamanIntiMemahami.deskripsi }}<br><br>
-                                    2. Mengaplikasi: {{ viewModal.pengalamanIntiMengaplikasi.deskripsi }}<br><br>
-                                    3. Merefleksi: {{ viewModal.pengalamanIntiMerefleksi.deskripsi }}
+                                    1. Memahami: {{ viewModal.pengalamanIntiMemahami.deskripsi }} ({{ viewModal.pengalamanIntiMemahami.prinsip.join(', ') }})<br><br>
+                                    2. Mengaplikasi: {{ viewModal.pengalamanIntiMengaplikasi.deskripsi }} ({{ viewModal.pengalamanIntiMengaplikasi.prinsip.join(', ') }})<br><br>
+                                    3. Merefleksi: {{ viewModal.pengalamanIntiMerefleksi.deskripsi }} ({{ viewModal.pengalamanIntiMerefleksi.prinsip.join(', ') }})
                                 </div>
-                                <div class="details-label">C. Kegiatan Penutup</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.pengalamanPenutup.deskripsi }}</div>
+                                <div class="details-label">C. Kegiatan Penutup</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.pengalamanPenutup.deskripsi }} ({{ viewModal.pengalamanPenutup.prinsip.join(', ') }})</div>
                             </div>
                         </div>
 
@@ -425,6 +440,7 @@
                     savedPlans: [],
                     viewModal: null,
                     editingIndex: null, // Jika null berarti Mode Baru
+                    sekolah: { logoBase64: null, logoPreview: null },
                     
                     // LIST MAPEL LENGKAP
                     mapelList: [
@@ -527,6 +543,7 @@
                     if (this.step === 1) {
                         if (!this.form.lingkupMateri || !this.form.nama || !this.form.fase || !this.form.mapel) 
                             return alert("Mohon lengkapi Identitas Utama & Judul Modul!");
+                        if (!this.sekolah.logoBase64) return alert("Mohon upload logo sekolah!");
                     }
                     else if (this.step === 3) {
                         if (!this.form.pesertaDidik || !this.form.materi) return alert("Mohon isi analisis identifikasi!");
@@ -572,23 +589,61 @@
                 addLampiran() { this.form.lampiran.push({ nama: '', keterangan: '' }); },
                 removeLampiran(index) { if(this.form.lampiran.length > 1) this.form.lampiran.splice(index, 1); },
                 
+                handleLogoUpload(e) {
+                    const f = e.target.files[0];
+                    if (f) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                const ctx = canvas.getContext('2d');
+                                const MAX_SIZE = 200;
+                                let w = img.width, h = img.height;
+                                if (w > h) { if (w > MAX_SIZE) { h *= MAX_SIZE / w; w = MAX_SIZE; } } 
+                                else { if (h > MAX_SIZE) { w *= MAX_SIZE / h; h = MAX_SIZE; } }
+                                canvas.width = w; canvas.height = h;
+                                ctx.drawImage(img, 0, 0, w, h);
+                                const compressed = canvas.toDataURL('image/jpeg', 0.7);
+                                this.sekolah.logoBase64 = compressed;
+                                this.sekolah.logoPreview = compressed;
+                            };
+                            img.src = ev.target.result;
+                        };
+                        reader.readAsDataURL(f);
+                    }
+                },
+
                 // --- PDF GENERATION ---
                 generatePDF(data) {
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
                     
+                    // KOP SURAT
+                    if (this.sekolah.logoBase64) {
+                        doc.addImage(this.sekolah.logoBase64, 'JPEG', 15, 10, 25, 25);
+                    }
+                    
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.setTextColor(30, 58, 138); 
+                    doc.text("SMP ALBANNA", 45, 18);
+                    doc.setTextColor(0); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+                    doc.text("Jl. Tukad Yeh Ho III No.10, Denpasar, Bali 80234", 45, 24);
+                    doc.text("Telepon (0361) 238 4444  |  www.albanna.sch.id", 45, 29);
+                    doc.setLineWidth(0.5); doc.line(10, 35, 200, 35);
+                    doc.setLineWidth(0.1); doc.line(10, 36, 200, 36);
+
                     // HEADER
                     doc.setFontSize(16); doc.setFont("helvetica", "bold");
-                    doc.text("MODUL AJAR / PERENCANAAN PEMBELAJARAN", 105, 15, {align:'center'});
+                    doc.text("MODUL AJAR / PERENCANAAN PEMBELAJARAN", 105, 45, {align:'center'});
                     doc.setFontSize(12);
-                    doc.text(`SMP ALBANNA - ${data.mapel}`, 105, 22, {align:'center'});
-                    doc.line(10, 25, 200, 25);
+                    doc.text(`SMP ALBANNA - ${data.mapel}`, 105, 52, {align:'center'});
+                    doc.line(10, 55, 200, 55);
 
                     // IDENTITAS
                     doc.setFontSize(10); doc.setFont("helvetica", "normal");
-                    doc.text(`Judul: ${data.lingkupMateri}`, 14, 32);
-                    doc.text(`Fase: ${data.fase}  |  Waktu: ${data.waktu}`, 14, 37);
-                    doc.text(`Guru: ${data.nama}`, 14, 42);
+                    doc.text(`Judul: ${data.lingkupMateri}`, 14, 62);
+                    doc.text(`Fase: ${data.fase}  |  Waktu: ${data.waktu}`, 14, 67);
+                    doc.text(`Guru: ${data.nama}`, 14, 72);
 
                     // HELPER: FORMAT PRINSIP
                     const fmtPrinsip = (title, prinsip) => {
@@ -632,7 +687,7 @@
                     ];
 
                     doc.autoTable({
-                        startY: 48,
+                        startY: 78,
                         head: [['Komponen', 'Deskripsi / Indikator']],
                         body: rows,
                         theme: 'grid',
