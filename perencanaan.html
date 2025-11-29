@@ -33,6 +33,28 @@
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
         }
+
+        /* Utilitas Grid untuk Titik Dua Rapi */
+        .details-grid {
+            display: grid;
+            grid-template-columns: 220px 20px 1fr; /* Label : Value */
+            gap: 8px;
+            margin-bottom: 1.5rem; /* Spasi baris 2 */
+            align-items: start;
+        }
+        .details-label {
+            font-weight: bold;
+            color: #1e3a8a; /* blue-900 */
+        }
+        .details-colon {
+            text-align: center;
+            font-weight: bold;
+            color: #64748b;
+        }
+        .details-value {
+            color: #334155;
+            white-space: pre-wrap;
+        }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen pb-20">
@@ -125,7 +147,7 @@
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         
-                        <!-- PILIH MAPEL (BARU) -->
+                        <!-- PILIH MAPEL -->
                         <div class="md:col-span-2">
                             <label class="block text-sm font-bold text-gray-700 mb-2">Mata Pelajaran <span class="text-red-500">*</span></label>
                             <select v-model="form.mapel" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none font-bold text-blue-900">
@@ -182,8 +204,8 @@
                     <div class="flex justify-between mb-6 border-b pb-4"><h2 class="text-xl font-bold text-gray-800">3. Tahap Identifikasi</h2><button @click="step=1" class="text-sm text-gray-400 font-bold hover:text-blue-600"><i class="fas fa-arrow-left"></i> Kembali</button></div>
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 flex flex-col"><h3 class="font-bold text-blue-800 mb-2 flex items-center gap-2"><i class="fas fa-user-graduate"></i> Peserta Didik</h3><p class="text-xs text-gray-500 mb-3">Kesiapan, minat, latar belakang.</p><textarea v-model="form.pesertaDidik" class="w-full p-3 border rounded-lg h-40 text-sm focus:border-blue-400 outline-none flex-1"></textarea></div>
-                        <div class="bg-purple-50 p-4 rounded-xl border border-purple-100 flex flex-col"><h3 class="font-bold text-purple-800 mb-2 flex items-center gap-2"><i class="fas fa-book"></i> Materi</h3><p class="text-xs text-gray-500 mb-3">Relevansi & tingkat kesulitan.</p><textarea v-model="form.materi" class="w-full p-3 border rounded-lg h-40 text-sm focus:border-purple-400 outline-none flex-1"></textarea></div>
-                        <div class="bg-green-50 p-4 rounded-xl border border-green-100 flex flex-col"><h3 class="font-bold text-green-800 mb-2 flex items-center gap-2"><i class="fas fa-check-circle"></i> Profil Lulusan</h3><div class="h-40 overflow-y-auto bg-white p-2 rounded-lg border flex-1"><label v-for="i in profilOptions" :key="i" class="flex gap-2 mb-2 text-xs cursor-pointer hover:bg-green-50 p-1 rounded"><input type="checkbox" :value="i" v-model="form.profil" class="mt-0.5"> {{i}}</label></div></div>
+                        <div class="bg-purple-50 p-4 rounded-xl border border-purple-100 flex flex-col"><h3 class="font-bold text-purple-800 mb-2 flex items-center gap-2"><i class="fas fa-book"></i> Materi Pelajaran</h3><p class="text-xs text-gray-500 mb-3">Relevansi & tingkat kesulitan.</p><textarea v-model="form.materi" class="w-full p-3 border rounded-lg h-40 text-sm focus:border-purple-400 outline-none flex-1"></textarea></div>
+                        <div class="bg-green-50 p-4 rounded-xl border border-green-100 flex flex-col"><h3 class="font-bold text-green-800 mb-2 flex items-center gap-2"><i class="fas fa-check-circle"></i> Dimensi Profil Lulusan</h3><div class="h-40 overflow-y-auto bg-white p-2 rounded-lg border flex-1"><label v-for="i in profilOptions" :key="i" class="flex gap-2 mb-2 text-xs cursor-pointer hover:bg-green-50 p-1 rounded"><input type="checkbox" :value="i" v-model="form.profil" class="mt-0.5"> {{i}}</label></div></div>
                     </div>
                     <div class="mt-8 flex justify-end gap-3"><button @click="saveDraft()" class="text-gray-500 font-bold px-4 hover:text-blue-600 text-sm">Simpan Draft</button><button @click="nextStep" class="bg-blue-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-800 shadow-lg transition">LANJUT <i class="fas fa-arrow-right"></i></button></div>
                 </div>
@@ -217,9 +239,9 @@
                             <div><label class="font-bold text-teal-800 text-sm mb-1 block">Praktik Pedagogis</label><input v-model="form.pedagogi" class="w-full p-3 border rounded-lg bg-teal-50/50 focus:bg-white transition text-sm" placeholder="PBL, PjBL, Inkuiri..."></div>
                         </div>
                         <div class="grid md:grid-cols-3 gap-4">
-                            <div><label class="font-bold text-teal-800 text-xs mb-1 block">Kemitraan</label><textarea v-model="form.kemitraan" rows="2" class="w-full p-2 border rounded-lg text-xs"></textarea></div>
-                            <div><label class="font-bold text-teal-800 text-xs mb-1 block">Lingkungan</label><textarea v-model="form.lingkungan" rows="2" class="w-full p-2 border rounded-lg text-xs"></textarea></div>
-                            <div><label class="font-bold text-teal-800 text-xs mb-1 block">Digital</label><textarea v-model="form.digital" rows="2" class="w-full p-2 border rounded-lg text-xs"></textarea></div>
+                            <div><label class="font-bold text-teal-800 text-xs mb-1 block">Kemitraan Pembelajaran</label><textarea v-model="form.kemitraan" rows="2" class="w-full p-2 border rounded-lg text-xs"></textarea></div>
+                            <div><label class="font-bold text-teal-800 text-xs mb-1 block">Lingkungan Pembelajaran</label><textarea v-model="form.lingkungan" rows="2" class="w-full p-2 border rounded-lg text-xs"></textarea></div>
+                            <div><label class="font-bold text-teal-800 text-xs mb-1 block">Pemanfaatan Digital</label><textarea v-model="form.digital" rows="2" class="w-full p-2 border rounded-lg text-xs"></textarea></div>
                         </div>
                     </div>
                     <div class="mt-8 flex justify-end gap-3"><button @click="saveDraft()" class="text-gray-500 font-bold px-4 hover:text-teal-600 text-sm">Simpan Draft</button><button @click="nextStep" class="bg-teal-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-teal-700 shadow-lg transition">LANJUT <i class="fas fa-arrow-right"></i></button></div>
@@ -277,6 +299,11 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                         <div v-for="(type, key) in {Awal: 'pink', Proses: 'purple', Akhir: 'teal'}" :key="key" :class="`bg-${type}-50 p-4 rounded-xl border border-${type}-100`">
                             <h3 :class="`font-bold text-${type}-800 mb-2 text-center border-b border-${type}-200 pb-2`">Asesmen {{key}}</h3>
+                            <div class="mb-2 flex flex-wrap gap-1">
+                                <label v-for="m in (key === 'Awal' ? methodsAwal : (key === 'Proses' ? methodsProses : methodsAkhir))" :key="key+m" class="text-[10px] bg-white px-2 py-1 border rounded cursor-pointer">
+                                    <input type="checkbox" :value="m" v-model="form['asesmen'+key].metode" class="mr-1"> {{m}}
+                                </label>
+                            </div>
                             <textarea v-model="form['asesmen'+key].deskripsi" rows="4" class="w-full p-2 border rounded text-xs" placeholder="Deskripsi..."></textarea>
                         </div>
                     </div>
@@ -310,13 +337,73 @@
                         <button @click="viewModal = null" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button>
                     </div>
                     <div class="flex-1 overflow-y-auto p-8 bg-gray-50 space-y-6">
-                        <div class="bg-white p-6 rounded-xl shadow-sm border"><h4 class="font-bold text-blue-800 border-b pb-2 mb-2">I. Identitas</h4><p><strong>Mapel:</strong> {{ viewModal.mapel }}</p><p><strong>Waktu:</strong> {{ viewModal.waktu }}</p></div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border"><h4 class="font-bold text-green-800 border-b pb-2 mb-2">II. Tujuan Pembelajaran</h4><p class="whitespace-pre-wrap">{{ viewModal.tp }}</p></div>
-                        <!-- Tambahkan detail lain sesuai kebutuhan -->
+                        <!-- 1. IDENTITAS -->
                         <div class="bg-white p-6 rounded-xl shadow-sm border">
-                            <h4 class="font-bold text-purple-800 border-b pb-2 mb-2">III. Langkah Pembelajaran</h4>
-                            <p><strong>Awal:</strong> {{ viewModal.pengalamanAwal.deskripsi }}</p>
-                            <p class="mt-2"><strong>Inti (Memahami):</strong> {{ viewModal.pengalamanIntiMemahami.deskripsi }}</p>
+                            <h4 class="font-bold text-blue-800 border-b pb-4 mb-4">I. IDENTITAS</h4>
+                            <div class="grid details-grid">
+                                <div class="details-label">Nama Penyusun</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.nama }}</div>
+                                <div class="details-label">Institusi</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.institusi }}</div>
+                                <div class="details-label">Fase / Kelas</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.fase }}</div>
+                                <div class="details-label">Mata Pelajaran</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.mapel }}</div>
+                                <div class="details-label">Lingkup Materi</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.lingkupMateri }}</div>
+                                <div class="details-label">Alokasi Waktu</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.waktu }}</div>
+                            </div>
+                        </div>
+
+                        <!-- 2. IDENTIFIKASI -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border">
+                            <h4 class="font-bold text-blue-800 border-b pb-4 mb-4">II. IDENTIFIKASI</h4>
+                            <div class="grid details-grid">
+                                <div class="details-label">Peserta Didik</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.pesertaDidik }}</div>
+                                <div class="details-label">Materi Pelajaran</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.materi }}</div>
+                                <div class="details-label">Profil Lulusan</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.profil.join(', ') }}</div>
+                            </div>
+                        </div>
+
+                        <!-- 3. DESAIN PEMBELAJARAN -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border">
+                            <h4 class="font-bold text-blue-800 border-b pb-4 mb-4">III. DESAIN PEMBELAJARAN</h4>
+                            <div class="grid details-grid">
+                                <div class="details-label">Capaian Pembelajaran</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.cp }}</div>
+                                <div class="details-label">Lintas Disiplin Ilmu</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.lintasDisiplin }}</div>
+                                <div class="details-label">Tujuan Pembelajaran</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.tp }}</div>
+                                <div class="details-label">Topik Pembelajaran</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.topik }}</div>
+                                <div class="details-label">Praktik Pedagogis</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.pedagogi }}</div>
+                                <div class="details-label">Kemitraan Pembelajaran</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.kemitraan }}</div>
+                                <div class="details-label">Lingkungan Pembelajaran</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.lingkungan }}</div>
+                                <div class="details-label">Pemanfaatan Digital</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.digital }}</div>
+                            </div>
+                        </div>
+
+                        <!-- 4. PENGALAMAN BELAJAR -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border">
+                            <h4 class="font-bold text-blue-800 border-b pb-4 mb-4">IV. PENGALAMAN BELAJAR</h4>
+                            <div class="grid details-grid">
+                                <div class="details-label">A. Kegiatan Awal</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.pengalamanAwal.deskripsi }}</div>
+                                <div class="details-label">B. Kegiatan Inti</div> <div class="details-colon">:</div> 
+                                <div class="details-value">
+                                    1. Memahami: {{ viewModal.pengalamanIntiMemahami.deskripsi }}<br><br>
+                                    2. Mengaplikasi: {{ viewModal.pengalamanIntiMengaplikasi.deskripsi }}<br><br>
+                                    3. Merefleksi: {{ viewModal.pengalamanIntiMerefleksi.deskripsi }}
+                                </div>
+                                <div class="details-label">C. Kegiatan Penutup</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.pengalamanPenutup.deskripsi }}</div>
+                            </div>
+                        </div>
+
+                        <!-- 5. ASESMEN -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border">
+                            <h4 class="font-bold text-blue-800 border-b pb-4 mb-4">V. ASESMEN & LAMPIRAN</h4>
+                            <div class="grid details-grid">
+                                <div class="details-label">Asesmen Awal</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.asesmenAwal.deskripsi }} (Metode: {{ viewModal.asesmenAwal.metode.join(', ') }})</div>
+                                <div class="details-label">Asesmen Proses</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.asesmenProses.deskripsi }} (Metode: {{ viewModal.asesmenProses.metode.join(', ') }})</div>
+                                <div class="details-label">Asesmen Akhir</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.asesmenAkhir.deskripsi }} (Metode: {{ viewModal.asesmenAkhir.metode.join(', ') }})</div>
+                                <div class="details-label">Lampiran</div> <div class="details-colon">:</div> 
+                                <div class="details-value">
+                                    <ul class="list-disc pl-4">
+                                        <li v-for="lamp in viewModal.lampiran">{{ lamp.nama }} - {{ lamp.keterangan }}</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -363,7 +450,9 @@
                     // OPTIONS
                     prinsip: ['Berkesadaran', 'Bermakna', 'Menggembirakan'],
                     profilOptions: ["Keimanan dan Ketakwaan", "Kewargaan", "Penalaran Kritis", "Kreativitas", "Kolaborasi", "Kemandirian", "Kesehatan", "Komunikasi"],
-                    methodsAwal: ['Tanya Jawab', 'Kuis'], methodsProses: ['Observasi', 'LKPD'], methodsAkhir: ['Tes Tulis', 'Produk']
+                    methodsAwal: ['Tanya Jawab', 'Kuis', 'Mind Map', 'Observasi'],
+                    methodsProses: ['Observasi', 'Penilaian Diri', 'Antar Teman', 'Kinerja', 'Proyek'],
+                    methodsAkhir: ['Tes Tulis', 'Tes Lisan', 'Produk', 'Portofolio']
                 }
             },
             mounted() {
@@ -501,27 +590,45 @@
                     doc.text(`Fase: ${data.fase}  |  Waktu: ${data.waktu}`, 14, 37);
                     doc.text(`Guru: ${data.nama}`, 14, 42);
 
+                    // HELPER: FORMAT PRINSIP
+                    const fmtPrinsip = (title, prinsip) => {
+                        if (!prinsip || prinsip.length === 0) return title;
+                        return `${title} (${prinsip.join(', ')})`;
+                    };
+
                     // TABLE CONTENT
                     const rows = [
+                        // 1. IDENTIFIKASI
                         [{content: '1. IDENTIFIKASI', colSpan: 2, styles: {fillColor: [220, 220, 220], fontStyle: 'bold'}}],
                         ['Peserta Didik', data.pesertaDidik],
-                        ['Materi', data.materi],
+                        ['Materi Pelajaran', data.materi],
                         ['Profil Lulusan', data.profil.join(', ')],
                         
+                        // 2. DESAIN PEMBELAJARAN
                         [{content: '2. DESAIN PEMBELAJARAN', colSpan: 2, styles: {fillColor: [220, 220, 220], fontStyle: 'bold'}}],
-                        ['CP', data.cp],
-                        ['Tujuan (TP)', data.tp],
-                        ['Pedagogi', data.pedagogi],
+                        ['Capaian Pembelajaran', data.cp],
+                        ['Lintas Disiplin Ilmu', data.lintasDisiplin],
+                        ['Tujuan Pembelajaran', data.tp],
+                        ['Topik Pembelajaran', data.topik],
+                        ['Praktik Pedagogis', data.pedagogi],
+                        ['Kemitraan Pembelajaran', data.kemitraan],
+                        ['Lingkungan Pembelajaran', data.lingkungan],
+                        ['Pemanfaatan Digital', data.digital],
                         
+                        // 3. PENGALAMAN BELAJAR
                         [{content: '3. PENGALAMAN BELAJAR', colSpan: 2, styles: {fillColor: [220, 220, 220], fontStyle: 'bold'}}],
-                        ['Awal', data.pengalamanAwal.deskripsi],
-                        ['Inti', `1. Paham: ${data.pengalamanIntiMemahami.deskripsi}\n2. Aplikasi: ${data.pengalamanIntiMengaplikasi.deskripsi}\n3. Refleksi: ${data.pengalamanIntiMerefleksi.deskripsi}`],
-                        ['Penutup', data.pengalamanPenutup.deskripsi],
+                        [fmtPrinsip('Kegiatan Awal', data.pengalamanAwal.prinsip), data.pengalamanAwal.deskripsi],
+                        [fmtPrinsip('Inti - Memahami', data.pengalamanIntiMemahami.prinsip), data.pengalamanIntiMemahami.deskripsi],
+                        [fmtPrinsip('Inti - Mengaplikasi', data.pengalamanIntiMengaplikasi.prinsip), data.pengalamanIntiMengaplikasi.deskripsi],
+                        [fmtPrinsip('Inti - Merefleksi', data.pengalamanIntiMerefleksi.prinsip), data.pengalamanIntiMerefleksi.deskripsi],
+                        [fmtPrinsip('Kegiatan Penutup', data.pengalamanPenutup.prinsip), data.pengalamanPenutup.deskripsi],
                         
-                        [{content: '4. ASESMEN', colSpan: 2, styles: {fillColor: [220, 220, 220], fontStyle: 'bold'}}],
-                        ['Awal', data.asesmenAwal.deskripsi],
-                        ['Proses', data.asesmenProses.deskripsi],
-                        ['Akhir', data.asesmenAkhir.deskripsi]
+                        // 4. ASESMEN
+                        [{content: '4. ASESMEN & LAMPIRAN', colSpan: 2, styles: {fillColor: [220, 220, 220], fontStyle: 'bold'}}],
+                        ['Asesmen Awal', `${data.asesmenAwal.deskripsi}\n(Metode: ${data.asesmenAwal.metode.join(', ')})`],
+                        ['Asesmen Proses', `${data.asesmenProses.deskripsi}\n(Metode: ${data.asesmenProses.metode.join(', ')})`],
+                        ['Asesmen Akhir', `${data.asesmenAkhir.deskripsi}\n(Metode: ${data.asesmenAkhir.metode.join(', ')})`],
+                        ['Lampiran', data.lampiran.map(l => `${l.nama}: ${l.keterangan}`).join('\n')]
                     ];
 
                     doc.autoTable({
@@ -529,7 +636,7 @@
                         head: [['Komponen', 'Deskripsi / Indikator']],
                         body: rows,
                         theme: 'grid',
-                        columnStyles: { 0: { cellWidth: 50, fontStyle: 'bold' } },
+                        columnStyles: { 0: { cellWidth: 60, fontStyle: 'bold' } },
                         styles: { fontSize: 9, cellPadding: 3 }
                     });
 
