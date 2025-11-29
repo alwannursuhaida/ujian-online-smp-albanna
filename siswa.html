@@ -43,16 +43,10 @@
                 </div>
 
                 <div class="space-y-4">
-                    <!-- Nama -->
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nama Lengkap</label>
-                        <input v-model="student.nama" class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900 uppercase placeholder-gray-300" placeholder="Sesuai Absen">
-                    </div>
-
-                    <!-- Kelas -->
+                    <!-- 1. Kelas (Paling Atas) -->
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Kelas</label>
-                        <select v-model="student.kelas" class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900">
+                        <select v-model="student.kelas" @change="fetchStudents" class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900">
                             <option value="" disabled>-- Pilih Kelas --</option>
                             <optgroup label="Kelas 7"><option v-for="c in 'ABCDEF'" :value="'7'+c">7{{c}}</option></optgroup>
                             <optgroup label="Kelas 8"><option v-for="c in 'ABCDEF'" :value="'8'+c">8{{c}}</option></optgroup>
@@ -60,7 +54,22 @@
                         </select>
                     </div>
 
-                    <!-- Mapel -->
+                    <!-- 2. Nama (Dropdown dari Database Absensi) -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nama Lengkap</label>
+                        <select v-model="student.nama" :disabled="!student.kelas || studentList.length === 0" class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:bg-gray-200 disabled:text-gray-400">
+                            <option value="" disabled>-- Pilih Nama Siswa --</option>
+                            <option v-for="s in studentList" :key="s.id" :value="s.nama">{{ s.nama }}</option>
+                        </select>
+                        <p v-if="student.kelas && studentList.length === 0 && !isLoadingList" class="text-xs text-red-500 mt-1 italic">
+                            * Data siswa kelas {{ student.kelas }} belum diinput Guru.
+                        </p>
+                        <p v-if="isLoadingList" class="text-xs text-blue-500 mt-1 italic animate-pulse">
+                            Sedang memuat daftar siswa...
+                        </p>
+                    </div>
+
+                    <!-- 3. Mapel -->
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Mata Pelajaran</label>
                         <select v-model="selectedExamId" class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900">
@@ -173,8 +182,8 @@
                                     </label>
                                 </div>
                                 <div v-if="q.type === 'BS'" class="flex gap-4">
-                                    <label :class="['flex-1 p-4 border-2 rounded-lg text-center cursor-pointer font-bold transition-all', answers[q.originalIndex] === 'BENAR' ? 'bg-green-50 border-green-500 text-green-700' : 'border-gray-100 hover:bg-gray-50']"><input type="radio" :name="'q'+q.originalIndex" value="BENAR" v-model="answers[q.originalIndex]" class="hidden"><i class="fas fa-check-circle mb-1 text-xl block"></i> BENAR</label>
-                                    <label :class="['flex-1 p-4 border-2 rounded-lg text-center cursor-pointer font-bold transition-all', answers[q.originalIndex] === 'SALAH' ? 'bg-red-50 border-red-500 text-red-700' : 'border-gray-100 hover:bg-gray-50']"><input type="radio" :name="'q'+q.originalIndex" value="SALAH" v-model="answers[q.originalIndex]" class="hidden"><i class="fas fa-times-circle mb-1 text-xl block"></i> SALAH</label>
+                                    <label :class="['flex-1 p-4 border-2 rounded-lg text-center cursor-pointer font-bold transition-all', answers[q.originalIndex] === 'BENAR' ? 'bg-green-50 border-green-500 text-green-700' : 'border-gray-100 hover:bg-gray-50']"><input type="radio" :name="'q'+q.originalIndex" value="BENAR" v-model="answers[q.originalIndex]" class="hidden"> BENAR</label>
+                                    <label :class="['flex-1 p-4 border-2 rounded-lg text-center cursor-pointer font-bold transition-all', answers[q.originalIndex] === 'SALAH' ? 'bg-red-50 border-red-500 text-red-700' : 'border-gray-100 hover:bg-gray-50']"><input type="radio" :name="'q'+q.originalIndex" value="SALAH" v-model="answers[q.originalIndex]" class="hidden"> SALAH</label>
                                 </div>
                                 <div v-if="q.type === 'PG_KOMPLEKS'" class="space-y-2">
                                     <label v-for="(opt, i) in q.options" :class="['flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all', (answers[q.originalIndex] || []).includes(i) ? 'bg-blue-50 border-blue-500' : 'border-gray-100 hover:bg-gray-50']"><input type="checkbox" :value="i" v-model="answers[q.originalIndex]" class="mr-3 w-5 h-5 text-blue-600 rounded focus:ring-blue-500"><span>{{ opt.text }}</span></label>
@@ -239,7 +248,7 @@
     <script type="module">
         import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBivREr2y61OYTE0kLxRnkGtPCdLvHn_og",
@@ -258,7 +267,9 @@
                 return {
                     loadingMessage: 'Menghubungkan ke Server...',
                     isLoading: true,
+                    isLoadingList: false, // Loading state for student list
                     student: { nama: '', kelas: '', mapel: '' },
+                    studentList: [], // Daftar nama siswa per kelas
                     allExams: [], selectedExamId: '',
                     isExamActive: false, isLocked: false, isFinished: false, showWarningModal: false,
                     agreed: false,
@@ -332,6 +343,26 @@
                 });
             },
             methods: {
+                // --- FITUR TARIK SISWA DARI DATABASE ---
+                async fetchStudents() {
+                    if(!this.student.kelas) return;
+                    this.studentList = [];
+                    this.student.nama = ''; // Reset nama
+                    this.isLoadingList = true;
+
+                    try {
+                        // Query ke collection data_absensi
+                        const q = query(collection(db, "data_absensi"), where("kelas", "==", this.student.kelas), orderBy("nama"));
+                        const snapshot = await getDocs(q);
+                        this.studentList = snapshot.docs.map(doc => doc.data());
+                    } catch(e) {
+                        console.log("Data siswa belum ada/error:", e);
+                        // Opsional: Bisa kasih alert jika mau
+                    } finally {
+                        this.isLoadingList = false;
+                    }
+                },
+
                 shuffleArray(array) {
                     for (let i = array.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
