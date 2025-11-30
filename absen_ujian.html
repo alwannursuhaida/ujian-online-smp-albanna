@@ -360,7 +360,6 @@
                 clearBulk() { this.bulkInput = new Array(30).fill(''); },
                 async deleteStudent(id) { if(confirm("Hapus?")) await deleteDoc(doc(db, "data_absensi", id)); },
                 
-                // --- NEW LOGIC: OVERWRITE IF EXIST ---
                 async saveAttendance() {
                     this.isLoading = true;
                     const batch = writeBatch(db);
