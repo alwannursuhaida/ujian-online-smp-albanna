@@ -106,7 +106,7 @@
                 <!-- TAB 2: KISI-KISI SAYA -->
                 <div v-if="activeTab === 'my_data'">
                     <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold text-gray-700">Arsip Kisi-Kisi Saya</h2><button @click="loadMyData" class="text-blue-600 hover:text-blue-800 text-sm font-bold"><i class="fas fa-sync"></i> Refresh</button></div>
-                    <div v-if="myKisiKisi.length === 0 && !isLoading" class="text-center text-gray-400 mt-20"><i class="fas fa-folder-open fa-4x mb-4"></i><p>Belum ada data.</p></div>
+                    <div v-if="myKisiKisi.length === 0 && !isLoading" class="text-center text-gray-400 mt-20"><i class="fas fa-folder-open fa-4x mb-4"></i><p>Belum ada data kisi-kisi yang tersimpan.</p></div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div v-for="item in myKisiKisi" :key="item.id" class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition flex flex-col relative group">
                             <div class="flex justify-between items-start mb-2"><span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">Kelas {{ item.config.kelas }}</span><span class="text-[10px] text-gray-400">{{ formatDate(item.timestamp) }}</span></div>
@@ -162,7 +162,7 @@
                 return {
                     currentUser: null, storageKey: '', activeTab: 'input', step: 1, isLoading: false, lastSaved: null,
                     selectedMapel: '', namaGuru: '', kelas: '', semester: '',
-                    sidebarLogo: null,
+                    sidebarLogo: null, // Disini simpan gambar KOP
                     mapelList: ['IPA', 'IPS', 'MATEMATIKA', 'BAHASA BALI', 'BAHASA ARAB', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 'OLAHRAGA', 'INFORMATIKA', 'KKA', 'AGAMA ISLAM', 'SENI BUDAYA', 'PKN'],
                     masterMapel: ['MATEMATIKA', 'IPA', 'BAHASA INGGRIS', 'BAHASA INDONESIA', 'BAHASA BALI', 'SENI BUDAYA', 'BAHASA ARAB', 'PJOK', 'IPS', 'PAI', 'INFORMATIKA', 'PKN', 'KKA'],
                     sekolah: { logoBase64: null, logoPreview: null },
@@ -172,17 +172,27 @@
             },
             mounted() {
                 const session = sessionStorage.getItem('cbt_user_session');
-                if (!session) { try{window.location.href = 'index.html';}catch(e){this.currentUser={name:'Dev'};} return; }
-                this.currentUser = JSON.parse(session);
-                this.storageKey = `guru_kisi_draft_${this.currentUser.username}`;
-                
-                this.loadSidebarImage(); // Load KOP
+                if (!session) {
+                    try { window.location.href = 'index.html'; } 
+                    catch (e) { 
+                        this.currentUser = { username: 'guru01', name: 'Guru Test Mode' }; 
+                        this.storageKey = `guru_kisi_draft_${this.currentUser.username}`;
+                    }
+                } else {
+                    this.currentUser = JSON.parse(session);
+                    this.storageKey = `guru_kisi_draft_${this.currentUser.username}`;
+                }
+
+                // Load Sidebar KOP
+                this.loadSidebarImage();
 
                 const draft = localStorage.getItem(this.storageKey);
                 if(draft && !this.editingId) {
                     try {
                         const p = JSON.parse(draft);
-                        this.selectedMapel = p.selectedMapel||''; this.namaGuru = p.namaGuru||''; this.kelas = p.kelas||''; this.semester = p.semester||''; this.soalList = p.soalList||[{ kd: '', level: '', indikator: '', bentuk: '' }];
+                        this.selectedMapel = p.selectedMapel||''; this.namaGuru = p.namaGuru||''; this.kelas = p.kelas||''; this.semester = p.semester||''; 
+                        // Jangan load logo dari draft jika corrupt, biarkan loadSidebarImage handle
+                        this.soalList = p.soalList||[{ kd: '', level: '', indikator: '', bentuk: '' }];
                     } catch(e) {}
                 }
                 this.loadMyData(); this.loadMonitoringData();
@@ -193,7 +203,7 @@
                 kelas() { this.saveDraft() }, semester() { this.saveDraft() }, step() { this.saveDraft() }
             },
             methods: {
-                // LOAD GAMBAR KOP.PNG
+                // LOAD KOP.PNG DARI REPO
                 async loadSidebarImage() {
                     try {
                         const response = await fetch('kop.png');
@@ -224,6 +234,7 @@
                     }
                     this.step = 2; window.scrollTo(0, 0);
                 },
+                handleLogoUpload() {}, // Disabled Manual Upload
                 tambahSoal() { this.soalList.push({ kd: '', level: '', indikator: '', bentuk: '' }); setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 100); },
                 hapusSoal(i) { if(this.soalList.length > 1) this.soalList.splice(i, 1); },
                 
@@ -233,7 +244,7 @@
                     try {
                         const dataToSave = {
                             config: { mapel: this.selectedMapel, kelas: this.kelas, semester: this.semester, guru: this.namaGuru },
-                            // logoBase64 tidak perlu disimpan di DB, ambil dari repo saat generate PDF
+                            // Tidak perlu simpan gambar KOP di DB, karena ambil dari repo
                             soalList: this.soalList,
                             uploadedBy: this.currentUser.username,
                             timestamp: new Date().toISOString()
@@ -245,8 +256,6 @@
                         this.editingId = null; this.resetData();
                     } catch(e) { alert("Gagal: " + e.message); } finally { this.isLoading = false; }
                 },
-                
-                handleLogoUpload() {}, // Disabled
 
                 generatePDF(data) {
                     try {
@@ -255,16 +264,16 @@
                         const pageWidth = doc.internal.pageSize.getWidth();
                         const pageHeight = doc.internal.pageSize.getHeight();
 
-                        // 1. SIDEBAR IMAGE (KOP.PNG) - LEBIH KECIL
+                        // 1. SIDEBAR IMAGE (KOP.PNG)
                         if (this.sidebarLogo) {
-                            // x=1.8mm (5pt), width=20mm (40% smaller)
-                            doc.addImage(this.sidebarLogo, 'PNG', 1.8, 0, 20, pageHeight);
+                            // x=8.9mm, y=16.6mm, width=29.3mm, height=263.7mm
+                            doc.addImage(this.sidebarLogo, 'PNG', 8.9, 16.6, 29.3, 263.7);
                         }
 
-                        // Margin konten digeser (agar tidak tertimpa sidebar)
-                        const contentX = 35;
+                        // Margin konten
+                        const contentX = 45;
 
-                        // 2. JUDUL & IDENTITAS (TANPA HEADER SEKOLAH)
+                        // 2. JUDUL & IDENTITAS
                         let y = 30;
                         doc.setFont("helvetica", "bold"); doc.setFontSize(12);
                         doc.text(`KISI-KISI ${data.config.mapel.toUpperCase()}`, (pageWidth + contentX)/2 - 10, y, {align:'center'});
