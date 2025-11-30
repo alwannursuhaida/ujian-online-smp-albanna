@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Absensi Ujian - SMP ALBANNA</title>
+    <title>Absensi & Arsip Ujian - SMP ALBANNA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- Chart.js -->
@@ -10,7 +10,7 @@
     <!-- PDF Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <!-- Excel Library (SheetJS) -->
+    <!-- Excel Library -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
@@ -36,6 +36,10 @@
                 </button>
                 <button @click="activeTab = 'input_absen'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'input_absen' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
                     <i class="fas fa-user-check w-5"></i> Input Absensi
+                </button>
+                <!-- MENU BARU: ARSIP -->
+                <button @click="activeTab = 'arsip'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'arsip' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
+                    <i class="fas fa-archive w-5"></i> Arsip Absensi
                 </button>
                 <button @click="activeTab = 'susulan'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'susulan' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
                     <i class="fas fa-file-pdf w-5"></i> Laporan & Susulan
@@ -70,7 +74,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                         <!-- Grafik Pie -->
                         <div class="bg-white p-6 rounded-xl shadow-sm border flex flex-col items-center">
-                            <h3 class="font-bold text-gray-700 mb-4">Persentase Kehadiran</h3>
+                            <h3 class="font-bold text-gray-700 mb-4">Persentase Kehadiran (Live)</h3>
                             <div class="h-64 w-full relative">
                                 <canvas id="attendanceChart"></canvas>
                             </div>
@@ -95,8 +99,6 @@
 
                 <!-- 2. DATA SISWA (INPUT MASSAL) -->
                 <div v-show="activeTab === 'data_siswa'">
-                    
-                    <!-- FILTER KELAS -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border mb-6">
                         <div class="flex justify-between items-center">
                             <div class="w-1/3">
@@ -106,20 +108,14 @@
                                 </select>
                             </div>
                             <div class="flex gap-2">
-                                <button @click="downloadTemplate" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 flex items-center gap-2 text-sm font-bold">
-                                    <i class="fas fa-file-excel"></i> Download Template
-                                </button>
-                                <label class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 flex items-center gap-2 text-sm font-bold cursor-pointer">
-                                    <i class="fas fa-upload"></i> Upload Excel
-                                    <input type="file" class="hidden" accept=".xlsx, .xls" @change="handleFileUpload">
-                                </label>
+                                <button @click="downloadTemplate" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 flex items-center gap-2 text-sm font-bold"><i class="fas fa-file-excel"></i> Download Template</button>
+                                <label class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 flex items-center gap-2 text-sm font-bold cursor-pointer"><i class="fas fa-upload"></i> Upload Excel<input type="file" class="hidden" accept=".xlsx, .xls" @change="handleFileUpload"></label>
                             </div>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        
-                        <!-- TABEL 1: DAFTAR SISWA DATABASE (LIVE) -->
+                        <!-- Tabel Live -->
                         <div class="bg-white rounded-xl shadow overflow-hidden border h-fit">
                             <div class="bg-slate-800 text-white p-3 flex justify-between items-center">
                                 <h3 class="font-bold text-sm">TERDAFTAR DI KELAS {{ selectedClass }}</h3>
@@ -131,59 +127,50 @@
                                         <tr v-for="(s, idx) in filteredStudents" :key="s.id" class="hover:bg-slate-50">
                                             <td class="p-3 w-8 text-center text-gray-400">{{ idx + 1 }}</td>
                                             <td class="p-3 font-bold text-slate-700">{{ s.nama }}</td>
-                                            <td class="p-3 text-right w-12">
-                                                <button @click="deleteStudent(s.id)" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
-                                            </td>
+                                            <td class="p-3 text-right w-12"><button @click="deleteStudent(s.id)" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button></td>
                                         </tr>
-                                        <tr v-if="filteredStudents.length === 0">
-                                            <td colspan="3" class="p-8 text-center text-gray-400">Belum ada data siswa.</td>
-                                        </tr>
+                                        <tr v-if="filteredStudents.length === 0"><td colspan="3" class="p-8 text-center text-gray-400">Belum ada data siswa.</td></tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
-
-                        <!-- TABEL 2: INPUT MASSAL (MAGIC PASTE) -->
+                        <!-- Tabel Input Massal -->
                         <div class="bg-white rounded-xl shadow overflow-hidden border h-fit">
-                            <div class="bg-blue-900 text-white p-3">
-                                <h3 class="font-bold text-sm"><i class="fas fa-edit mr-2"></i>INPUT SISWA BARU (COPY-PASTE DARI EXCEL)</h3>
-                            </div>
-                            <div class="p-4 bg-blue-50 border-b border-blue-100 text-xs text-blue-800">
-                                <i class="fas fa-info-circle"></i> <strong>Tips:</strong> Copy 1 kolom nama dari Excel Anda, lalu klik baris pertama di bawah dan <strong>Paste (Ctrl+V)</strong>. Nama akan otomatis terisi ke bawah.
-                            </div>
+                            <div class="bg-blue-900 text-white p-3"><h3 class="font-bold text-sm"><i class="fas fa-edit mr-2"></i>INPUT SISWA BARU (COPY-PASTE)</h3></div>
+                            <div class="p-4 bg-blue-50 border-b border-blue-100 text-xs text-blue-800"><i class="fas fa-info-circle"></i> <strong>Tips:</strong> Copy 1 kolom nama dari Excel, lalu Paste di baris pertama.</div>
                             <div class="max-h-[500px] overflow-y-auto p-4">
                                 <div v-for="(row, idx) in bulkInput" :key="idx" class="flex gap-2 mb-2 items-center">
                                     <span class="text-xs text-gray-400 w-6 text-right">{{ idx + 1 }}.</span>
-                                    <!-- Magic Paste Input -->
-                                    <input v-model="bulkInput[idx]" 
-                                           @paste="handlePaste($event, idx)" 
-                                           class="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none uppercase" 
-                                           placeholder="Paste Nama Disini...">
+                                    <input v-model="bulkInput[idx]" @paste="handlePaste($event, idx)" class="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none uppercase" placeholder="Paste Nama Disini...">
                                     <button v-if="bulkInput[idx]" @click="bulkInput[idx] = ''" class="text-gray-300 hover:text-red-500"><i class="fas fa-times"></i></button>
                                 </div>
                             </div>
                             <div class="p-4 border-t bg-gray-50 flex justify-end gap-2">
                                 <button @click="clearBulk" class="text-gray-500 hover:text-red-500 text-sm font-bold px-4">Reset</button>
-                                <button @click="saveBulkStudents" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 shadow flex items-center gap-2">
-                                    <i class="fas fa-save"></i> SIMPAN SEMUA KE DATABASE
-                                </button>
+                                <button @click="saveBulkStudents" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 shadow flex items-center gap-2"><i class="fas fa-save"></i> SIMPAN SEMUA</button>
                             </div>
                         </div>
-
                     </div>
                 </div>
 
                 <!-- 3. INPUT ABSENSI -->
                 <div v-show="activeTab === 'input_absen'">
-                    <div class="flex justify-between items-center mb-6">
-                        <div class="w-64">
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Pilih Kelas untuk Absen</label>
-                            <select v-model="selectedClass" class="w-full p-2 border rounded bg-white shadow-sm">
-                                <option v-for="c in kelasList" :value="c">{{ c }}</option>
-                            </select>
+                    <div class="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
+                        <div class="flex gap-4 w-full">
+                            <div class="w-1/2">
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Pilih Kelas</label>
+                                <select v-model="selectedClass" class="w-full p-2 border rounded bg-white shadow-sm">
+                                    <option v-for="c in kelasList" :value="c">{{ c }}</option>
+                                </select>
+                            </div>
+                            <!-- KOLOM TANGGAL (BARU) -->
+                            <div class="w-1/2">
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Tanggal Ujian</label>
+                                <input type="date" v-model="attendanceDate" class="w-full p-2 border rounded bg-white shadow-sm">
+                            </div>
                         </div>
-                        <button @click="saveAttendance" class="bg-green-600 text-white px-6 py-3 rounded shadow-lg font-bold hover:bg-green-700 transition transform hover:scale-105">
-                            <i class="fas fa-save mr-2"></i> SIMPAN ABSEN KELAS {{ selectedClass }}
+                        <button @click="saveAttendance" class="bg-green-600 text-white px-6 py-2.5 rounded shadow-lg font-bold hover:bg-green-700 transition transform hover:scale-105 whitespace-nowrap w-full md:w-auto">
+                            <i class="fas fa-save mr-2"></i> SIMPAN & ARSIPKAN
                         </button>
                     </div>
 
@@ -203,7 +190,6 @@
                                 <tr v-for="(s, idx) in filteredStudents" :key="s.id" class="hover:bg-blue-50 transition">
                                     <td class="p-4 text-center font-mono text-gray-500">{{ idx + 1 }}</td>
                                     <td class="p-4 font-bold text-gray-800">{{ s.nama }}</td>
-                                    
                                     <td class="p-4 text-center bg-green-50 cursor-pointer" @click="s.status = 'H'"><input type="radio" :name="'absen_'+s.id" value="H" v-model="s.status" class="w-5 h-5 accent-green-600 cursor-pointer"></td>
                                     <td class="p-4 text-center bg-yellow-50 cursor-pointer" @click="s.status = 'S'"><input type="radio" :name="'absen_'+s.id" value="S" v-model="s.status" class="w-5 h-5 accent-yellow-600 cursor-pointer"></td>
                                     <td class="p-4 text-center bg-blue-50 cursor-pointer" @click="s.status = 'I'"><input type="radio" :name="'absen_'+s.id" value="I" v-model="s.status" class="w-5 h-5 accent-blue-600 cursor-pointer"></td>
@@ -214,83 +200,67 @@
                     </div>
                 </div>
 
-                <!-- 4. LAPORAN & SUSULAN -->
-                <div v-show="activeTab === 'susulan'">
-                    
+                <!-- 4. ARSIP ABSENSI (BARU) -->
+                <div v-show="activeTab === 'arsip'">
                     <div class="bg-white p-6 rounded-xl shadow-sm border mb-6">
-                        <div class="flex justify-between items-start">
-                            
-                            <!-- Logo Upload -->
-                            <div class="flex gap-4 items-center">
-                                <div class="border-2 border-dashed border-gray-300 p-2 rounded text-center cursor-pointer hover:bg-gray-50 relative w-32 h-16 flex items-center justify-center group">
-                                    <input type="file" accept="image/*" @change="handleLogoUpload" class="absolute inset-0 opacity-0 cursor-pointer z-10">
-                                    <img v-if="sekolah.logoPreview" :src="sekolah.logoPreview" class="max-h-full max-w-full object-contain">
-                                    <span v-else class="text-xs text-gray-400 group-hover:text-blue-500">
-                                        <i class="fas fa-cloud-upload-alt"></i> Upload Logo
-                                    </span>
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-gray-800">Filter Laporan</h3>
-                                    <div class="mt-1">
-                                        <!-- FILTER KELAS / SEMUA -->
-                                        <select v-model="filterReportClass" class="p-2 border rounded bg-gray-50 text-sm font-bold text-blue-900">
-                                            <option value="SEMUA">Seluruh Sekolah (Semua Kelas)</option>
-                                            <optgroup label="Pilih Per Kelas">
-                                                <option v-for="c in kelasList" :value="c">Kelas {{ c }}</option>
-                                            </optgroup>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button @click="downloadPDFReport" class="bg-red-600 text-white px-6 py-3 rounded font-bold shadow hover:bg-red-700 flex items-center gap-2 transition">
-                                <i class="fas fa-file-pdf"></i> UNDUH LAPORAN PDF
-                            </button>
-                        </div>
+                        <h2 class="text-xl font-bold text-slate-800 mb-2">Arsip Riwayat Absensi</h2>
+                        <p class="text-sm text-gray-500">Data absensi yang tersimpan per tanggal dan kelas.</p>
                     </div>
 
-                    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 flex justify-between items-center">
-                        <div>
-                            <h3 class="font-bold text-red-800">Daftar Siswa Perlu Ujian Susulan</h3>
-                            <p class="text-sm text-red-600">Menampilkan siswa Sakit (S), Izin (I), atau Alpha (A) berdasarkan filter di atas.</p>
+                    <div v-if="archives.length === 0" class="text-center text-gray-400 py-10">
+                        <i class="fas fa-box-open fa-3x mb-4"></i>
+                        <p>Belum ada arsip tersimpan.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div v-for="arc in archives" :key="arc.id" class="bg-white p-4 rounded-lg shadow border hover:shadow-md transition">
+                            <div class="flex justify-between items-start mb-3">
+                                <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2 py-1 rounded">Kelas {{ arc.kelas }}</span>
+                                <span class="text-xs text-gray-500 font-mono">{{ formatDate(arc.tanggal) }}</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm mb-4">
+                                <span class="text-green-600 font-bold"><i class="fas fa-check-circle"></i> Hadir: {{ countStatus(arc.records, 'H') }}</span>
+                                <span class="text-red-500 font-bold"><i class="fas fa-times-circle"></i> Absen: {{ arc.records.length - countStatus(arc.records, 'H') }}</span>
+                            </div>
+                            <div class="flex gap-2 pt-3 border-t">
+                                <button @click="viewArchive(arc)" class="flex-1 bg-blue-50 text-blue-600 text-xs font-bold py-2 rounded hover:bg-blue-100"><i class="fas fa-eye"></i> Lihat/Edit</button>
+                                <button @click="deleteArchive(arc.id)" class="px-3 bg-red-50 text-red-600 text-xs font-bold py-2 rounded hover:bg-red-100"><i class="fas fa-trash"></i></button>
+                            </div>
                         </div>
-                        <div class="text-xl font-bold text-red-800 bg-red-200 px-4 py-1 rounded-full">
-                            {{ susulanList.length }} Siswa
+                    </div>
+                </div>
+
+                <!-- 5. LAPORAN & SUSULAN -->
+                <div v-show="activeTab === 'susulan'">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border mb-6 flex justify-between items-center">
+                        <div class="flex gap-4 items-center">
+                            <div class="border-2 border-dashed border-gray-300 p-2 rounded text-center cursor-pointer hover:bg-gray-50 relative w-32 h-16 flex items-center justify-center group">
+                                <input type="file" accept="image/*" @change="handleLogoUpload" class="absolute inset-0 opacity-0 cursor-pointer z-10">
+                                <img v-if="sekolah.logoPreview" :src="sekolah.logoPreview" class="max-h-full max-w-full object-contain">
+                                <span v-else class="text-xs text-gray-400 group-hover:text-blue-500"><i class="fas fa-cloud-upload-alt"></i> Upload Logo</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800">Laporan Siswa Tidak Hadir</h3>
+                                <p class="text-sm text-gray-500">Unduh PDF berdasarkan data saat ini ({{ formatDate(attendanceDate) }}).</p>
+                            </div>
                         </div>
+                        <button @click="downloadPDFReport" class="bg-red-600 text-white px-6 py-3 rounded font-bold shadow hover:bg-red-700 flex items-center gap-2"><i class="fas fa-file-pdf"></i> UNDUH LAPORAN PDF</button>
                     </div>
 
                     <div class="bg-white rounded-xl shadow overflow-hidden border">
                         <table class="w-full text-left">
                             <thead class="bg-slate-800 text-white">
-                                <tr>
-                                    <th class="p-4">Nama Siswa</th>
-                                    <th class="p-4">Kelas</th>
-                                    <th class="p-4 text-center">Status Absen</th>
-                                    <th class="p-4">Keterangan / Jadwal Susulan</th>
-                                    <th class="p-4 text-center">Aksi</th>
-                                </tr>
+                                <tr><th class="p-4">Nama Siswa</th><th class="p-4">Kelas</th><th class="p-4 text-center">Status</th><th class="p-4">Keterangan Susulan</th><th class="p-4 text-center">Aksi</th></tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
                                 <tr v-for="s in susulanList" :key="s.id" class="hover:bg-red-50">
                                     <td class="p-4 font-bold">{{ s.nama }}</td>
                                     <td class="p-4"><span class="bg-gray-200 px-2 py-1 rounded text-xs font-bold">{{ s.kelas }}</span></td>
-                                    <td class="p-4 text-center">
-                                        <span v-if="s.status === 'S'" class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded font-bold">SAKIT</span>
-                                        <span v-if="s.status === 'I'" class="bg-blue-100 text-blue-800 px-3 py-1 rounded font-bold">IZIN</span>
-                                        <span v-if="s.status === 'A'" class="bg-red-100 text-red-800 px-3 py-1 rounded font-bold">ALPHA</span>
-                                    </td>
-                                    <td class="p-4">
-                                        <input v-model="s.ket_susulan" class="w-full border-b-2 border-gray-300 focus:border-blue-600 outline-none bg-transparent py-1" placeholder="Contoh: Senin, 10.00 di Lab">
-                                    </td>
-                                    <td class="p-4 text-center">
-                                        <button @click="updateSusulan(s)" class="text-blue-600 hover:text-blue-800 font-bold text-xs border border-blue-600 px-3 py-1 rounded hover:bg-blue-50">
-                                            SIMPAN
-                                        </button>
-                                    </td>
+                                    <td class="p-4 text-center"><span :class="{'bg-yellow-100 text-yellow-800': s.status==='S', 'bg-blue-100 text-blue-800': s.status==='I', 'bg-red-100 text-red-800': s.status==='A'}" class="px-3 py-1 rounded font-bold">{{ s.status }}</span></td>
+                                    <td class="p-4"><input v-model="s.ket_susulan" class="w-full border-b-2 border-gray-300 focus:border-blue-600 outline-none bg-transparent py-1" placeholder="Jadwal Susulan..."></td>
+                                    <td class="p-4 text-center"><button @click="updateSusulan(s)" class="text-blue-600 hover:text-blue-800 font-bold text-xs border border-blue-600 px-3 py-1 rounded hover:bg-blue-50">SIMPAN</button></td>
                                 </tr>
-                                <tr v-if="susulanList.length === 0">
-                                    <td colspan="5" class="p-8 text-center text-green-600 font-bold">Semua siswa hadir sesuai filter yang dipilih!</td>
-                                </tr>
+                                <tr v-if="susulanList.length === 0"><td colspan="5" class="p-8 text-center text-green-600 font-bold">Semua siswa hadir!</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -298,12 +268,40 @@
 
             </div>
         </div>
+
+        <!-- MODAL EDIT ARSIP -->
+        <div v-if="viewArchiveModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white w-full max-w-3xl h-[80vh] rounded-xl shadow-2xl flex flex-col overflow-hidden">
+                <div class="p-4 border-b flex justify-between items-center bg-slate-50">
+                    <div><h3 class="font-bold text-lg">Edit Arsip: {{ viewArchiveModal.kelas }}</h3><p class="text-xs text-gray-500">{{ formatDate(viewArchiveModal.tanggal) }}</p></div>
+                    <button @click="viewArchiveModal = null" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-6">
+                    <table class="w-full text-sm text-left border">
+                        <thead class="bg-gray-100"><tr><th class="p-2 border">Nama</th><th class="p-2 border text-center">Status</th><th class="p-2 border">Keterangan</th></tr></thead>
+                        <tbody>
+                            <tr v-for="(rec, idx) in viewArchiveModal.records" :key="idx">
+                                <td class="p-2 border font-bold">{{ rec.nama }}</td>
+                                <td class="p-2 border text-center">
+                                    <select v-model="rec.status" class="p-1 border rounded text-xs font-bold" :class="{'text-green-600': rec.status==='H', 'text-red-600': rec.status==='A'}">
+                                        <option value="H">Hadir</option><option value="S">Sakit</option><option value="I">Izin</option><option value="A">Alpha</option>
+                                    </select>
+                                </td>
+                                <td class="p-2 border"><input v-model="rec.ket_susulan" class="w-full p-1 border-b outline-none text-xs" placeholder="-"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="p-4 border-t text-right"><button @click="updateArchiveData" class="bg-green-600 text-white px-6 py-2 rounded font-bold hover:bg-green-700">Simpan Perubahan Arsip</button></div>
+            </div>
+        </div>
+
     </div>
 
     <script type="module">
         import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, where, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBivREr2y61OYTE0kLxRnkGtPCdLvHn_og",
@@ -323,40 +321,23 @@
                     activeTab: 'dashboard',
                     isLoading: true,
                     selectedClass: '7A',
+                    attendanceDate: new Date().toISOString().split('T')[0], // Default Hari Ini
+                    newStudentName: '',
                     allStudents: [],
+                    archives: [], // Data Arsip
+                    viewArchiveModal: null, // Data Modal Edit Arsip
                     chartInstance: null,
                     stats: { hadir: 0, absen: 0, total: 0 },
                     sekolah: { logoBase64: null, logoPreview: null },
-                    
-                    // DATA BULK INPUT (30 Baris)
-                    bulkInput: new Array(30).fill(''),
-                    
-                    // FILTER LAPORAN (BARU)
-                    filterReportClass: 'SEMUA'
+                    bulkInput: new Array(30).fill('')
                 }
             },
             computed: {
                 kelasList() { return ['7A','7B','7C','7D','7E','7F','8A','8B','8C','8D','8E','8F','9A','9B','9C','9D','9E']; },
-                filteredStudents() {
-                    return this.allStudents.filter(s => s.kelas === this.selectedClass).sort((a,b) => a.nama.localeCompare(b.nama));
-                },
-                susulanList() {
-                    // 1. Filter by Status (S/I/A)
-                    let list = this.allStudents.filter(s => ['S','I','A'].includes(s.status));
-                    
-                    // 2. Filter by Class (Dropdown Laporan)
-                    if (this.filterReportClass !== 'SEMUA') {
-                        list = list.filter(s => s.kelas === this.filterReportClass);
-                    }
-
-                    // 3. Sort by Kelas then Nama
-                    return list.sort((a,b) => {
-                        if (a.kelas === b.kelas) return a.nama.localeCompare(b.nama);
-                        return a.kelas.localeCompare(b.kelas);
-                    });
-                },
+                filteredStudents() { return this.allStudents.filter(s => s.kelas === this.selectedClass).sort((a,b) => a.nama.localeCompare(b.nama)); },
+                susulanList() { return this.allStudents.filter(s => ['S','I','A'].includes(s.status)).sort((a,b) => a.kelas.localeCompare(b.kelas)); },
                 pageTitle() {
-                    const titles = { 'dashboard': 'Dashboard Statistik', 'data_siswa': 'Manajemen Data Siswa', 'input_absen': 'Input Absensi Harian', 'susulan': 'Laporan & Jadwal Susulan' };
+                    const titles = { 'dashboard': 'Dashboard Statistik', 'data_siswa': 'Manajemen Data Siswa', 'input_absen': 'Input Absensi Harian', 'susulan': 'Laporan & Jadwal Susulan', 'arsip': 'Arsip Absensi' };
                     return titles[this.activeTab];
                 }
             },
@@ -365,6 +346,7 @@
                 allStudents: { handler() { this.updateStats(); }, deep: true }
             },
             mounted() {
+                // Load Data Siswa (Realtime)
                 const q = query(collection(db, "data_absensi"));
                 onSnapshot(q, (snapshot) => {
                     this.allStudents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -372,188 +354,128 @@
                     this.updateStats();
                     if(this.activeTab === 'dashboard') this.renderChart();
                 }, () => this.isLoading = false);
+
+                // Load Arsip (Realtime)
+                const qArsip = query(collection(db, "history_absensi"), orderBy("tanggal", "desc"));
+                onSnapshot(qArsip, (snap) => {
+                    this.archives = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                });
             },
             methods: {
-                // --- FITUR MAGIC PASTE (PASTE EXCEL KE INPUT) ---
                 handlePaste(event, startIndex) {
                     event.preventDefault();
                     const pastedText = (event.clipboardData || window.clipboardData).getData('text');
-                    const rows = pastedText.split(/\r?\n/).filter(row => row.trim() !== ''); // Split by newline & remove empty
-
-                    // Isi input mulai dari startIndex
-                    rows.forEach((name, i) => {
-                        if (startIndex + i < this.bulkInput.length) {
-                            this.bulkInput[startIndex + i] = name.trim().toUpperCase();
-                        }
-                    });
+                    const rows = pastedText.split(/\r?\n/).filter(row => row.trim() !== '');
+                    rows.forEach((name, i) => { if (startIndex + i < this.bulkInput.length) this.bulkInput[startIndex + i] = name.trim().toUpperCase(); });
                 },
-
-                // --- IMPORT EXCEL FILE ---
                 downloadTemplate() {
-                    const ws = XLSX.utils.aoa_to_sheet([["Nama Siswa"]]); // Header
-                    const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, "Template Siswa");
-                    XLSX.writeFile(wb, "Template_Nama_Siswa.xlsx");
+                    const ws = XLSX.utils.aoa_to_sheet([["Nama Siswa"]]); 
+                    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Template Siswa"); XLSX.writeFile(wb, "Template_Nama_Siswa.xlsx");
                 },
                 handleFileUpload(event) {
-                    const file = event.target.files[0];
-                    if (!file) return;
-
+                    const file = event.target.files[0]; if (!file) return;
                     const reader = new FileReader();
                     reader.onload = (e) => {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }); // Array of Arrays
-
-                        // Ambil data mulai baris ke-2 (indeks 1), kolom pertama
+                        const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, { type: 'array' });
+                        const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
                         let count = 0;
-                        for (let i = 1; i < jsonData.length; i++) {
-                            const row = jsonData[i];
-                            if (row[0] && count < this.bulkInput.length) {
-                                this.bulkInput[count] = String(row[0]).toUpperCase().trim();
-                                count++;
-                            }
-                        }
-                        alert(`Berhasil memuat ${count} nama dari Excel. Silakan klik tombol SIMPAN.`);
-                    };
-                    reader.readAsArrayBuffer(file);
+                        for (let i = 1; i < jsonData.length; i++) { if (jsonData[i][0] && count < this.bulkInput.length) { this.bulkInput[count] = String(jsonData[i][0]).toUpperCase().trim(); count++; } }
+                        alert(`Dimuat ${count} nama.`);
+                    }; reader.readAsArrayBuffer(file);
                 },
-
-                // --- SIMPAN DATA MASSAL ---
                 async saveBulkStudents() {
-                    const namesToSave = this.bulkInput.filter(n => n.trim() !== '');
-                    if (namesToSave.length === 0) return alert("Tidak ada nama yang diisi!");
-
-                    this.isLoading = true;
-                    const batch = writeBatch(db); // Gunakan Batch untuk performa
-
-                    namesToSave.forEach(name => {
-                        const docRef = doc(collection(db, "data_absensi")); // Auto ID
-                        batch.set(docRef, {
-                            nama: name,
-                            kelas: this.selectedClass,
-                            status: 'H',
-                            ket_susulan: ''
-                        });
-                    });
-
-                    try {
-                        await batch.commit();
-                        alert(`Berhasil menambahkan ${namesToSave.length} siswa ke Kelas ${this.selectedClass}!`);
-                        this.clearBulk();
-                    } catch(e) {
-                        alert("Gagal menyimpan: " + e.message);
-                    } finally {
-                        this.isLoading = false;
-                    }
+                    const names = this.bulkInput.filter(n => n.trim() !== ''); if (names.length === 0) return alert("Kosong!");
+                    this.isLoading = true; const batch = writeBatch(db);
+                    names.forEach(name => { batch.set(doc(collection(db, "data_absensi")), { nama: name, kelas: this.selectedClass, status: 'H', ket_susulan: '' }); });
+                    try { await batch.commit(); alert(`Berhasil tambah ${names.length} siswa!`); this.bulkInput = new Array(30).fill(''); } catch(e) { alert("Gagal: " + e.message); } finally { this.isLoading = false; }
                 },
-                clearBulk() {
-                    this.bulkInput = new Array(30).fill('');
-                },
-
-                // --- FUNGSI LAMA (HAPUS, ABSEN, DLL) ---
-                async deleteStudent(id) { if(confirm("Hapus siswa ini?")) await deleteDoc(doc(db, "data_absensi", id)); },
+                clearBulk() { this.bulkInput = new Array(30).fill(''); },
+                async deleteStudent(id) { if(confirm("Hapus siswa?")) await deleteDoc(doc(db, "data_absensi", id)); },
                 
+                // --- SAVE ATTENDANCE & ARCHIVE ---
                 async saveAttendance() {
                     this.isLoading = true;
                     const batch = writeBatch(db);
+                    const currentSnapshot = []; // Untuk Arsip
+
+                    // 1. Update Status Live
                     this.filteredStudents.forEach(s => {
                         const ref = doc(db, "data_absensi", s.id);
                         batch.update(ref, { status: s.status });
+                        // Siapkan data snapshot
+                        currentSnapshot.push({ id: s.id, nama: s.nama, status: s.status, ket_susulan: s.ket_susulan || '' });
                     });
-                    try { await batch.commit(); alert(`Absensi Kelas ${this.selectedClass} Tersimpan!`); } 
-                    catch(e) { alert("Gagal: " + e.message); } finally { this.isLoading = false; }
+
+                    try {
+                        await batch.commit(); // Commit update live dulu
+                        
+                        // 2. Cek apakah arsip hari ini sudah ada (Optional: Overwrite atau Create New)
+                        // Disini kita create new dulu, logic overwrite agak kompleks untuk batch
+                        // Kita cari manual kalau mau overwrite:
+                        const qCheck = query(collection(db, "history_absensi"), where("kelas", "==", this.selectedClass), where("tanggal", "==", this.attendanceDate));
+                        const snapCheck = await getDocs(qCheck);
+                        
+                        if (!snapCheck.empty) {
+                            // Update Existing Archive
+                            const archiveId = snapCheck.docs[0].id;
+                            await updateDoc(doc(db, "history_absensi", archiveId), { records: currentSnapshot, timestamp: new Date().toISOString() });
+                            alert(`Arsip Kelas ${this.selectedClass} Tanggal ${this.attendanceDate} DIPERBARUI!`);
+                        } else {
+                            // Create New Archive
+                            await addDoc(collection(db, "history_absensi"), {
+                                kelas: this.selectedClass,
+                                tanggal: this.attendanceDate,
+                                records: currentSnapshot,
+                                timestamp: new Date().toISOString()
+                            });
+                            alert(`Absensi Kelas ${this.selectedClass} Tanggal ${this.attendanceDate} DISIMPAN & DIARSIPKAN!`);
+                        }
+
+                    } catch(e) { alert("Gagal: " + e.message); } finally { this.isLoading = false; }
                 },
+
+                // --- ARSIP ACTIONS ---
+                viewArchive(arc) {
+                    // Clone object untuk modal edit
+                    this.viewArchiveModal = JSON.parse(JSON.stringify(arc));
+                },
+                async updateArchiveData() {
+                    if(!this.viewArchiveModal) return;
+                    if(!confirm("Simpan perubahan pada arsip ini?")) return;
+                    try {
+                        await updateDoc(doc(db, "history_absensi", this.viewArchiveModal.id), {
+                            records: this.viewArchiveModal.records
+                        });
+                        this.viewArchiveModal = null;
+                        alert("Arsip berhasil diperbarui.");
+                    } catch(e) { alert("Gagal update: " + e.message); }
+                },
+                async deleteArchive(id) {
+                    if(confirm("Hapus arsip ini permanen?")) await deleteDoc(doc(db, "history_absensi", id));
+                },
+                countStatus(records, status) {
+                    return records.filter(r => r.status === status).length;
+                },
+                formatDate(iso) { return new Date(iso).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); },
 
                 async updateSusulan(student) {
                     try { await updateDoc(doc(db, "data_absensi", student.id), { ket_susulan: student.ket_susulan }); alert("Tersimpan."); } 
                     catch(e) { alert("Gagal: "+e.message); }
                 },
-
-                // PDF & CHART
                 handleLogoUpload(event) {
                     const file = event.target.files[0];
                     if (file) { const r = new FileReader(); r.onload = (e) => { this.sekolah.logoBase64 = e.target.result; this.sekolah.logoPreview = e.target.result; }; r.readAsDataURL(file); }
                 },
                 downloadPDFReport() {
-                    if(this.susulanList.length === 0) return alert("Tidak ada data siswa susulan sesuai filter.");
-                    
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF();
-                    const pageWidth = doc.internal.pageSize.getWidth();
-
-                    // --- KOP SURAT (SAMA PERSIS DENGAN SOAL/KISI-KISI) ---
-                    const logoX = 15; const logoY = 10; const logoSize = 25; const textX = 45;
-
-                    // 1. Logo
-                    if (this.sekolah.logoBase64) {
-                        doc.addImage(this.sekolah.logoBase64, 'PNG', logoX, logoY, logoSize, logoSize); 
-                    }
-
-                    // 2. Teks Kop (SMP ALBANNA BIRU)
-                    doc.setFont("helvetica", "bold");
-                    doc.setFontSize(18);
-                    doc.setTextColor(30, 58, 138); // Biru
-                    doc.text("SMP ALBANNA", textX, 18); 
-
-                    // Kembalikan ke Hitam untuk alamat
-                    doc.setTextColor(0, 0, 0); 
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(9);
-                    doc.text("Jl. Tukad Yeh Ho III No.10, Denpasar, Bali 80234", textX, 24);
-                    doc.text("Dangin Puri Klod, Denpasar Timur", textX, 28);
-                    doc.text("Telepon (0361) 238 4444  |  www.albanna.sch.id", textX, 33);
-
-                    // 3. Garis Kop (Double Line)
-                    doc.setLineWidth(0.5); doc.line(10, 40, pageWidth - 10, 40);
-                    doc.setLineWidth(0.1); doc.line(10, 41, pageWidth - 10, 41);
-
-                    // --- JUDUL LAPORAN ---
-                    doc.setFont("helvetica", "bold"); 
-                    doc.setFontSize(14);
-                    doc.text("LAPORAN KETIDAKHADIRAN & UJIAN SUSULAN", pageWidth / 2, 55, { align: "center" });
-                    
-                    doc.setFontSize(10);
-                    doc.setFont("helvetica", "normal");
-                    
-                    // Sub-Judul Filter
-                    const subTitle = this.filterReportClass === 'SEMUA' 
-                        ? "Filter: Seluruh Sekolah" 
-                        : `Filter: Kelas ${this.filterReportClass}`;
-                    
-                    doc.text(subTitle, 14, 65);
-                    doc.text(`Dicetak pada: ${new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`, pageWidth - 14, 65, { align: "right" });
-
-                    // --- TABEL DATA ---
-                    doc.autoTable({
-                        startY: 70,
-                        head: [['No', 'Nama Siswa', 'Kelas', 'Status', 'Keterangan Susulan']],
-                        body: this.susulanList.map((s, i) => [
-                            i+1, 
-                            s.nama, 
-                            s.kelas, 
-                            s.status === 'S' ? 'Sakit' : (s.status === 'I' ? 'Izin' : 'Alpha'),
-                            s.ket_susulan || '-'
-                        ]),
-                        theme: 'grid',
-                        headStyles: { fillColor: [220, 38, 38], fontStyle: 'bold' }, // Merah Header
-                        styles: { fontSize: 10, cellPadding: 3 },
-                        columnStyles: {
-                            0: { cellWidth: 10, halign: 'center' },
-                            2: { cellWidth: 20, halign: 'center' },
-                            3: { cellWidth: 20, halign: 'center' }
-                        }
-                    });
-
-                    // Footer (Optional Tanda Tangan)
-                    let finalY = doc.lastAutoTable.finalY + 20;
-                    if (finalY > 250) { doc.addPage(); finalY = 20; }
-                    
-                    doc.text("Mengetahui,", pageWidth - 50, finalY, { align: 'center' });
-                    doc.text("Panitia Ujian", pageWidth - 50, finalY + 20, { align: 'center' });
-
-                    doc.save(`Laporan_Susulan_${this.filterReportClass}.pdf`);
+                    if(this.susulanList.length === 0) return alert("Tidak ada data.");
+                    const { jsPDF } = window.jspdf; const doc = new jsPDF();
+                    if (this.sekolah.logoBase64) doc.addImage(this.sekolah.logoBase64, 'PNG', 15, 10, 20, 20); 
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.text("SMP ALBANNA", 40, 18);
+                    doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.text("Laporan Ketidakhadiran & Ujian Susulan", 40, 24);
+                    doc.text(`Tanggal Laporan: ${this.formatDate(this.attendanceDate)}`, 40, 29);
+                    doc.setLineWidth(0.5); doc.line(10, 35, 200, 35);
+                    doc.autoTable({ startY: 40, head: [['No', 'Nama', 'Kelas', 'Status', 'Keterangan']], body: this.susulanList.map((s,i)=>[i+1, s.nama, s.kelas, s.status, s.ket_susulan]) });
+                    doc.save(`Laporan_Susulan_${this.attendanceDate}.pdf`);
                 },
                 updateStats() {
                     this.stats.total = this.allStudents.length;
