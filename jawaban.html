@@ -5,14 +5,22 @@
     <title>Manajemen Nilai Siswa - SMP ALBANNA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Library Excel (SheetJS) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Montserrat', sans-serif; }
         .score-badge { @apply px-2 py-1 rounded text-xs font-bold; }
+        .score-high { @apply bg-green-100 text-green-700; }
+        .score-med { @apply bg-yellow-100 text-yellow-700; }
+        .score-low { @apply bg-red-100 text-red-700; }
+        
+        /* Custom Radio Button untuk Skor Manual */
         .score-radio:checked + label {
-            background-color: #2563eb; color: white; border-color: #2563eb;
+            background-color: #2563eb;
+            color: white;
+            border-color: #2563eb;
         }
     </style>
 </head>
@@ -20,12 +28,13 @@
 
     <div id="grading-app" class="flex h-screen overflow-hidden">
         
-        <!-- SIDEBAR -->
+        <!-- 1. SIDEBAR: PILIH KELAS -->
         <div class="w-64 bg-white border-r flex flex-col h-full shadow-lg z-10">
             <div class="p-6 border-b bg-blue-900 text-white">
                 <h1 class="font-bold text-lg">REKAP NILAI</h1>
                 <p class="text-xs opacity-75">AUTO & MANUAL GRADING</p>
             </div>
+            
             <div class="flex-1 overflow-y-auto p-2">
                 <div v-for="(subClasses, grade) in kelasStructure" :key="grade" class="mb-4">
                     <h3 class="px-4 text-xs font-bold text-gray-400 uppercase mb-2 mt-2">Kelas {{ grade }}</h3>
@@ -40,6 +49,7 @@
                     </ul>
                 </div>
             </div>
+
             <div class="p-4 border-t border-slate-200 bg-slate-50">
                 <a href="index.html" class="flex items-center justify-center gap-2 w-full bg-white border border-slate-300 text-slate-600 py-2 rounded font-bold text-xs hover:bg-blue-900 hover:text-white transition shadow-sm">
                     <i class="fas fa-home"></i> MENU UTAMA
@@ -47,19 +57,27 @@
             </div>
         </div>
 
-        <!-- MAIN CONTENT -->
+        <!-- 2. MAIN CONTENT -->
         <div class="flex-1 flex flex-col h-full bg-gray-50 overflow-hidden">
+            
+            <!-- Header & Filter Mapel -->
             <div class="bg-white p-6 shadow-sm border-b">
                 <div class="flex justify-between items-center">
                     <div>
                         <h2 class="text-2xl font-bold text-gray-800 mb-1">Data Kelas {{ selectedClass }}</h2>
-                        <p class="text-sm text-gray-500">Lakukan koreksi manual untuk soal Uraian/Esai/Isian.</p>
+                        <p class="text-sm text-gray-500">
+                            KKM Mapel Terpilih: 
+                            <span class="font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100">
+                                {{ selectedMapel ? getKKM(selectedMapel) : '-' }}
+                            </span>
+                        </p>
                     </div>
                     <div class="flex items-center gap-3">
                         <select v-model="selectedMapel" class="p-3 border-2 border-blue-100 rounded-lg bg-gray-50 text-sm font-bold focus:border-blue-500 focus:outline-none transition min-w-[200px]">
-                            <option value="">-- Semua Mata Pelajaran --</option>
+                            <option value="">-- Pilih Mapel --</option>
                             <option v-for="m in availableMapels" :value="m">{{ m }}</option>
                         </select>
+
                         <button @click="exportToExcel" :disabled="!selectedMapel || filteredResults.length === 0" class="bg-green-600 text-white px-6 py-3 rounded-lg font-bold shadow hover:bg-green-700 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                             <i class="fas fa-file-excel"></i> ANALISIS RAPOR
                         </button>
@@ -67,10 +85,13 @@
                 </div>
             </div>
 
+            <!-- Tabel Data -->
             <div class="flex-1 overflow-y-auto p-8">
+                
                 <div v-if="filteredResults.length === 0" class="h-full flex flex-col items-center justify-center text-gray-400 -mt-10">
                     <div class="bg-white p-6 rounded-full shadow-sm mb-4"><i class="fas fa-folder-open fa-4x text-gray-300"></i></div>
                     <p class="text-lg font-medium">Data tidak ditemukan.</p>
+                    <p class="text-sm" v-if="!selectedMapel">Silakan pilih Mata Pelajaran di atas.</p>
                 </div>
 
                 <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
@@ -81,7 +102,7 @@
                                 <th class="p-4 border-b">Nama Siswa</th>
                                 <th class="p-4 border-b">Mata Pelajaran</th>
                                 <th class="p-4 border-b text-center">Status Koreksi</th>
-                                <th class="p-4 border-b text-center">Total Nilai</th>
+                                <th class="p-4 border-b text-center">Nilai Akhir</th>
                                 <th class="p-4 border-b text-center">Status Lulus</th>
                                 <th class="p-4 border-b text-center w-48">Aksi</th>
                             </tr>
@@ -92,6 +113,7 @@
                                 <td class="p-4 font-bold text-gray-800 uppercase">{{ res.student?.nama || 'Tanpa Nama' }}</td>
                                 <td class="p-4 text-gray-600">{{ res.mapel }}</td>
                                 
+                                <!-- Status Koreksi -->
                                 <td class="p-4 text-center">
                                     <span v-if="needsManualCorrection(res)" class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold animate-pulse flex items-center justify-center gap-1">
                                         <i class="fas fa-exclamation-circle"></i> Butuh Koreksi
@@ -100,12 +122,19 @@
                                         <i class="fas fa-check-circle"></i> Selesai
                                     </span>
                                 </td>
-                                <td class="p-4 text-center"><span :class="getScoreClass(calculateScore(res))">{{ calculateScore(res) }}</span></td>
+
                                 <td class="p-4 text-center">
-                                    <span :class="calculateScore(res) < 75 ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-green-100 text-green-700 border border-green-200'" class="px-3 py-1 rounded-full text-xs font-bold">
-                                        {{ calculateScore(res) < 75 ? 'REMIDI' : 'LOLOS' }}
-                                    </span>
+                                    <span :class="getScoreClass(calculateScore(res), res.mapel)">{{ calculateScore(res) }}</span>
                                 </td>
+
+                                <!-- STATUS KELULUSAN (DINAMIS PER MAPEL) -->
+                                <td class="p-4 text-center">
+                                    <span :class="isPass(res) ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'" class="px-3 py-1 rounded-full text-xs font-bold">
+                                        {{ isPass(res) ? 'LOLOS' : 'REMIDI' }}
+                                    </span>
+                                    <div class="text-[10px] text-gray-400 mt-1">KKM: {{ getKKM(res.mapel) }}</div>
+                                </td>
+
                                 <td class="p-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
                                         <button @click="startCorrection(res)" class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded shadow transition" title="Koreksi Jawaban"><i class="fas fa-check-double"></i></button>
@@ -131,59 +160,43 @@
                 </div>
                 
                 <div class="flex-1 overflow-y-auto p-6 bg-gray-50">
+                    <!-- INFO SKOR -->
                     <div class="flex justify-between mb-6 bg-white p-4 rounded shadow-sm">
-                        <div class="text-center w-1/2 border-r"><p class="text-xs text-gray-500 font-bold uppercase">Nilai Otomatis (PG/BS)</p><p class="text-2xl font-bold text-slate-700">{{ tempStats.autoScore }}</p></div>
-                        <div class="text-center w-1/2"><p class="text-xs text-gray-500 font-bold uppercase">Nilai Manual (Isian/Uraian)</p><p class="text-2xl font-bold text-blue-600">{{ tempStats.manualScore }}</p></div>
+                        <div class="text-center w-1/2 border-r"><p class="text-xs text-gray-500 font-bold uppercase">Nilai Otomatis</p><p class="text-2xl font-bold text-slate-700">{{ tempStats.autoScore }}</p></div>
+                        <div class="text-center w-1/2"><p class="text-xs text-gray-500 font-bold uppercase">Nilai Manual</p><p class="text-2xl font-bold text-blue-600">{{ tempStats.manualScore }}</p></div>
                     </div>
 
                     <div class="space-y-6">
                         <div v-for="(ans, idx) in correctionData.answers" :key="idx" class="bg-white border rounded-lg shadow-sm p-4">
                             <div class="flex justify-between mb-3 border-b pb-2">
                                 <span class="font-bold text-sm text-gray-600">Soal No. {{ parseInt(idx)+1 }} <span class="text-xs bg-gray-200 px-2 py-0.5 rounded ml-2 text-gray-600">{{ getQuestionType(correctionData.examId, idx) }}</span></span>
-                                <span class="text-xs font-bold text-gray-400">Bobot Max: {{ getQuestionPoint(correctionData.examId, idx) }}</span>
+                                <span class="text-xs font-bold text-gray-400">Bobot: {{ getQuestionPoint(correctionData.examId, idx) }}</span>
                             </div>
                             <p class="text-sm text-gray-800 mb-4 italic bg-gray-50 p-3 rounded">"{{ getQuestionText(correctionData.examId, idx) }}"</p>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="text-sm space-y-2">
                                     <div><span class="block text-xs font-bold text-gray-400 uppercase">Jawaban Siswa:</span><div class="font-bold text-slate-800 whitespace-pre-wrap border-l-4 border-blue-400 pl-2">{{ formatAnswer(ans) }}</div></div>
-                                    <div v-if="isManualType(correctionData.examId, idx)"><span class="block text-xs font-bold text-gray-400 uppercase mt-2">Kunci Guru:</span><div class="text-green-700 text-xs whitespace-pre-wrap border-l-4 border-green-400 pl-2">{{ getCorrectAnswer(correctionData.examId, idx) }}</div></div>
+                                    <div v-if="['URAIAN', 'ESAI', 'ISIAN'].includes(getQuestionType(correctionData.examId, idx))"><span class="block text-xs font-bold text-gray-400 uppercase mt-2">Kunci Guru:</span><div class="text-green-700 text-xs whitespace-pre-wrap border-l-4 border-green-400 pl-2">{{ getCorrectAnswer(correctionData.examId, idx) }}</div></div>
                                 </div>
 
-                                <!-- Panel Skor Manual DINAMIS -->
-                                <div v-if="isManualType(correctionData.examId, idx)" class="bg-blue-50 p-3 rounded border border-blue-100">
-                                    
-                                    <!-- KASUS 1: JIKA TIDAK DIJAWAB -->
-                                    <div v-if="!ans || ans.trim() === ''" class="text-center py-4">
-                                        <p class="text-red-500 font-bold text-sm"><i class="fas fa-times-circle"></i> Tidak Dijawab</p>
-                                        <p class="text-xs text-gray-500">Otomatis Skor: 0</p>
+                                <!-- Panel Skor Manual -->
+                                <div v-if="['URAIAN', 'ESAI', 'ISIAN'].includes(getQuestionType(correctionData.examId, idx))" class="bg-blue-50 p-3 rounded border border-blue-100">
+                                    <p class="text-xs font-bold text-blue-800 mb-2 text-center uppercase">Berikan Skor</p>
+                                    <div class="flex justify-center gap-2 flex-wrap">
+                                        <template v-for="s in getScoreRange(correctionData.examId, idx)" :key="s">
+                                            <input type="radio" :name="'score_'+idx" :id="'s_'+idx+'_'+s" :value="s" v-model="correctionData.manualScores[idx]" class="hidden score-radio">
+                                            <label :for="'s_'+idx+'_'+s" class="w-8 h-8 flex items-center justify-center border border-blue-300 rounded cursor-pointer hover:bg-blue-200 font-bold text-blue-800 transition">{{ s }}</label>
+                                        </template>
                                     </div>
-
-                                    <!-- KASUS 2: JIKA DIJAWAB -->
-                                    <div v-else>
-                                        <p class="text-xs font-bold text-blue-800 mb-2 text-center uppercase">Berikan Skor (Maks {{ getQuestionPoint(correctionData.examId, idx) }})</p>
-                                        <div class="flex justify-center gap-2 flex-wrap">
-                                            <!-- Generate Radio Button 0 s/d Bobot -->
-                                            <template v-for="s in getScoreRange(correctionData.examId, idx)" :key="s">
-                                                <input type="radio" :name="'score_'+idx" :id="'s_'+idx+'_'+s" :value="s" v-model="correctionData.manualScores[idx]" class="hidden score-radio">
-                                                <label :for="'s_'+idx+'_'+s" class="w-8 h-8 flex items-center justify-center border border-blue-300 rounded cursor-pointer hover:bg-blue-200 font-bold text-blue-800 transition">{{ s }}</label>
-                                            </template>
-                                        </div>
-                                    </div>
-
                                 </div>
-                                
-                                <!-- Info Otomatis -->
                                 <div v-else class="flex items-center justify-center">
-                                    <div :class="['px-4 py-2 rounded font-bold text-sm flex items-center gap-2', isAnswerCorrect(correctionData.examId, idx, ans) ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700']">
-                                        <i :class="['fas', isAnswerCorrect(correctionData.examId, idx, ans) ? 'fa-check' : 'fa-times']"></i> {{ isAnswerCorrect(correctionData.examId, idx, ans) ? 'Benar (Otomatis)' : 'Salah (0 Poin)' }}
-                                    </div>
+                                    <div :class="['px-4 py-2 rounded font-bold text-sm flex items-center gap-2', isAnswerCorrect(correctionData.examId, idx, ans) ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700']"><i :class="['fas', isAnswerCorrect(correctionData.examId, idx, ans) ? 'fa-check' : 'fa-times']"></i> {{ isAnswerCorrect(correctionData.examId, idx, ans) ? 'Benar' : 'Salah' }}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
                 <div class="p-4 border-t bg-white text-right flex justify-between items-center">
                     <div class="text-left"><p class="text-xs text-gray-500">Total Nilai Akhir:</p><p class="text-2xl font-bold text-blue-900">{{ tempStats.autoScore + tempStats.manualScore }}</p></div>
                     <div class="flex gap-2"><button @click="isCorrecting = false" class="px-6 py-2 text-gray-500 font-bold hover:bg-gray-100 rounded">Batal</button><button @click="saveCorrection" class="bg-blue-600 text-white px-8 py-2 rounded font-bold shadow hover:bg-blue-700 flex items-center gap-2"><i class="fas fa-save"></i> SIMPAN NILAI</button></div>
@@ -213,10 +226,11 @@
         createApp({
             data() {
                 return {
-                    isLoading: true, kelasStructure: {'7': ['7A','7B','7C','7D','7E','7F'], '8': ['8A','8B','8C','8D','8E','8F'], '9': ['9A','9B','9C','9D','9E']},
+                    isLoading: true,
+                    kelasStructure: {'7': ['7A','7B','7C','7D','7E','7F'], '8': ['8A','8B','8C','8D','8E','8F'], '9': ['9A','9B','9C','9D','9E']},
                     selectedClass: '7A', selectedMapel: '', allResults: [], bankSoalCache: {},
                     isCorrecting: false, correctionData: null,
-                    manualTypes: ['URAIAN', 'ESAI', 'ISIAN'] // Types to be graded manually
+                    manualTypes: ['URAIAN', 'ESAI', 'ISIAN']
                 }
             },
             computed: {
@@ -232,12 +246,7 @@
                         return matchClass && matchMapel;
                     });
                 },
-                sortedResults() { 
-                    return [...this.filteredResults].sort((a, b) => {
-                        const nameA = a.student?.nama || ''; const nameB = b.student?.nama || '';
-                        return nameA.localeCompare(nameB);
-                    }); 
-                },
+                sortedResults() { return [...this.filteredResults].sort((a, b) => a.student.nama.localeCompare(b.student.nama)); },
                 tempStats() {
                     if (!this.correctionData) return { autoScore: 0, manualScore: 0 };
                     let auto = 0, manual = 0;
@@ -263,6 +272,21 @@
                 });
             },
             methods: {
+                // --- KKM LOGIC (KKTP) ---
+                getKKM(mapel) {
+                    if(!mapel) return 75;
+                    const m = mapel.toUpperCase();
+                    if (['MATEMATIKA', 'IPA', 'BAHASA BALI'].includes(m)) return 70;
+                    return 75; // AGAMA, PKN, INDO, IPS, INGGRIS, INFOR, PJOK/OLAHRAGA, SENBUD, ARAB, KKA
+                },
+
+                // Cek Status Lulus
+                isPass(res) {
+                    const score = this.calculateScore(res);
+                    const kkm = this.getKKM(res.mapel);
+                    return score >= kkm;
+                },
+
                 switchClass(cls) { this.selectedClass = cls; this.selectedMapel = ''; },
                 getCountPerClass(cls) { return this.allResults.filter(r => r.student && r.student.kelas === cls).length; },
                 formatDate(iso) { return new Date(iso).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); },
@@ -273,17 +297,8 @@
                 getQuestionPoint(examId, idx) { const e = this.getExamData(examId); return e && e.soal[idx] ? parseInt(e.soal[idx].poin) : 0; },
                 getCorrectAnswer(examId, idx) { const e = this.getExamData(examId); return e && e.soal[idx] ? e.soal[idx].answer : '-'; },
                 formatAnswer(ans) { return Array.isArray(ans) ? (ans.length ? ans.join(', ') : '-') : (ans || '-'); },
-
-                // --- NEW HELPER: SCORE RANGE ---
-                getScoreRange(examId, idx) {
-                    const max = this.getQuestionPoint(examId, idx);
-                    // Create array [0, 1, 2, ... max]
-                    return Array.from({length: max + 1}, (_, i) => i);
-                },
-                isManualType(examId, idx) {
-                    const type = this.getQuestionType(examId, idx);
-                    return this.manualTypes.includes(type);
-                },
+                getScoreRange(examId, idx) { const max = this.getQuestionPoint(examId, idx); return Array.from({length: max + 1}, (_, i) => i); },
+                isManualType(examId, idx) { return this.manualTypes.includes(this.getQuestionType(examId, idx)); },
 
                 isAnswerCorrect(examId, idx, ans) {
                     const q = this.getExamData(examId)?.soal[idx];
@@ -310,27 +325,22 @@
                     return score;
                 },
                 
-                // FIXED CSS CLASS
-                getScoreClass(score) {
+                getScoreClass(score, mapel) {
+                    const kkm = this.getKKM(mapel);
                     const base = "px-2 py-1 rounded text-xs font-bold text-center inline-block ";
-                    if (score >= 80) return base + "bg-green-100 text-green-700";
-                    if (score >= 60) return base + "bg-yellow-100 text-yellow-700";
-                    return base + "bg-red-100 text-red-700";
+                    if (score >= kkm) return base + "bg-green-100 text-green-700"; // Lulus
+                    return base + "bg-red-100 text-red-700"; // Remidi
                 },
 
                 startCorrection(res) {
                     this.correctionData = JSON.parse(JSON.stringify(res));
                     if (!this.correctionData.manualScores) this.correctionData.manualScores = {};
-                    
-                    // AUTO SET 0 IF EMPTY
                     const exam = this.getExamData(res.examId);
                     if(exam) {
                         exam.soal.forEach((q, idx) => {
                             if(this.manualTypes.includes(q.type)) {
                                 const ans = this.correctionData.answers[idx];
-                                if (!ans || ans.trim() === '') {
-                                    this.correctionData.manualScores[idx] = 0; // Auto 0
-                                }
+                                if (!ans || ans.trim() === '') this.correctionData.manualScores[idx] = 0;
                             }
                         });
                     }
@@ -343,9 +353,7 @@
                         this.isCorrecting = false; this.correctionData = null; alert("✅ Nilai disimpan!");
                     } catch(e) { alert("Error: " + e.message); }
                 },
-                async deleteResult(id) {
-                    if(confirm("Hapus data ini?")) await deleteDoc(doc(db, "jawaban_siswa", id));
-                },
+                async deleteResult(id) { if(confirm("Hapus data ini?")) await deleteDoc(doc(db, "jawaban_siswa", id)); },
 
                 exportToExcel() {
                     if (this.sortedResults.length === 0) return alert("Data kosong!");
@@ -377,8 +385,11 @@
                             });
                         }
                         const score = this.calculateScore(res);
+                        const kkm = this.getKKM(res.mapel);
+                        const isPass = score >= kkm;
+                        
                         row.push({ v: score, s: { font: { bold: true } } });
-                        row.push({ v: score < 75 ? 'REMIDI' : 'LOLOS', s: { font: { bold: true, color: { rgb: score < 75 ? "FF0000" : "008000" } } } });
+                        row.push({ v: isPass ? 'LOLOS' : 'REMIDI', s: { font: { bold: true, color: { rgb: isPass ? "008000" : "FF0000" } } } });
                         rows.push(row);
                     });
 
