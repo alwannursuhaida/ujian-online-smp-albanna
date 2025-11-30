@@ -36,83 +36,113 @@
 
     <div id="app" class="min-h-screen flex flex-col relative">
         
-        <!-- WATERMARK -->
+        <!-- WATERMARK LAYER (HANYA MUNCUL SAAT UJIAN AKTIF) -->
         <div v-if="isExamActive" class="watermark">
             <div v-for="n in 30" class="watermark-text">{{ student.nama }} - {{ student.kelas }} - DILARANG MENYEBARLUASKAN</div>
         </div>
 
-        <!-- LOADING -->
+        <!-- LOADING OVERLAY -->
         <div v-if="isLoading" class="fixed inset-0 bg-white flex flex-col items-center justify-center z-50 opacity-95">
             <i class="fas fa-circle-notch fa-spin fa-3x text-blue-900 mb-4"></i>
             <p class="text-blue-900 font-bold animate-pulse">{{ loadingMessage }}</p>
         </div>
 
-        <!-- 1. LOGIN -->
+        <!-- 1. HALAMAN LOGIN -->
         <div v-if="!isExamActive && !isLocked && !isFinished && !isLoading && !showWarningModal" class="flex flex-col items-center justify-center min-h-screen px-4 bg-gray-100">
             <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md border-t-8 border-blue-900">
                 <div class="text-center mb-6">
-                    <div class="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-900"><i class="fas fa-user-graduate fa-3x"></i></div>
+                    <div class="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-900">
+                        <i class="fas fa-user-graduate fa-3x"></i>
+                    </div>
                     <h1 class="text-2xl font-bold text-blue-900">LOGIN PESERTA</h1>
                     <p class="text-xs text-gray-500 tracking-widest">CBT SMP ALBANNA</p>
                 </div>
+
                 <div class="space-y-4">
-                    <!-- KELAS (TRIGGERS FETCH) -->
-                    <div><label class="block text-xs font-bold text-gray-600 uppercase mb-1">Kelas</label>
-                        <select v-model="student.kelas" @change="fetchStudents" class="w-full p-3 border rounded bg-gray-50 outline-none focus:ring-2 focus:ring-blue-900">
+                    <!-- 1. Kelas (Paling Atas) -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Kelas</label>
+                        <select v-model="student.kelas" @change="fetchStudents" class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900">
                             <option value="" disabled>-- Pilih Kelas --</option>
                             <optgroup label="Kelas 7"><option v-for="c in 'ABCDEF'" :value="'7'+c">7{{c}}</option></optgroup>
                             <optgroup label="Kelas 8"><option v-for="c in 'ABCDEF'" :value="'8'+c">8{{c}}</option></optgroup>
                             <optgroup label="Kelas 9"><option v-for="c in 'ABCDE'" :value="'9'+c">9{{c}}</option></optgroup>
                         </select>
                     </div>
-                    
-                    <!-- NAMA (DROPDOWN) -->
-                    <div><label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nama Lengkap</label>
-                        <select v-model="student.nama" :disabled="!student.kelas || studentList.length === 0" class="w-full p-3 border rounded bg-gray-50 outline-none focus:ring-2 focus:ring-blue-900 disabled:bg-gray-200">
+
+                    <!-- 2. Nama -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nama Lengkap</label>
+                        <select v-model="student.nama" :disabled="!student.kelas || studentList.length === 0" class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:bg-gray-200 disabled:text-gray-400">
                             <option value="" disabled>-- Pilih Nama Siswa --</option>
                             <option v-for="s in studentList" :key="s.id" :value="s.nama">{{ s.nama }}</option>
                         </select>
-                        <p v-if="isLoadingList" class="text-xs text-blue-500 mt-1 animate-pulse">Mengambil data siswa...</p>
-                        <p v-if="!isLoadingList && student.kelas && studentList.length === 0" class="text-xs text-red-500 mt-1">* Data siswa belum tersedia.</p>
+                        <p v-if="isLoadingList" class="text-xs text-blue-500 mt-1 italic animate-pulse">
+                            Sedang memuat daftar siswa...
+                        </p>
+                        <p v-if="!isLoadingList && student.kelas && studentList.length === 0" class="text-xs text-red-500 mt-1 italic">
+                            * Data siswa kelas {{ student.kelas }} belum diinput Guru.
+                        </p>
                     </div>
 
-                    <div><label class="block text-xs font-bold text-gray-600 uppercase mb-1">Mata Pelajaran</label>
-                        <select v-model="selectedExamId" class="w-full p-3 border rounded bg-gray-50 outline-none focus:ring-2 focus:ring-blue-900">
+                    <!-- 3. Mapel -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Mata Pelajaran</label>
+                        <select v-model="selectedExamId" class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900">
                             <option value="" disabled>-- Pilih Soal Ujian --</option>
-                            <option v-for="exam in availableExams" :value="exam.id">{{ exam.config.mapel }} ({{ exam.config.durasi }} Menit)</option>
+                            <option v-for="exam in availableExams" :value="exam.id">
+                                {{ exam.config.mapel }} ({{ exam.config.durasi }} Menit)
+                            </option>
                         </select>
+                        
+                        <p v-if="availableExams.length === 0 && student.kelas" class="text-xs text-red-500 mt-2 italic bg-red-50 p-2 rounded border border-red-100">
+                            <i class="fas fa-info-circle"></i> Tidak ada ujian aktif untuk kelas {{ student.kelas }}.<br>Hubungi pengawas jika soal belum dibuka.
+                        </p>
                     </div>
-                    <button @click="checkLogin" class="w-full bg-blue-900 text-white py-4 rounded-lg font-bold mt-4 hover:bg-blue-800 shadow-lg">MASUK UJIAN</button>
+
+                    <button @click="checkLogin" class="w-full bg-blue-900 text-white py-4 rounded-lg font-bold mt-4 hover:bg-blue-800 transition shadow-lg flex justify-center items-center gap-2">
+                        <span>MASUK UJIAN</span> <i class="fas fa-sign-in-alt"></i>
+                    </button>
                 </div>
             </div>
+            <p class="mt-6 text-xs text-gray-400 text-center">&copy; 2025 IT SMP Albanna.<br>Sistem Monitoring Aktif.</p>
         </div>
 
-        <!-- 1.5. WARNING MODAL -->
+        <!-- 1.5. MODAL PERINGATAN -->
         <div v-if="showWarningModal" class="fixed inset-0 bg-slate-900 bg-opacity-90 flex items-center justify-center z-50 p-4">
             <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-pop">
-                <div class="bg-red-600 p-4 text-white text-center"><i class="fas fa-exclamation-triangle fa-3x mb-2"></i><h2 class="text-xl font-bold">PERATURAN UJIAN</h2></div>
+                <div class="bg-red-600 p-4 text-white text-center">
+                    <i class="fas fa-exclamation-triangle fa-3x mb-2"></i>
+                    <h2 class="text-xl font-bold">PERATURAN UJIAN</h2>
+                </div>
                 <div class="p-6">
                     <div class="bg-red-50 border-l-4 border-red-600 p-4 mb-6 text-sm text-gray-700 space-y-3">
                         <ul class="list-disc pl-5 space-y-1 font-medium">
-                            <li>Dilarang keras <strong>keluar dari browser</strong> atau <strong>pindah tab</strong>.</li>
-                            <li>Dilarang <strong>Screenshot</strong>.</li>
-                            <li>Pelanggaran menyebabkan akun <strong>TERKUNCI</strong>.</li>
+                            <li>Dilarang keras <strong>keluar dari browser</strong>, <strong>pindah tab</strong>, atau <strong>minimize</strong>.</li>
+                            <li>Dilarang melakukan <strong>Screenshot</strong> atau <strong>Rekam Layar</strong>.</li>
+                            <li>Pelanggaran akan menyebabkan akun <strong>TERKUNCI OTOMATIS</strong>.</li>
                         </ul>
                     </div>
-                    <div class="flex items-start gap-3 mb-6 p-3 border rounded-lg bg-gray-50 cursor-pointer hover:bg-gray-100" @click="agreed = !agreed">
-                        <div :class="['w-6 h-6 border-2 rounded flex items-center justify-center shrink-0 transition', agreed ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-400 bg-white']"><i class="fas fa-check text-xs" v-if="agreed"></i></div>
+
+                    <div class="flex items-start gap-3 mb-6 p-3 border rounded-lg bg-gray-50 cursor-pointer hover:bg-gray-100 transition" @click="agreed = !agreed">
+                        <div :class="['w-6 h-6 border-2 rounded flex items-center justify-center shrink-0 transition', agreed ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-400 bg-white']">
+                            <i class="fas fa-check text-xs" v-if="agreed"></i>
+                        </div>
                         <span class="text-sm font-bold text-gray-600 select-none">Saya menyetujui dan siap mengerjakan dengan jujur.</span>
                     </div>
-                    <button @click="startExam" :disabled="!agreed" :class="['w-full py-4 rounded-lg font-bold text-lg transition shadow-lg flex justify-center items-center gap-2', agreed ? 'bg-blue-900 text-white hover:bg-blue-800' : 'bg-gray-300 text-gray-500 cursor-not-allowed']"><span>BUKA SOAL</span> <i class="fas fa-unlock"></i></button>
+
+                    <button @click="startExam" :disabled="!agreed" :class="['w-full py-4 rounded-lg font-bold text-lg transition shadow-lg flex justify-center items-center gap-2', agreed ? 'bg-blue-900 text-white hover:bg-blue-800 transform hover:scale-[1.02]' : 'bg-gray-300 text-gray-500 cursor-not-allowed']">
+                        <span>BUKA SOAL</span> <i class="fas fa-unlock"></i>
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- 2. UJIAN AKTIF -->
-        <div v-if="isExamActive && !isLocked" class="flex-1 flex flex-col h-screen overflow-hidden">
+        <!-- 2. HALAMAN UJIAN -->
+        <div v-if="isExamActive && !isLocked" class="flex-1 flex flex-col">
             
             <!-- Header Ujian -->
-            <header class="bg-white shadow-md z-40 px-4 py-3 flex justify-between items-center border-b-4 border-blue-900 shrink-0">
+            <div class="sticky top-0 bg-white shadow-md z-40 px-4 py-3 flex justify-between items-center border-b-4 border-blue-900">
                 <div class="flex flex-col">
                     <h2 class="font-bold text-blue-900 text-lg leading-tight">{{ student.mapel }}</h2>
                     <p class="text-xs text-gray-500 font-mono">{{ student.nama }} | {{ student.kelas }}</p>
@@ -127,7 +157,7 @@
                         {{ timerDisplay }}
                     </div>
                 </div>
-            </header>
+            </div>
 
             <div class="flex-1 flex overflow-hidden relative">
                 
@@ -210,22 +240,24 @@
             </div>
         </div>
 
-        <!-- 3. BLOCKED & 4. FINISHED -->
+        <!-- 3. HALAMAN TERBLOKIR (PERSISTENT) -->
         <div v-if="isLocked" class="min-h-screen bg-red-600 flex flex-col items-center justify-center text-white p-8 text-center z-50">
             <div class="bg-white p-8 rounded-full mb-6 shadow-xl animate-pulse"><i class="fas fa-lock fa-5x text-red-600"></i></div>
             <h1 class="text-4xl font-bold mb-2">UJIAN TERKUNCI!</h1>
             <p class="text-xl mb-8 opacity-90">Anda terdeteksi keluar/refresh halaman ujian.</p>
             <div class="bg-red-800 bg-opacity-50 p-6 rounded-xl border border-red-400 max-w-lg">
                 <h3 class="font-bold mb-2 text-sm">SOLUSI:</h3><p class="mb-2">Lapor Pengawas untuk buka blokir.</p>
-                <div class="bg-white text-red-900 px-4 py-2 rounded font-mono font-bold text-lg">{{ student.nama }}</div>
-                <div class="mt-2 text-xs italic opacity-75">Menunggu admin...</div>
+                <div class="bg-white text-red-900 px-4 py-2 rounded font-mono font-bold text-lg">{{ student.nama || 'Siswa' }}</div>
+                <div class="mt-2 text-xs italic opacity-75">Menunggu admin membuka blokir...</div>
             </div>
         </div>
+
+        <!-- 4. HALAMAN SELESAI -->
         <div v-if="isFinished" class="min-h-screen bg-green-50 flex flex-col items-center justify-center p-8 text-center">
             <div class="bg-white p-6 rounded-full shadow-lg mb-6"><i class="fas fa-check-circle fa-5x text-green-500"></i></div>
-            <h1 class="text-3xl font-bold text-green-800 mb-2">SELESAI!</h1>
-            <p class="text-gray-600 mb-8">Jawaban berhasil disimpan.</p>
-            <p class="mt-8 text-xs text-gray-400 animate-pulse">Mengalihkan ke halaman awal...</p>
+            <h1 class="text-3xl font-bold text-green-800 mb-2">UJIAN SELESAI</h1>
+            <p class="text-gray-600 mb-8">Jawaban Anda telah berhasil disimpan.</p>
+            <p class="mt-8 text-xs text-gray-400 animate-pulse">Mengalihkan ke halaman login...</p>
         </div>
 
     </div>
@@ -306,30 +338,26 @@
                 window.onbeforeunload = function() { return "Ujian akan terblokir!"; };
             },
             methods: {
-                // --- FUNGSI TARIK SISWA (YANG SEMPAT HILANG) ---
                 async fetchStudents() {
                     if(!this.student.kelas) return;
                     this.isLoadingList = true; this.studentList = []; this.student.nama = ''; 
                     try {
-                        const q = query(collection(db, "data_absensi"), where("kelas", "==", this.student.kelas), orderBy("nama"));
+                        // Query hanya berdasarkan kelas, sort manual
+                        const q = query(collection(db, "data_absensi"), where("kelas", "==", this.student.kelas));
                         const snapshot = await getDocs(q);
-                        this.studentList = snapshot.docs.map(doc => doc.data());
+                        this.studentList = snapshot.docs.map(doc => doc.data()).sort((a,b) => a.nama.localeCompare(b.nama));
                     } catch(e) {
                         console.log("Fallback sorting client-side:", e);
-                        // Fallback jika error index, ambil by kelas lalu sort manual
-                        try {
-                             const q2 = query(collection(db, "data_absensi"), where("kelas", "==", this.student.kelas));
-                             const snapshot2 = await getDocs(q2);
-                             this.studentList = snapshot2.docs.map(doc => doc.data()).sort((a,b) => a.nama.localeCompare(b.nama));
-                        } catch(e2) { console.error(e2); }
                     } finally { this.isLoadingList = false; }
                 },
 
                 shuffleArray(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } return array; },
+                
                 async checkLogin() {
                     if(!this.student.nama || !this.student.kelas || !this.selectedExamId) return alert("Lengkapi data!");
                     this.isLoading = true;
                     try {
+                        // Cek Ganda (Filter Manual untuk stabilitas)
                         const qSubmit = query(collection(db, "jawaban_siswa"), where("examId", "==", this.selectedExamId));
                         const snapSubmit = await getDocs(qSubmit);
                         if(snapSubmit.docs.some(doc => doc.data().student.nama.toUpperCase() === this.student.nama.toUpperCase())) throw new Error("Sudah Mengerjakan.");
@@ -389,8 +417,20 @@
                 },
                 async submitExam(force=false) {
                     if(!force) {
-                        for(let i=0; i<this.activeExam.soal.length; i++) { if(this.answers[i]===null || this.answers[i]==='' || (Array.isArray(this.answers[i]) && this.answers[i].length===0)) return alert("Jawab semua soal!"); }
-                        if(!confirm("Kirim?")) return;
+                        // VALIDASI JAWABAN & RAGU-RAGU
+                        for(let i=0; i<this.activeExam.soal.length; i++) { 
+                            const ans = this.answers[i];
+                            const isDoubt = this.doubts[i];
+                            
+                            if(ans === null || ans === '' || (Array.isArray(ans) && ans.length===0)) {
+                                return alert(`Soal No. ${this.getDisplayNumber(i)} belum dijawab!`);
+                            }
+                            
+                            if (isDoubt) {
+                                return alert(`Soal No. ${this.getDisplayNumber(i)} masih ditandai Ragu-ragu. Hilangkan centang Ragu-ragu untuk mengirim.`);
+                            }
+                        }
+                        if(!confirm("Kirim Jawaban?")) return;
                     }
                     this.isLoading = true;
                     try {
@@ -398,7 +438,8 @@
                         this.isExamActive = false; this.isFinished = true; this.submitTime = new Date().toLocaleTimeString();
                         if (document.exitFullscreen) document.exitFullscreen();
                         window.onbeforeunload = null; localStorage.removeItem('cbt_client_lock'); 
-                        setTimeout(() => { window.location.href = 'jawaban.html'; }, 3000);
+                        // REDIRECT RELOAD KE LOGIN
+                        setTimeout(() => { window.location.reload(); }, 3000);
                     } catch(e) { alert("Gagal: " + e.message); this.isExamActive = true; } finally { this.isLoading = false; }
                 }
             }
