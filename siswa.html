@@ -26,6 +26,10 @@
         /* Animasi Sidebar Navigasi */
         .slide-enter-active, .slide-leave-active { transition: transform 0.3s ease-in-out; }
         .slide-enter-from, .slide-leave-to { transform: translateX(100%); }
+        
+        /* Hide scrollbar for nav */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen" oncontextmenu="return false;">
@@ -52,6 +56,7 @@
                     <p class="text-xs text-gray-500 tracking-widest">CBT SMP ALBANNA</p>
                 </div>
                 <div class="space-y-4">
+                    <!-- KELAS (TRIGGERS FETCH) -->
                     <div><label class="block text-xs font-bold text-gray-600 uppercase mb-1">Kelas</label>
                         <select v-model="student.kelas" @change="fetchStudents" class="w-full p-3 border rounded bg-gray-50 outline-none focus:ring-2 focus:ring-blue-900">
                             <option value="" disabled>-- Pilih Kelas --</option>
@@ -60,12 +65,17 @@
                             <optgroup label="Kelas 9"><option v-for="c in 'ABCDE'" :value="'9'+c">9{{c}}</option></optgroup>
                         </select>
                     </div>
+                    
+                    <!-- NAMA (DROPDOWN) -->
                     <div><label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nama Lengkap</label>
                         <select v-model="student.nama" :disabled="!student.kelas || studentList.length === 0" class="w-full p-3 border rounded bg-gray-50 outline-none focus:ring-2 focus:ring-blue-900 disabled:bg-gray-200">
                             <option value="" disabled>-- Pilih Nama Siswa --</option>
                             <option v-for="s in studentList" :key="s.id" :value="s.nama">{{ s.nama }}</option>
                         </select>
+                        <p v-if="isLoadingList" class="text-xs text-blue-500 mt-1 animate-pulse">Mengambil data siswa...</p>
+                        <p v-if="!isLoadingList && student.kelas && studentList.length === 0" class="text-xs text-red-500 mt-1">* Data siswa belum tersedia.</p>
                     </div>
+
                     <div><label class="block text-xs font-bold text-gray-600 uppercase mb-1">Mata Pelajaran</label>
                         <select v-model="selectedExamId" class="w-full p-3 border rounded bg-gray-50 outline-none focus:ring-2 focus:ring-blue-900">
                             <option value="" disabled>-- Pilih Soal Ujian --</option>
@@ -149,7 +159,7 @@
                                     
                                     <!-- Jawaban -->
                                     <div v-if="q.type === 'PG'" class="space-y-3">
-                                        <label v-for="opt in ['A','B','C','D']" :class="['flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all', answers[q.originalIndex] === opt ? 'bg-blue-50 border-blue-500 text-blue-900' : 'border-gray-100 hover:bg-gray-50']">
+                                        <label v-for="opt in ['A','B','C','D']" :class="['flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all relative overflow-hidden', answers[q.originalIndex] === opt ? 'bg-blue-50 border-blue-500 text-blue-900' : 'border-gray-100 hover:bg-gray-50']">
                                             <input type="radio" :name="'q'+q.originalIndex" :value="opt" v-model="answers[q.originalIndex]" class="hidden">
                                             <div :class="['w-8 h-8 flex items-center justify-center rounded-full font-bold mr-3 transition-colors', answers[q.originalIndex] === opt ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500']">{{ opt }}</div><span class="font-medium">{{ q.options[opt] }}</span>
                                         </label>
@@ -204,7 +214,7 @@
         <div v-if="isLocked" class="min-h-screen bg-red-600 flex flex-col items-center justify-center text-white p-8 text-center z-50">
             <div class="bg-white p-8 rounded-full mb-6 shadow-xl animate-pulse"><i class="fas fa-lock fa-5x text-red-600"></i></div>
             <h1 class="text-4xl font-bold mb-2">UJIAN TERKUNCI!</h1>
-            <p class="text-xl mb-8">Aktivitas mencurigakan terdeteksi.</p>
+            <p class="text-xl mb-8 opacity-90">Anda terdeteksi keluar/refresh halaman ujian.</p>
             <div class="bg-red-800 bg-opacity-50 p-6 rounded-xl border border-red-400 max-w-lg">
                 <h3 class="font-bold mb-2 text-sm">SOLUSI:</h3><p class="mb-2">Lapor Pengawas untuk buka blokir.</p>
                 <div class="bg-white text-red-900 px-4 py-2 rounded font-mono font-bold text-lg">{{ student.nama }}</div>
@@ -215,7 +225,7 @@
             <div class="bg-white p-6 rounded-full shadow-lg mb-6"><i class="fas fa-check-circle fa-5x text-green-500"></i></div>
             <h1 class="text-3xl font-bold text-green-800 mb-2">SELESAI!</h1>
             <p class="text-gray-600 mb-8">Jawaban berhasil disimpan.</p>
-            <p class="mt-8 text-xs text-gray-400 animate-pulse">Kembali ke halaman awal...</p>
+            <p class="mt-8 text-xs text-gray-400 animate-pulse">Mengalihkan ke halaman awal...</p>
         </div>
 
     </div>
@@ -244,7 +254,7 @@
                     student: { nama: '', kelas: '', mapel: '' }, studentList: [],
                     allExams: [], selectedExamId: '',
                     isExamActive: false, isLocked: false, isFinished: false, showWarningModal: false, agreed: false,
-                    groupedQuestions: [], answers: {}, doubts: {}, showNav: false, // Default hidden
+                    groupedQuestions: [], answers: {}, doubts: {}, showNav: false, 
                     timerSeconds: 0, timerInterval: null, submitTime: '',
                     unlockListener: null, flatQuestionOrder: [] 
                 }
@@ -272,6 +282,7 @@
                 }
             },
             async mounted() {
+                // ANTI SCREENSHOT & SHORTCUT
                 document.addEventListener('keyup', (e) => { if (e.key === 'PrintScreen') { navigator.clipboard.writeText(''); this.triggerLock("Screenshot"); } });
                 document.addEventListener('visibilitychange', () => { if (document.hidden && this.isExamActive) this.triggerLock("Pindah Tab"); });
                 ['copy','cut','paste','contextmenu'].forEach(e => document.addEventListener(e, ev => ev.preventDefault()));
@@ -295,6 +306,7 @@
                 window.onbeforeunload = function() { return "Ujian akan terblokir!"; };
             },
             methods: {
+                // --- FUNGSI TARIK SISWA (YANG SEMPAT HILANG) ---
                 async fetchStudents() {
                     if(!this.student.kelas) return;
                     this.isLoadingList = true; this.studentList = []; this.student.nama = ''; 
@@ -302,8 +314,17 @@
                         const q = query(collection(db, "data_absensi"), where("kelas", "==", this.student.kelas), orderBy("nama"));
                         const snapshot = await getDocs(q);
                         this.studentList = snapshot.docs.map(doc => doc.data());
-                    } catch(e) { console.log(e); } finally { this.isLoadingList = false; }
+                    } catch(e) {
+                        console.log("Fallback sorting client-side:", e);
+                        // Fallback jika error index, ambil by kelas lalu sort manual
+                        try {
+                             const q2 = query(collection(db, "data_absensi"), where("kelas", "==", this.student.kelas));
+                             const snapshot2 = await getDocs(q2);
+                             this.studentList = snapshot2.docs.map(doc => doc.data()).sort((a,b) => a.nama.localeCompare(b.nama));
+                        } catch(e2) { console.error(e2); }
+                    } finally { this.isLoadingList = false; }
                 },
+
                 shuffleArray(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } return array; },
                 async checkLogin() {
                     if(!this.student.nama || !this.student.kelas || !this.selectedExamId) return alert("Lengkapi data!");
@@ -345,6 +366,7 @@
 
                     const elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(()=>{});
                     this.isExamActive = true;
+                    this.showNav = true; 
                 },
                 scrollToQuestion(idx) {
                     const el = document.getElementById('q-' + idx);
