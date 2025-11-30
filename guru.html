@@ -11,9 +11,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     
-    <!-- Excel Library (SheetJS) - BARU -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>body { font-family: 'Montserrat', sans-serif; }</style>
@@ -30,115 +27,211 @@
                     <i class="fas fa-user-circle mr-1"></i> {{ currentUser.name }}
                 </div>
             </div>
+            
             <nav class="flex-1 p-4 space-y-2">
-                <button @click="switchTab('input')" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'input' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']"><i class="fas fa-plus-circle w-5"></i> Input Kisi-Kisi</button>
-                <button @click="switchTab('my_data')" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'my_data' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']"><i class="fas fa-folder-open w-5"></i> Kisi-Kisi Saya</button>
-                <button @click="switchTab('monitoring')" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'monitoring' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']"><i class="fas fa-chart-bar w-5"></i> Monitoring</button>
+                <button @click="switchTab('input')" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'input' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
+                    <i class="fas fa-plus-circle w-5"></i> Buat Kisi-Kisi
+                </button>
+                <button @click="switchTab('my_data')" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'my_data' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
+                    <i class="fas fa-folder-open w-5"></i> Kisi-Kisi Saya
+                </button>
+                <button @click="switchTab('monitoring')" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'monitoring' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
+                    <i class="fas fa-chart-bar w-5"></i> Monitoring
+                </button>
             </nav>
-            <div class="p-4 border-t border-slate-800"><a href="index.html" class="w-full text-center text-xs text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 p-2 hover:bg-slate-800 rounded transition"><i class="fas fa-home"></i> MENU UTAMA</a></div>
+
+            <div class="p-4 border-t border-slate-800">
+                <a href="index.html" class="w-full text-center text-xs text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 p-2 hover:bg-slate-800 rounded transition">
+                    <i class="fas fa-home"></i> MENU UTAMA
+                </a>
+            </div>
         </div>
 
         <!-- MAIN CONTENT -->
         <div class="flex-1 flex flex-col h-full overflow-hidden bg-gray-50">
+            
             <!-- TOP BAR -->
             <div class="bg-white p-4 shadow-sm border-b flex justify-between items-center px-8">
-                <h2 class="text-2xl font-bold text-slate-800"><span v-if="activeTab === 'input'">{{ editingId ? 'Edit Kisi-Kisi' : 'Input Kisi-Kisi Baru' }}</span><span v-else-if="activeTab === 'my_data'">Arsip Kisi-Kisi Saya</span><span v-else>Monitoring Pengumpulan</span></h2>
-                <div v-if="isLoading" class="flex items-center gap-2 text-blue-600 font-bold animate-pulse"><i class="fas fa-circle-notch fa-spin"></i> Memproses...</div>
-                <div v-if="lastSaved && !isLoading && activeTab === 'input'" class="text-xs text-green-600 font-bold flex items-center gap-1"><i class="fas fa-check"></i> Draft: {{ lastSaved }}</div>
+                <h2 class="text-2xl font-bold text-slate-800">
+                    <span v-if="activeTab === 'input'">{{ editingId ? 'Edit Kisi-Kisi' : 'Input Kisi-Kisi Baru' }}</span>
+                    <span v-else-if="activeTab === 'my_data'">Arsip Kisi-Kisi Saya</span>
+                    <span v-else>Monitoring Pengumpulan</span>
+                </h2>
+                <div v-if="isLoading" class="flex items-center gap-2 text-blue-600 font-bold animate-pulse">
+                    <i class="fas fa-circle-notch fa-spin"></i> Memproses Data...
+                </div>
+                <div v-if="lastSaved && !isLoading && activeTab === 'input'" class="text-xs text-green-600 font-bold flex items-center gap-1">
+                    <i class="fas fa-check"></i> Auto-save: {{ lastSaved }}
+                </div>
             </div>
 
             <!-- CONTENT AREA -->
             <div class="flex-1 overflow-y-auto p-8">
-                <!-- TAB 1: INPUT -->
+
+                <!-- TAB 1: INPUT KISI-KISI -->
                 <div v-if="activeTab === 'input'">
+                    
                     <!-- ALERT MODE EDIT -->
                     <div v-if="editingId" class="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-6 flex justify-between items-center shadow-sm">
-                        <div><h3 class="font-bold text-yellow-800"><i class="fas fa-edit mr-2"></i>Mode Edit</h3><p class="text-sm text-yellow-700">Perubahan akan menimpa data lama.</p></div>
-                        <button @click="cancelEdit" class="bg-white text-yellow-700 px-4 py-2 rounded border border-yellow-300 hover:bg-yellow-50 font-bold text-sm">Batal</button>
+                        <div>
+                            <h3 class="font-bold text-yellow-800"><i class="fas fa-edit mr-2"></i>Anda sedang dalam Mode Edit</h3>
+                            <p class="text-sm text-yellow-700">Perubahan akan menimpa data lama. Klik Batal jika ingin membuat baru.</p>
+                        </div>
+                        <button @click="cancelEdit" class="bg-white text-yellow-700 px-4 py-2 rounded border border-yellow-300 hover:bg-yellow-50 font-bold text-sm">Batal Edit</button>
                     </div>
 
-                    <!-- STEP 1 -->
+                    <!-- STEP 1: IDENTITAS -->
                     <div v-if="step === 1" class="bg-white p-8 rounded-lg shadow-lg max-w-3xl mx-auto border-t-8 border-blue-900 relative">
-                        <div class="text-center mb-8"><h2 class="text-xl font-bold text-gray-700">Langkah 1: Identitas Dokumen</h2></div>
+                        
+                        <div class="text-center mb-8">
+                            <h2 class="text-xl font-bold text-gray-700">Langkah 1: Identitas Dokumen</h2>
+                            <p class="text-sm text-gray-500">Lengkapi data sebelum mengisi butir soal.</p>
+                        </div>
+
                         <div class="space-y-4">
-                            <div class="border-2 border-dashed border-gray-300 p-4 rounded text-center bg-gray-50 hover:bg-gray-100 cursor-pointer relative group">
-                                <input type="file" accept="image/*" @change="handleLogoUpload" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                                <div v-if="sekolah.logoPreview"><img :src="sekolah.logoPreview" class="h-16 mx-auto object-contain"><p class="text-xs text-green-600 mt-1 font-bold"><i class="fas fa-check"></i> Logo Siap</p></div>
-                                <div v-else class="py-4"><i class="fas fa-cloud-upload-alt fa-2x text-gray-300 mb-2"></i><p class="text-sm text-gray-500 font-bold">Upload Logo Sekolah</p><p class="text-xs text-gray-400">(Otomatis dikompres &lt; 50KB)</p></div>
-                            </div>
+                            <!-- Upload Logo DIHAPUS sesuai permintaan -->
+
                             <div class="grid grid-cols-2 gap-4">
-                                <div><label class="block text-sm font-bold mb-2 text-gray-700">Mata Pelajaran</label><select v-model="selectedMapel" class="w-full p-3 border rounded focus:ring-2 focus:ring-blue-900"><option value="" disabled>-- Pilih --</option><option v-for="m in mapelList" :value="m">{{ m }}</option></select></div>
-                                <div><label class="block text-sm font-bold mb-2 text-gray-700">Nama Guru</label><input v-model="namaGuru" class="w-full p-3 border rounded" placeholder="Nama Lengkap & Gelar"></div>
+                                <div>
+                                    <label class="block text-sm font-bold mb-2 text-gray-700">Mata Pelajaran <span class="text-red-500">*</span></label>
+                                    <select v-model="selectedMapel" class="w-full p-3 border rounded focus:ring-2 focus:ring-blue-900">
+                                        <option value="" disabled>-- Pilih --</option>
+                                        <option v-for="m in mapelList" :value="m">{{ m }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold mb-2 text-gray-700">Nama Guru <span class="text-red-500">*</span></label>
+                                    <input v-model="namaGuru" class="w-full p-3 border rounded" placeholder="Nama Lengkap & Gelar">
+                                </div>
                             </div>
+
                             <div class="grid grid-cols-2 gap-4">
-                                <div><label class="block text-sm font-bold mb-2 text-gray-700">Kelas</label><select v-model="kelas" class="w-full p-3 border rounded"><option value="" disabled>-- Pilih --</option><option v-for="c in ['7','8','9']" :value="c">Kelas {{ c }}</option></select></div>
-                                <div><label class="block text-sm font-bold mb-2 text-gray-700">Semester</label><select v-model="semester" class="w-full p-3 border rounded"><option value="" disabled>-- Pilih --</option><option value="Ganjil">Ganjil</option><option value="Genap">Genap</option></select></div>
+                                <div>
+                                    <label class="block text-sm font-bold mb-2 text-gray-700">Kelas <span class="text-red-500">*</span></label>
+                                    <select v-model="kelas" class="w-full p-3 border rounded">
+                                        <option value="" disabled>-- Pilih --</option>
+                                        <option v-for="c in ['7','8','9']" :value="c">Kelas {{ c }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold mb-2 text-gray-700">Semester <span class="text-red-500">*</span></label>
+                                    <select v-model="semester" class="w-full p-3 border rounded">
+                                        <option value="" disabled>-- Pilih --</option>
+                                        <option value="Ganjil">Ganjil</option>
+                                        <option value="Genap">Genap</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
+
                         <div class="mt-8 flex gap-4">
                             <button v-if="!editingId" @click="resetData" class="px-6 py-3 bg-gray-200 text-gray-600 rounded font-bold hover:bg-gray-300 transition">Reset</button>
-                            <button @click="lanjutKeKisiKisi" class="flex-1 px-6 py-3 bg-blue-900 text-white rounded font-bold hover:bg-blue-800 shadow-lg transition">LANJUT ISI BUTIR SOAL <i class="fas fa-arrow-right ml-2"></i></button>
+                            <button @click="lanjutKeKisiKisi" class="flex-1 px-6 py-3 bg-blue-900 text-white rounded font-bold hover:bg-blue-800 shadow-lg transition">
+                                LANJUT ISI BUTIR SOAL <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
                         </div>
                     </div>
 
-                    <!-- STEP 2 -->
+                    <!-- STEP 2: INPUT BUTIR -->
                     <div v-if="step === 2">
-                        <div class="sticky top-0 z-40 bg-white p-4 shadow mb-6 rounded flex flex-col md:flex-row justify-between items-center border-l-4 border-blue-900 gap-4">
+                        <div class="sticky top-0 z-40 bg-white p-4 shadow mb-6 rounded flex justify-between items-center border-l-4 border-blue-900">
                             <div>
                                 <h2 class="font-bold text-lg text-blue-900">{{ selectedMapel }} (Kelas {{ kelas }})</h2>
                                 <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Total: {{ soalList.length }} Soal</span>
                             </div>
-                            
-                            <!-- TOMBOL EXCEL BARU -->
-                            <div class="flex gap-2">
-                                <button @click="downloadExcelTemplate" class="bg-green-600 text-white px-3 py-2 rounded text-xs font-bold hover:bg-green-700 shadow flex items-center gap-1">
-                                    <i class="fas fa-file-excel"></i> Template
-                                </button>
-                                <label class="bg-blue-500 text-white px-3 py-2 rounded text-xs font-bold hover:bg-blue-600 shadow cursor-pointer flex items-center gap-1">
-                                    <i class="fas fa-upload"></i> Upload Excel
-                                    <input type="file" accept=".xlsx, .xls" class="hidden" @change="handleExcelUpload">
-                                </label>
-                            </div>
-
-                            <button @click="step = 1" class="text-sm text-gray-500 hover:text-blue-900 font-bold"><i class="fas fa-arrow-left"></i> Info</button>
+                            <button @click="step = 1" class="text-sm text-gray-500 hover:text-blue-900 font-bold"><i class="fas fa-arrow-left"></i> Edit Info</button>
                         </div>
 
                         <div v-for="(soal, index) in soalList" :key="index" class="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200 relative hover:shadow-lg transition">
                             <div class="absolute -left-3 top-4 bg-blue-900 text-white w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm shadow border-2 border-white">{{ index + 1 }}</div>
                             <button @click="hapusSoal(index)" class="absolute top-4 right-4 text-gray-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
+
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4">
                                 <div class="col-span-2">
-                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tujuan Pembelajaran (TP)</label>
-                                    <input v-model="soal.tp" class="w-full p-2 border rounded focus:border-blue-500" placeholder="Isi TP...">
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Kompetensi Dasar (KD)</label>
+                                    <input v-model="soal.kd" class="w-full p-2 border rounded focus:border-blue-500" placeholder="Isi KD...">
                                 </div>
-                                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Level Kognitif</label><select v-model="soal.level" class="w-full p-2 border rounded"><option>L1 - C1 (Mengingat)</option><option>L1 - C2 (Memahami)</option><option>L2 - C3 (Menerapkan)</option><option>L3 - C4 (Menganalisis)</option><option>L3 - C5 (Mengevaluasi)</option><option>L3 - C6 (Mencipta)</option></select></div>
-                                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Bentuk Soal</label><select v-model="soal.bentuk" class="w-full p-2 border rounded"><option>Pilihan Ganda</option><option>Benar Salah</option><option>PG Kompleks</option><option>Menjodohkan</option><option>Uraian</option></select></div>
-                                <div class="col-span-2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Indikator Soal</label><textarea v-model="soal.indikator" rows="2" class="w-full p-2 border rounded focus:border-blue-500" placeholder="Siswa dapat..."></textarea></div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Level Kognitif</label>
+                                    <select v-model="soal.level" class="w-full p-2 border rounded">
+                                        <option>L1 - C1 (Mengingat)</option>
+                                        <option>L1 - C2 (Memahami)</option>
+                                        <option>L2 - C3 (Menerapkan)</option>
+                                        <option>L3 - C4 (Menganalisis)</option>
+                                        <option>L3 - C5 (Mengevaluasi)</option>
+                                        <option>L3 - C6 (Mencipta)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Bentuk Soal</label>
+                                    <select v-model="soal.bentuk" class="w-full p-2 border rounded">
+                                        <option>Pilihan Ganda</option>
+                                        <option>Benar Salah</option>
+                                        <option>PG Kompleks</option>
+                                        <option>Menjodohkan</option>
+                                        <option>Uraian</option>
+                                    </select>
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Indikator Soal</label>
+                                    <textarea v-model="soal.indikator" rows="2" class="w-full p-2 border rounded focus:border-blue-500" placeholder="Siswa dapat..."></textarea>
+                                </div>
                             </div>
                         </div>
+
                         <div class="flex flex-col gap-4 mb-20">
-                            <button @click="tambahSoal" class="w-full py-4 border-2 border-dashed border-gray-300 text-gray-400 font-bold rounded-lg hover:bg-blue-50 hover:border-blue-500 hover:text-blue-600 transition"><i class="fas fa-plus-circle mr-2"></i> TAMBAH SOAL BERIKUTNYA</button>
+                            <button @click="tambahSoal" class="w-full py-4 border-2 border-dashed border-gray-300 text-gray-400 font-bold rounded-lg hover:bg-blue-50 hover:border-blue-500 hover:text-blue-600 transition">
+                                <i class="fas fa-plus-circle mr-2"></i> TAMBAH SOAL BERIKUTNYA
+                            </button>
+                            
                             <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 flex justify-between items-center">
-                                <div><h3 class="font-bold text-blue-900">Selesai?</h3><p class="text-xs text-blue-700">Data akan disimpan ke sistem & PDF akan terunduh.</p></div>
-                                <button @click="saveAndDownload" class="bg-green-600 text-white px-6 py-3 rounded font-bold shadow hover:bg-green-700 transition transform hover:scale-105"><i class="fas fa-save mr-2"></i> {{ editingId ? 'UPDATE' : 'SIMPAN' }} & DOWNLOAD PDF</button>
+                                <div>
+                                    <h3 class="font-bold text-blue-900">Selesai?</h3>
+                                    <p class="text-xs text-blue-700">Data akan disimpan ke sistem & PDF akan terunduh.</p>
+                                </div>
+                                <button @click="saveAndDownload" class="bg-green-600 text-white px-6 py-3 rounded font-bold shadow hover:bg-green-700 transition transform hover:scale-105">
+                                    <i class="fas fa-save mr-2"></i> {{ editingId ? 'UPDATE DATA' : 'SIMPAN BARU' }} & PDF
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- TAB 2: ARSIP -->
+                <!-- TAB 2: KISI-KISI SAYA -->
                 <div v-if="activeTab === 'my_data'">
-                    <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold text-gray-700">Arsip Kisi-Kisi Saya</h2><button @click="loadMyData" class="text-blue-600 hover:text-blue-800 text-sm font-bold"><i class="fas fa-sync"></i> Refresh</button></div>
-                    <div v-if="myKisiKisi.length === 0 && !isLoading" class="text-center text-gray-400 mt-20"><i class="fas fa-folder-open fa-4x mb-4"></i><p>Belum ada data kisi-kisi yang tersimpan.</p></div>
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-700">Arsip Kisi-Kisi Saya</h2>
+                        <button @click="loadMyData" class="text-blue-600 hover:text-blue-800 text-sm font-bold"><i class="fas fa-sync"></i> Refresh</button>
+                    </div>
+
+                    <div v-if="myKisiKisi.length === 0 && !isLoading" class="text-center text-gray-400 mt-20">
+                        <i class="fas fa-folder-open fa-4x mb-4"></i>
+                        <p>Belum ada data kisi-kisi yang tersimpan.</p>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div v-for="item in myKisiKisi" :key="item.id" class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition flex flex-col relative group">
-                            <div class="flex justify-between items-start mb-2"><span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">Kelas {{ item.config.kelas }}</span><span class="text-[10px] text-gray-400">{{ formatDate(item.timestamp) }}</span></div>
-                            <h3 class="font-bold text-lg text-slate-800 mb-1">{{ item.config.mapel }}</h3><p class="text-sm text-gray-500 mb-4">{{ item.soalList.length }} Butir Soal</p>
-                            <div class="mt-auto pt-4 border-t grid grid-cols-2 gap-2">
-                                <button @click="viewItem(item)" class="flex-1 bg-blue-50 text-blue-600 py-2 rounded text-xs font-bold hover:bg-blue-100"><i class="fas fa-eye mr-1"></i> Lihat</button>
-                                <button @click="editItem(item)" class="flex-1 bg-yellow-50 text-yellow-600 py-2 rounded text-xs font-bold hover:bg-yellow-100"><i class="fas fa-pen"></i></button>
-                                <button @click="regeneratePDF(item)" class="flex-1 bg-green-50 text-green-600 py-2 rounded text-xs font-bold hover:bg-green-100"><i class="fas fa-file-pdf mr-1"></i> PDF</button>
-                                <button @click="deleteItem(item.id)" class="flex-1 bg-red-50 text-red-600 py-2 rounded text-xs font-bold hover:bg-red-100"><i class="fas fa-trash"></i></button>
+                            
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">Kelas {{ item.config.kelas }}</span>
+                                <span class="text-[10px] text-gray-400">{{ formatDate(item.timestamp) }}</span>
+                            </div>
+                            <h3 class="font-bold text-lg text-slate-800 mb-1">{{ item.config.mapel }}</h3>
+                            <p class="text-sm text-gray-500 mb-4">{{ item.soalList.length }} Butir Soal</p>
+                            
+                            <div class="mt-auto pt-4 border-t flex justify-between gap-2">
+                                <button @click="viewItem(item)" class="flex-1 bg-gray-50 text-gray-600 py-2 rounded text-xs font-bold hover:bg-gray-200 transition" title="Lihat Detail">
+                                    <i class="fas fa-eye"></i> Lihat
+                                </button>
+                                <button @click="editItem(item)" class="flex-1 bg-yellow-50 text-yellow-600 py-2 rounded text-xs font-bold hover:bg-yellow-100 transition" title="Edit Data">
+                                    <i class="fas fa-pen"></i> Edit
+                                </button>
+                                <button @click="regeneratePDF(item)" class="flex-1 bg-green-50 text-green-600 py-2 rounded text-xs font-bold hover:bg-green-100 transition" title="Download PDF">
+                                    <i class="fas fa-file-pdf"></i> PDF
+                                </button>
+                                <button @click="deleteItem(item.id)" class="flex-1 bg-red-50 text-red-600 py-2 rounded text-xs font-bold hover:bg-red-100 transition" title="Hapus Data">
+                                    <i class="fas fa-trash"></i> Hapus
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -150,17 +243,53 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div v-for="grade in ['7', '8', '9']" :key="grade" class="bg-white rounded-xl shadow-sm border overflow-hidden">
                             <div class="bg-slate-800 text-white p-4 text-center"><h3 class="text-xl font-bold">KELAS {{ grade }}</h3></div>
-                            <div class="p-0"><table class="w-full text-sm"><tbody class="divide-y divide-gray-100"><tr v-for="mapel in masterMapel" :key="mapel" class="hover:bg-gray-50"><td class="p-3 pl-4 font-medium text-gray-700">{{ mapel }}</td><td class="p-3 pr-4 text-right"><div v-if="checkAvailability(grade, mapel)" class="text-green-600 font-bold flex items-center justify-end gap-2"><span class="text-xs bg-green-100 px-2 py-0.5 rounded">Ada</span> <i class="fas fa-check-circle"></i></div><div v-else class="text-red-300 flex items-center justify-end gap-2"><i class="fas fa-times-circle"></i></div></td></tr></tbody></table></div>
+                            <div class="p-0">
+                                <table class="w-full text-sm">
+                                    <tbody class="divide-y divide-gray-100">
+                                        <tr v-for="mapel in masterMapel" :key="mapel" class="hover:bg-gray-50">
+                                            <td class="p-3 pl-4 font-medium text-gray-700">{{ mapel }}</td>
+                                            <td class="p-3 pr-4 text-right">
+                                                <div v-if="checkAvailability(grade, mapel)" class="text-green-600 font-bold flex items-center justify-end gap-2"><span class="text-xs bg-green-100 px-2 py-0.5 rounded">Ada</span> <i class="fas fa-check-circle"></i></div>
+                                                <div v-else class="text-red-300 flex items-center justify-end gap-2"><i class="fas fa-times-circle"></i></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- MODAL VIEW DETAIL -->
+        <div v-if="modalItem" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white w-full max-w-3xl h-[80vh] rounded-xl shadow-2xl flex flex-col overflow-hidden">
+                <div class="p-4 border-b flex justify-between items-center bg-slate-50">
+                    <h3 class="font-bold text-lg">{{ modalItem.config.mapel }} - Kelas {{ modalItem.config.kelas }}</h3>
+                    <button @click="modalItem = null" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-6">
+                    <table class="w-full text-sm border-collapse border">
+                        <thead class="bg-gray-100"><tr><th class="border p-2 w-10">No</th><th class="border p-2">KD</th><th class="border p-2">Level</th><th class="border p-2">Indikator</th><th class="border p-2">Bentuk</th></tr></thead>
+                        <tbody>
+                            <tr v-for="(s, i) in modalItem.soalList" :key="i">
+                                <td class="border p-2 text-center">{{ i+1 }}</td>
+                                <td class="border p-2">{{ s.kd }}</td>
+                                <td class="border p-2">{{ s.level }}</td>
+                                <td class="border p-2">{{ s.indikator }}</td>
+                                <td class="border p-2">{{ s.bentuk }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="p-4 border-t text-right">
+                    <button @click="regeneratePDF(modalItem)" class="bg-red-600 text-white px-4 py-2 rounded font-bold hover:bg-red-700 text-sm"><i class="fas fa-print mr-2"></i> Cetak PDF</button>
                 </div>
             </div>
         </div>
 
-        <!-- MODAL VIEW -->
-        <div v-if="modalItem" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white w-full max-w-3xl h-[80vh] rounded-xl shadow-2xl flex flex-col overflow-hidden"><div class="p-4 border-b flex justify-between items-center bg-slate-50"><h3 class="font-bold text-lg">{{ modalItem.config.mapel }} - Kelas {{ modalItem.config.kelas }}</h3><button @click="modalItem = null" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button></div><div class="flex-1 overflow-y-auto p-6"><table class="w-full text-sm border-collapse border"><thead class="bg-gray-100"><tr><th class="border p-2 w-10">No</th><th class="border p-2">TP</th><th class="border p-2">Level</th><th class="border p-2">Indikator</th><th class="border p-2">Bentuk</th></tr></thead><tbody><tr v-for="(s, i) in modalItem.soalList" :key="i"><td class="border p-2 text-center">{{ i+1 }}</td><td class="border p-2">{{ s.tp }}</td><td class="border p-2">{{ s.level }}</td><td class="border p-2">{{ s.indikator }}</td><td class="border p-2">{{ s.bentuk }}</td></tr></tbody></table></div><div class="p-4 border-t text-right"><button @click="regeneratePDF(modalItem)" class="bg-red-600 text-white px-4 py-2 rounded font-bold hover:bg-red-700 text-sm"><i class="fas fa-print mr-2"></i> Cetak PDF</button></div></div>
-        </div>
     </div>
 
     <script type="module">
@@ -185,185 +314,154 @@
                 return {
                     currentUser: null, storageKey: '', activeTab: 'input', step: 1, isLoading: false, lastSaved: null,
                     selectedMapel: '', namaGuru: '', kelas: '', semester: '',
+                    sidebarLogo: null, // Simpan logo kop.png
                     mapelList: ['IPA', 'IPS', 'MATEMATIKA', 'BAHASA BALI', 'BAHASA ARAB', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 'OLAHRAGA', 'INFORMATIKA', 'KKA', 'AGAMA ISLAM', 'SENI BUDAYA', 'PKN'],
                     masterMapel: ['MATEMATIKA', 'IPA', 'BAHASA INGGRIS', 'BAHASA INDONESIA', 'BAHASA BALI', 'SENI BUDAYA', 'BAHASA ARAB', 'PJOK', 'IPS', 'PAI', 'INFORMATIKA', 'PKN', 'KKA'],
-                    sekolah: { logoBase64: null, logoPreview: null },
-                    soalList: [{ tp: '', level: '', indikator: '', bentuk: '' }],
+                    soalList: [{ kd: '', level: '', indikator: '', bentuk: '' }],
                     myKisiKisi: [], allKisiKisi: [], modalItem: null, editingId: null
                 }
             },
             mounted() {
                 const session = sessionStorage.getItem('cbt_user_session');
-                if (!session) { window.location.href = 'index.html'; return; }
+                if (!session) {
+                    try { window.location.href = 'index.html'; } 
+                    catch (e) { 
+                        this.currentUser = { username: 'guru01', name: 'Guru Test Mode' }; 
+                        this.storageKey = `guru_kisi_draft_${this.currentUser.username}`;
+                        return;
+                    }
+                    return;
+                }
                 this.currentUser = JSON.parse(session);
                 this.storageKey = `guru_kisi_draft_${this.currentUser.username}`;
                 
+                // Load Sidebar Image (KOP) dari Repository
+                this.loadSidebarImage();
+
                 const draft = localStorage.getItem(this.storageKey);
                 if(draft && !this.editingId) {
                     try {
                         const p = JSON.parse(draft);
                         this.selectedMapel = p.selectedMapel || ''; this.namaGuru = p.namaGuru || ''; 
                         this.kelas = p.kelas || ''; this.semester = p.semester || ''; 
-                        this.sekolah = p.sekolah || {logoBase64:null, logoPreview:null}; 
-                        this.soalList = p.soalList || [{ tp: '', level: '', indikator: '', bentuk: '' }];
+                        this.soalList = p.soalList || [{ kd: '', level: '', indikator: '', bentuk: '' }];
                     } catch(e) {}
                 }
                 this.loadMyData(); this.loadMonitoringData();
             },
-            watch: {
-                soalList: { handler() { this.saveDraft() }, deep: true },
-                sekolah: { handler() { this.saveDraft() }, deep: true },
-                selectedMapel() { this.saveDraft() }, namaGuru() { this.saveDraft() },
-                kelas() { this.saveDraft() }, semester() { this.saveDraft() }, step() { this.saveDraft() }
-            },
             methods: {
-                saveDraft() {
-                    if(this.editingId) return;
-                    const data = { selectedMapel:this.selectedMapel, namaGuru:this.namaGuru, kelas:this.kelas, semester:this.semester, sekolah:this.sekolah, soalList:this.soalList, step:this.step };
-                    localStorage.setItem(this.storageKey, JSON.stringify(data));
-                    this.lastSaved = new Date().toLocaleTimeString();
-                },
+                switchTab(tab) { this.activeTab = tab; if(tab === 'my_data') this.loadMyData(); if(tab === 'monitoring') this.loadMonitoringData(); },
+                saveDraft() { if(this.editingId) return; const data = { selectedMapel:this.selectedMapel, namaGuru:this.namaGuru, kelas:this.kelas, semester:this.semester, soalList:this.soalList, step:this.step }; localStorage.setItem(this.storageKey, JSON.stringify(data)); this.lastSaved = new Date().toLocaleTimeString(); },
                 resetData() {
                     if(confirm("Reset data?")) {
                         localStorage.removeItem(this.storageKey);
-                        this.selectedMapel=''; this.namaGuru=''; this.kelas=''; this.semester=''; this.sekolah={logoBase64:null}; this.soalList=[{tp:'',level:'',indikator:'',bentuk:''}]; this.step=1;
+                        this.selectedMapel=''; this.namaGuru=''; this.kelas=''; this.semester=''; this.soalList=[{kd:'',level:'',indikator:'',bentuk:''}]; this.step=1;
                         if(!this.editingId) localStorage.removeItem(this.storageKey);
                     }
                 },
                 lanjutKeKisiKisi() {
-                    if (!this.namaGuru || !this.kelas || !this.selectedMapel) return alert("Lengkapi Identitas!");
+                    const guru = (this.namaGuru || '').trim();
+                    if (!guru || !this.kelas || !this.semester || !this.selectedMapel) {
+                        return alert("Lengkapi Identitas (Mapel, Guru, Kelas, Semester)!");
+                    }
                     this.step = 2; window.scrollTo(0, 0);
                 },
-                handleLogoUpload(e) {
-                    const f = e.target.files[0];
-                    if (f && f.size < 500000) {
-                        const r = new FileReader();
-                        r.onload = (ev) => { this.sekolah.logoBase64 = ev.target.result; this.sekolah.logoPreview = ev.target.result; };
-                        r.readAsDataURL(f);
-                    } else alert("File Max 500KB");
-                },
-                
-                // --- FITUR EXCEL IMPORT/EXPORT ---
-                downloadExcelTemplate() {
-                    const headers = [["No", "Tujuan Pembelajaran (TP)", "Level Kognitif", "Indikator Soal", "Bentuk Soal"]];
-                    const example = ["1", "Peserta didik mampu...", "L1 - C1 (Mengingat)", "Disajikan gambar...", "Pilihan Ganda"];
-                    
-                    const wb = XLSX.utils.book_new();
-                    const ws = XLSX.utils.aoa_to_sheet([headers[0], example]);
-                    
-                    // Lebar kolom
-                    ws['!cols'] = [{wch:5}, {wch:50}, {wch:20}, {wch:50}, {wch:20}];
-                    
-                    XLSX.utils.book_append_sheet(wb, ws, "Template Kisi-Kisi");
-                    XLSX.writeFile(wb, "Template_Kisi_Kisi.xlsx");
-                },
-
-                handleExcelUpload(e) {
-                    const file = e.target.files[0];
-                    if(!file) return;
-
-                    const reader = new FileReader();
-                    reader.onload = (ev) => {
-                        const data = new Uint8Array(ev.target.result);
-                        const workbook = XLSX.read(data, {type: 'array'});
-                        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const json = XLSX.utils.sheet_to_json(sheet, {header: 1}); // Array of Arrays
-
-                        // Skip header (row 0)
-                        const rows = json.slice(1);
-                        const newSoal = [];
-
-                        rows.forEach(r => {
-                            if(r[1]) { // Jika kolom TP ada isi
-                                newSoal.push({
-                                    tp: r[1] || '',
-                                    level: r[2] || 'L1 - C1',
-                                    indikator: r[3] || '',
-                                    bentuk: r[4] || 'Pilihan Ganda'
-                                });
-                            }
-                        });
-
-                        if(newSoal.length > 0) {
-                            this.soalList = newSoal;
-                            alert(`Berhasil memuat ${newSoal.length} data dari Excel!`);
-                        } else {
-                            alert("File Excel kosong atau format salah.");
-                        }
-                    };
-                    reader.readAsArrayBuffer(file);
-                },
-
-                tambahSoal() { this.soalList.push({ tp: '', level: '', indikator: '', bentuk: '' }); setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 100); },
+                tambahSoal() { this.soalList.push({ kd: '', level: '', indikator: '', bentuk: '' }); setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 100); },
                 hapusSoal(i) { if(this.soalList.length > 1) this.soalList.splice(i, 1); },
                 
                 async saveAndDownload() {
-                    for(let s of this.soalList) { if(!s.tp || !s.level || !s.indikator || !s.bentuk) return alert("Lengkapi semua butir soal!"); }
+                    for(let s of this.soalList) { if(!s.kd || !s.level || !s.indikator || !s.bentuk) return alert("Lengkapi semua butir soal!"); }
                     this.isLoading = true;
                     try {
                         const dataToSave = {
                             config: { mapel: this.selectedMapel, kelas: this.kelas, semester: this.semester, guru: this.namaGuru },
-                            sekolah: { logoBase64: this.sekolah.logoBase64 }, 
+                            // sekolah: { logoBase64: this.sekolah.logoBase64 }, // LOGO SEKOLAH TIDAK DISIMPAN LAGI
                             soalList: this.soalList,
                             uploadedBy: this.currentUser.username,
                             timestamp: new Date().toISOString()
                         };
-                        if (this.editingId) {
-                            await updateDoc(doc(db, "bank_kisi_kisi", this.editingId), dataToSave);
-                            alert("✅ Data Diperbarui!");
-                        } else {
-                            await addDoc(collection(db, "bank_kisi_kisi"), dataToSave);
-                            alert("✅ Data Disimpan!");
-                        }
+                        if (this.editingId) { await updateDoc(doc(db, "bank_kisi_kisi", this.editingId), dataToSave); alert("✅ Data Diperbarui!"); } 
+                        else { await addDoc(collection(db, "bank_kisi_kisi"), dataToSave); alert("✅ Data Disimpan!"); }
                         this.generatePDF(dataToSave);
                         localStorage.removeItem(this.storageKey);
-                        this.editingId = null;
-                        this.resetData();
+                        this.editingId = null; this.resetData();
                     } catch(e) { alert("Gagal: " + e.message); } finally { this.isLoading = false; }
                 },
-                
-                // UPDATE PDF GENERATOR UNTUK "TP"
+
+                // LOAD GAMBAR KOP DARI REPO
+                async loadSidebarImage() {
+                    try {
+                        const response = await fetch('kop.png');
+                        const blob = await response.blob();
+                        const reader = new FileReader();
+                        reader.onloadend = () => { this.sidebarLogo = reader.result; };
+                        reader.readAsDataURL(blob);
+                    } catch (e) { console.log("kop.png tidak ditemukan."); }
+                },
+
                 generatePDF(data) {
                     try {
                         const { jsPDF } = window.jspdf;
                         const doc = new jsPDF();
-                        
-                        if (data.sekolah && data.sekolah.logoBase64) doc.addImage(data.sekolah.logoBase64, 'JPEG', 15, 10, 25, 25);
-                        doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.setTextColor(30, 58, 138); doc.text("SMP ALBANNA", 45, 18);
-                        doc.setTextColor(0); doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-                        doc.text("Jl. Tukad Yeh Ho III No.10, Denpasar, Bali 80234", 45, 24);
-                        doc.text("Telepon (0361) 238 4444  |  www.albanna.sch.id", 45, 29);
-                        doc.setLineWidth(0.5); doc.line(10, 35, pageWidth-10, 35);
+                        const pageWidth = doc.internal.pageSize.getWidth();
+                        const pageHeight = doc.internal.pageSize.getHeight();
+
+                        // 1. GAMBAR SIDEBAR (KOP.PNG) - FULL LEFT
+                        if (this.sidebarLogo) {
+                            // Lebar 35mm, Tinggi Full Page
+                            doc.addImage(this.sidebarLogo, 'PNG', 0, 0, 35, pageHeight);
+                        }
+
+                        // Margin konten
+                        const contentX = 45;
+
+                        // 2. HEADER SEKOLAH
+                        doc.setTextColor(0);
+                        doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+                        doc.text("RELIGIUS, UNGGUL", contentX, 15);
+                        doc.text("DAN BERDAYA SAING GLOBAL", contentX, 20);
+                        doc.setLineWidth(0.5); doc.line(contentX, 25, pageWidth - 10, 25);
 
                         doc.setFont("helvetica", "bold"); doc.setFontSize(12);
-                        doc.text(`KISI-KISI ${data.config.mapel.toUpperCase()}`, pageWidth/2, 45, {align:'center'});
+                        doc.text("SMP ALBANNA", contentX, 35);
+                        doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+                        doc.text("Jl. Tukad Yeh Ho III No.16, Denpasar, Bali 80234", contentX, 41);
+                        doc.text("Telepon. (0361) 236 4444 | www.albanna.sch.id", contentX, 46);
+
+                        // 3. JUDUL & IDENTITAS
+                        const startTableY = 60;
+                        doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+                        doc.text(`KISI-KISI ${data.config.mapel.toUpperCase()}`, (pageWidth + contentX)/2 - 10, startTableY, {align:'center'});
                         
                         doc.setFont("helvetica", "normal"); doc.setFontSize(10);
-                        const startY = 55; const col1 = 14; const col2 = 50;
-                        doc.text("Mata Pelajaran", col1, startY); doc.text(`: ${data.config.mapel}`, col2, startY);
-                        doc.text("Kelas / Semester", col1, startY+5); doc.text(`: ${data.config.kelas} / ${data.config.semester}`, col2, startY+5);
-                        doc.text("Guru Pengampu", col1, startY+10); doc.text(`: ${data.config.guru}`, col2, startY+10);
+                        const infoY = startTableY + 10;
+                        doc.text(`Mata Pelajaran: ${data.config.mapel}`, contentX, infoY);
+                        doc.text(`Kelas / Semester: ${data.config.kelas} / ${data.config.semester}`, contentX, infoY + 5);
+                        doc.text(`Guru Pengampu: ${data.config.guru}`, contentX, infoY + 10);
 
                         doc.autoTable({
-                            startY: startY + 20,
-                            head: [['No', 'Tujuan Pembelajaran (TP)', 'Level', 'Indikator', 'Bentuk']], // HEADER UPDATE
-                            body: data.soalList.map((s, i) => [i+1, s.tp, s.level, s.indikator, s.bentuk]), // DATA UPDATE
+                            startY: infoY + 18,
+                            margin: { left: contentX },
+                            head: [['No', 'KD', 'Level', 'Indikator', 'Bentuk']],
+                            body: data.soalList.map((s, i) => [i+1, s.kd, s.level, s.indikator, s.bentuk]),
                             theme: 'grid',
-                            styles: { fontSize: 10, cellPadding: 3 },
-                            columnStyles: { 0: { cellWidth: 10 }, 2: { cellWidth: 25 }, 4: { cellWidth: 25 } }
+                            styles: { fontSize: 9, cellPadding: 2 },
+                            columnStyles: { 0: { cellWidth: 10 }, 2: { cellWidth: 20 }, 4: { cellWidth: 25 } }
                         });
 
                         let finalY = doc.lastAutoTable.finalY + 15;
                         if (finalY > 250) { doc.addPage(); finalY = 20; }
-                        doc.text(`Denpasar, ${new Date().toLocaleDateString('id-ID')}`, pageWidth-60, finalY);
-                        doc.text("Guru Mata Pelajaran,", pageWidth-60, finalY+5);
-                        doc.text(`( ${data.config.guru} )`, pageWidth-60, finalY+30);
+                        const ttdX = pageWidth - 50;
+                        doc.text(`Denpasar, ${new Date().toLocaleDateString('id-ID')}`, ttdX, finalY, {align:'center'});
+                        doc.text("Guru Mata Pelajaran,", ttdX, finalY+5, {align:'center'});
+                        doc.setFont("helvetica", "bold");
+                        doc.text(`( ${data.config.guru} )`, ttdX, finalY+30, {align:'center'});
 
                         doc.save(`Kisi-Kisi_${data.config.mapel}_${data.config.kelas}.pdf`);
-                    } catch (err) { console.error(err); }
+                    } catch (err) { console.error(err); alert("Error PDF"); }
                 },
 
-                // EDIT & DELETE & LOAD (SAMA)
+                // ... (LOAD DATA & ACTIONS SAMA) ...
                 async loadMyData() {
                     this.isLoading = true;
                     try {
@@ -372,15 +470,15 @@
                         this.myKisiKisi = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                     } catch(e) { console.error(e); } finally { this.isLoading = false; }
                 },
-                async loadMonitoringData() {
-                    onSnapshot(query(collection(db, "bank_kisi_kisi")), (snap) => { this.allKisiKisi = snap.docs.map(d => d.data()); });
-                },
+                async loadMonitoringData() { onSnapshot(query(collection(db, "bank_kisi_kisi")), (snap) => { this.allKisiKisi = snap.docs.map(d => d.data()); }); },
+                viewItem(item) { this.modalItem = item; },
+                regeneratePDF(item) { this.generatePDF(item); },
+                formatDate(iso) { return new Date(iso).toLocaleDateString('id-ID'); },
+                checkAvailability(grade, mapel) { return this.allKisiKisi.some(k => k.config.kelas == grade && k.config.mapel === mapel); },
+                
                 editItem(item) {
-                    this.editingId = item.id;
-                    this.selectedMapel = item.config.mapel; this.namaGuru = item.config.guru;
+                    this.editingId = item.id; this.selectedMapel = item.config.mapel; this.namaGuru = item.config.guru;
                     this.kelas = item.config.kelas; this.semester = item.config.semester;
-                    this.sekolah = item.sekolah || { logoBase64: null };
-                    this.sekolah.logoPreview = this.sekolah.logoBase64;
                     this.soalList = JSON.parse(JSON.stringify(item.soalList));
                     this.activeTab = 'input'; this.step = 1;
                 },
@@ -390,12 +488,7 @@
                         this.isLoading = true;
                         try { await deleteDoc(doc(db, "bank_kisi_kisi", id)); this.loadMyData(); } catch(e) { alert(e.message); } finally { this.isLoading = false; }
                     }
-                },
-                viewItem(item) { this.modalItem = item; },
-                regeneratePDF(item) { this.generatePDF(item); },
-                formatDate(iso) { return new Date(iso).toLocaleDateString('id-ID'); },
-                checkAvailability(grade, mapel) { return this.allKisiKisi.some(k => k.config.kelas == grade && k.config.mapel === mapel); },
-                switchTab(tab) { this.activeTab = tab; if(tab === 'my_data') this.loadMyData(); if(tab === 'monitoring') this.loadMonitoringData(); }
+                }
             }
         }).mount('#app');
     </script>
