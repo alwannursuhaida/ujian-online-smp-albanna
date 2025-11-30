@@ -71,14 +71,10 @@
                 <!-- 1. DASHBOARD GRAFIK -->
                 <div v-show="activeTab === 'dashboard'">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                        <!-- Grafik Pie -->
                         <div class="bg-white p-6 rounded-xl shadow-sm border flex flex-col items-center">
                             <h3 class="font-bold text-gray-700 mb-4">Persentase Kehadiran (Live)</h3>
-                            <div class="h-64 w-full relative">
-                                <canvas id="attendanceChart"></canvas>
-                            </div>
+                            <div class="h-64 w-full relative"><canvas id="attendanceChart"></canvas></div>
                         </div>
-                        <!-- Info Cards -->
                         <div class="grid grid-cols-2 gap-4">
                             <div class="bg-green-100 p-6 rounded-xl border border-green-200 text-center flex flex-col justify-center">
                                 <div class="text-4xl font-bold text-green-700">{{ stats.hadir }}</div>
@@ -112,38 +108,21 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div class="bg-white rounded-xl shadow overflow-hidden border h-fit">
-                            <div class="bg-slate-800 text-white p-3 flex justify-between items-center">
-                                <h3 class="font-bold text-sm">TERDAFTAR DI KELAS {{ selectedClass }}</h3>
-                                <span class="bg-slate-600 text-xs px-2 py-1 rounded">{{ filteredStudents.length }} Siswa</span>
-                            </div>
+                            <div class="bg-slate-800 text-white p-3 flex justify-between items-center"><h3 class="font-bold text-sm">TERDAFTAR DI KELAS {{ selectedClass }}</h3><span class="bg-slate-600 text-xs px-2 py-1 rounded">{{ filteredStudents.length }} Siswa</span></div>
                             <div class="max-h-[600px] overflow-y-auto">
-                                <table class="w-full text-left text-sm">
-                                    <tbody class="divide-y divide-gray-100">
-                                        <tr v-for="(s, idx) in filteredStudents" :key="s.id" class="hover:bg-slate-50">
-                                            <td class="p-3 w-8 text-center text-gray-400">{{ idx + 1 }}</td>
-                                            <td class="p-3 font-bold text-slate-700">{{ s.nama }}</td>
-                                            <td class="p-3 text-right w-12"><button @click="deleteStudent(s.id)" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <table class="w-full text-left text-sm"><tbody class="divide-y divide-gray-100"><tr v-for="(s, idx) in filteredStudents" :key="s.id" class="hover:bg-slate-50"><td class="p-3 w-8 text-center text-gray-400">{{ idx + 1 }}</td><td class="p-3 font-bold text-slate-700">{{ s.nama }}</td><td class="p-3 text-right w-12"><button @click="deleteStudent(s.id)" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button></td></tr></tbody></table>
                             </div>
                         </div>
                         <div class="bg-white rounded-xl shadow overflow-hidden border h-fit">
-                            <div class="bg-blue-900 text-white p-3"><h3 class="font-bold text-sm"><i class="fas fa-edit mr-2"></i>INPUT SISWA BARU (COPY-PASTE)</h3></div>
-                            <div class="p-4 bg-blue-50 border-b border-blue-100 text-xs text-blue-800"><i class="fas fa-info-circle"></i> <strong>Tips:</strong> Copy 1 kolom nama dari Excel, lalu Paste di baris pertama.</div>
+                            <div class="bg-blue-900 text-white p-3"><h3 class="font-bold text-sm"><i class="fas fa-edit mr-2"></i>INPUT SISWA BARU</h3></div>
+                            <div class="p-4 bg-blue-50 border-b border-blue-100 text-xs text-blue-800"><i class="fas fa-info-circle"></i> Copy 1 kolom nama dari Excel, lalu Paste di baris pertama.</div>
                             <div class="max-h-[500px] overflow-y-auto p-4">
-                                <div v-for="(row, idx) in bulkInput" :key="idx" class="flex gap-2 mb-2 items-center">
-                                    <span class="text-xs text-gray-400 w-6 text-right">{{ idx + 1 }}.</span>
-                                    <input v-model="bulkInput[idx]" @paste="handlePaste($event, idx)" class="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none uppercase" placeholder="Paste Nama Disini...">
-                                    <button v-if="bulkInput[idx]" @click="bulkInput[idx] = ''" class="text-gray-300 hover:text-red-500"><i class="fas fa-times"></i></button>
-                                </div>
+                                <div v-for="(row, idx) in bulkInput" :key="idx" class="flex gap-2 mb-2 items-center"><span class="text-xs text-gray-400 w-6 text-right">{{ idx + 1 }}.</span><input v-model="bulkInput[idx]" @paste="handlePaste($event, idx)" class="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none uppercase" placeholder="Paste Nama Disini..."><button v-if="bulkInput[idx]" @click="bulkInput[idx] = ''" class="text-gray-300 hover:text-red-500"><i class="fas fa-times"></i></button></div>
                             </div>
                             <div class="p-4 border-t bg-gray-50 flex justify-end gap-2">
-                                <button @click="clearBulk" class="text-gray-500 hover:text-red-500 text-sm font-bold px-4">Reset</button>
-                                <button @click="saveBulkStudents" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 shadow flex items-center gap-2"><i class="fas fa-save"></i> SIMPAN SEMUA</button>
+                                <button @click="clearBulk" class="text-gray-500 hover:text-red-500 text-sm font-bold px-4">Reset</button><button @click="saveBulkStudents" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 shadow flex items-center gap-2"><i class="fas fa-save"></i> SIMPAN SEMUA</button>
                             </div>
                         </div>
                     </div>
@@ -153,45 +132,13 @@
                 <div v-show="activeTab === 'input_absen'">
                     <div class="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
                         <div class="flex gap-4 w-full">
-                            <div class="w-1/2">
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Pilih Kelas</label>
-                                <select v-model="selectedClass" class="w-full p-2 border rounded bg-white shadow-sm">
-                                    <option v-for="c in kelasList" :value="c">{{ c }}</option>
-                                </select>
-                            </div>
-                            <div class="w-1/2">
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Tanggal Ujian</label>
-                                <input type="date" v-model="attendanceDate" class="w-full p-2 border rounded bg-white shadow-sm">
-                            </div>
+                            <div class="w-1/2"><label class="block text-sm font-bold text-gray-700 mb-1">Pilih Kelas</label><select v-model="selectedClass" class="w-full p-2 border rounded bg-white shadow-sm"><option v-for="c in kelasList" :value="c">{{ c }}</option></select></div>
+                            <div class="w-1/2"><label class="block text-sm font-bold text-gray-700 mb-1">Tanggal Ujian</label><input type="date" v-model="attendanceDate" class="w-full p-2 border rounded bg-white shadow-sm"></div>
                         </div>
-                        <button @click="saveAttendance" class="bg-green-600 text-white px-6 py-2.5 rounded shadow-lg font-bold hover:bg-green-700 transition transform hover:scale-105 whitespace-nowrap w-full md:w-auto">
-                            <i class="fas fa-save mr-2"></i> SIMPAN & ARSIPKAN
-                        </button>
+                        <button @click="saveAttendance" class="bg-green-600 text-white px-6 py-2.5 rounded shadow-lg font-bold hover:bg-green-700 transition transform hover:scale-105 whitespace-nowrap w-full md:w-auto"><i class="fas fa-save mr-2"></i> SIMPAN & ARSIPKAN</button>
                     </div>
-
                     <div class="bg-white rounded-xl shadow overflow-hidden border">
-                        <table class="w-full text-left">
-                            <thead class="bg-blue-100 text-blue-900 uppercase text-xs font-bold">
-                                <tr>
-                                    <th class="p-4 border-b w-10">No</th>
-                                    <th class="p-4 border-b">Nama Siswa</th>
-                                    <th class="p-4 border-b text-center w-20 bg-green-200">Hadir</th>
-                                    <th class="p-4 border-b text-center w-20 bg-yellow-200">Sakit</th>
-                                    <th class="p-4 border-b text-center w-20 bg-blue-200">Izin</th>
-                                    <th class="p-4 border-b text-center w-20 bg-red-200">Alpha</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                <tr v-for="(s, idx) in filteredStudents" :key="s.id" class="hover:bg-blue-50 transition">
-                                    <td class="p-4 text-center font-mono text-gray-500">{{ idx + 1 }}</td>
-                                    <td class="p-4 font-bold text-gray-800">{{ s.nama }}</td>
-                                    <td class="p-4 text-center bg-green-50 cursor-pointer" @click="s.status = 'H'"><input type="radio" :name="'absen_'+s.id" value="H" v-model="s.status" class="w-5 h-5 accent-green-600 cursor-pointer"></td>
-                                    <td class="p-4 text-center bg-yellow-50 cursor-pointer" @click="s.status = 'S'"><input type="radio" :name="'absen_'+s.id" value="S" v-model="s.status" class="w-5 h-5 accent-yellow-600 cursor-pointer"></td>
-                                    <td class="p-4 text-center bg-blue-50 cursor-pointer" @click="s.status = 'I'"><input type="radio" :name="'absen_'+s.id" value="I" v-model="s.status" class="w-5 h-5 accent-blue-600 cursor-pointer"></td>
-                                    <td class="p-4 text-center bg-red-50 cursor-pointer" @click="s.status = 'A'"><input type="radio" :name="'absen_'+s.id" value="A" v-model="s.status" class="w-5 h-5 accent-red-600 cursor-pointer"></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <table class="w-full text-left"><thead class="bg-blue-100 text-blue-900 uppercase text-xs font-bold"><tr><th class="p-4 border-b w-10">No</th><th class="p-4 border-b">Nama Siswa</th><th class="p-4 border-b text-center w-20 bg-green-200">Hadir</th><th class="p-4 border-b text-center w-20 bg-yellow-200">Sakit</th><th class="p-4 border-b text-center w-20 bg-blue-200">Izin</th><th class="p-4 border-b text-center w-20 bg-red-200">Alpha</th></tr></thead><tbody class="divide-y divide-gray-100"><tr v-for="(s, idx) in filteredStudents" :key="s.id" class="hover:bg-blue-50 transition"><td class="p-4 text-center font-mono text-gray-500">{{ idx + 1 }}</td><td class="p-4 font-bold text-gray-800">{{ s.nama }}</td><td class="p-4 text-center bg-green-50 cursor-pointer" @click="s.status = 'H'"><input type="radio" :name="'absen_'+s.id" value="H" v-model="s.status" class="w-5 h-5 accent-green-600 cursor-pointer"></td><td class="p-4 text-center bg-yellow-50 cursor-pointer" @click="s.status = 'S'"><input type="radio" :name="'absen_'+s.id" value="S" v-model="s.status" class="w-5 h-5 accent-yellow-600 cursor-pointer"></td><td class="p-4 text-center bg-blue-50 cursor-pointer" @click="s.status = 'I'"><input type="radio" :name="'absen_'+s.id" value="I" v-model="s.status" class="w-5 h-5 accent-blue-600 cursor-pointer"></td><td class="p-4 text-center bg-red-50 cursor-pointer" @click="s.status = 'A'"><input type="radio" :name="'absen_'+s.id" value="A" v-model="s.status" class="w-5 h-5 accent-red-600 cursor-pointer"></td></tr></tbody></table>
                     </div>
                 </div>
 
@@ -206,24 +153,12 @@
                             </div>
                         </div>
                     </div>
-
                     <div v-if="filteredArchives.length === 0" class="text-center text-gray-400 py-10"><i class="fas fa-box-open fa-3x mb-4"></i><p>Tidak ada arsip ditemukan.</p></div>
-
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div v-for="arc in filteredArchives" :key="arc.id" class="bg-white p-4 rounded-lg shadow border hover:shadow-md transition relative group">
-                            <div class="flex justify-between items-start mb-3">
-                                <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2 py-1 rounded">Kelas {{ arc.kelas }}</span>
-                                <span class="text-xs text-gray-500 font-bold">{{ formatDate(arc.tanggal) }}</span>
-                            </div>
-                            <div class="flex justify-between items-center text-sm mb-4">
-                                <span class="text-green-600 font-bold"><i class="fas fa-check-circle"></i> Hadir: {{ countStatus(arc.records, 'H') }}</span>
-                                <span class="text-red-500 font-bold"><i class="fas fa-times-circle"></i> Absen: {{ arc.records.length - countStatus(arc.records, 'H') }}</span>
-                            </div>
-                            <div class="flex gap-2 pt-3 border-t">
-                                <button @click="viewArchive(arc)" class="flex-1 bg-blue-50 text-blue-600 text-xs font-bold py-2 rounded hover:bg-blue-100"><i class="fas fa-eye"></i> Lihat</button>
-                                <button @click="downloadArchivePDF(arc)" class="bg-green-50 text-green-600 px-3 py-2 rounded text-xs font-bold hover:bg-green-100"><i class="fas fa-file-pdf"></i></button>
-                                <button @click="deleteArchive(arc.id)" class="bg-red-50 text-red-600 px-3 py-2 rounded text-xs font-bold hover:bg-red-100"><i class="fas fa-trash"></i></button>
-                            </div>
+                            <div class="flex justify-between items-start mb-3"><span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2 py-1 rounded">Kelas {{ arc.kelas }}</span><span class="text-xs text-gray-500 font-bold">{{ formatDate(arc.tanggal) }}</span></div>
+                            <div class="flex justify-between items-center text-sm mb-4"><span class="text-green-600 font-bold"><i class="fas fa-check-circle"></i> Hadir: {{ countStatus(arc.records, 'H') }}</span><span class="text-red-500 font-bold"><i class="fas fa-times-circle"></i> Absen: {{ arc.records.length - countStatus(arc.records, 'H') }}</span></div>
+                            <div class="flex gap-2 pt-3 border-t"><button @click="viewArchive(arc)" class="flex-1 bg-blue-50 text-blue-600 text-xs font-bold py-2 rounded hover:bg-blue-100"><i class="fas fa-eye"></i> Lihat/Edit</button><button @click="downloadArchivePDF(arc)" class="bg-green-50 text-green-600 px-3 py-2 rounded text-xs font-bold hover:bg-green-100"><i class="fas fa-file-pdf"></i></button><button @click="deleteArchive(arc.id)" class="bg-red-50 text-red-600 px-3 py-2 rounded text-xs font-bold hover:bg-red-100"><i class="fas fa-trash"></i></button></div>
                         </div>
                     </div>
                 </div>
@@ -242,30 +177,18 @@
                                 </select>
                             </div>
                             <div class="flex gap-4 items-center w-full md:w-auto justify-end">
-                                <div class="border-2 border-dashed border-gray-300 p-1 rounded cursor-pointer hover:bg-gray-50 relative w-12 h-12 flex items-center justify-center" title="Upload Logo">
-                                    <input type="file" accept="image/*" @change="handleLogoUpload" class="absolute inset-0 opacity-0 cursor-pointer z-10">
-                                    <img v-if="sekolah.logoPreview" :src="sekolah.logoPreview" class="max-h-full max-w-full object-contain">
-                                    <i v-else class="fas fa-image text-gray-400"></i>
-                                </div>
+                                <div class="border-2 border-dashed border-gray-300 p-1 rounded cursor-pointer hover:bg-gray-50 relative w-12 h-12 flex items-center justify-center" title="Upload Logo"><input type="file" accept="image/*" @change="handleLogoUpload" class="absolute inset-0 opacity-0 cursor-pointer z-10"><img v-if="sekolah.logoPreview" :src="sekolah.logoPreview" class="max-h-full max-w-full object-contain"><i v-else class="fas fa-image text-gray-400"></i></div>
                                 <button @click="downloadPDFReport" class="bg-red-600 text-white px-6 py-3 rounded font-bold shadow hover:bg-red-700 flex items-center gap-2"><i class="fas fa-file-pdf"></i> UNDUH LAPORAN</button>
                             </div>
                         </div>
-                        
-                        <!-- FILTER KELAS (HANYA UNTUK LIVE) -->
                         <div class="mt-4 pt-4 border-t flex items-center gap-2" v-if="reportSource === 'LIVE'">
                             <span class="text-sm font-bold text-gray-600">Filter Tampilan:</span>
-                            <select v-model="filterReportClass" class="p-1 border rounded text-sm">
-                                <option value="SEMUA">Semua Kelas</option>
-                                <option v-for="c in kelasList" :value="c">{{ c }}</option>
-                            </select>
+                            <select v-model="filterReportClass" class="p-1 border rounded text-sm"><option value="SEMUA">Semua Kelas</option><option v-for="c in kelasList" :value="c">{{ c }}</option></select>
                         </div>
                     </div>
 
                     <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 flex justify-between items-center">
-                        <div>
-                            <h3 class="font-bold text-red-800">Daftar Siswa Perlu Ujian Susulan</h3>
-                            <p class="text-sm text-red-600">Sumber: {{ reportSource === 'LIVE' ? 'Input Hari Ini' : 'Arsip Terpilih' }}</p>
-                        </div>
+                        <div><h3 class="font-bold text-red-800">Daftar Siswa Perlu Ujian Susulan</h3><p class="text-sm text-red-600">Sumber: {{ reportSource === 'LIVE' ? 'Input Hari Ini' : 'Arsip Terpilih' }}</p></div>
                         <div class="text-xl font-bold text-red-800 bg-red-200 px-4 py-1 rounded-full">{{ susulanList.length }} Siswa</div>
                     </div>
 
@@ -280,11 +203,18 @@
                                     <td class="p-4"><span class="bg-gray-200 px-2 py-1 rounded text-xs font-bold">{{ s.kelas }}</span></td>
                                     <td class="p-4 text-center"><span :class="{'bg-yellow-100 text-yellow-800': s.status==='S', 'bg-blue-100 text-blue-800': s.status==='I', 'bg-red-100 text-red-800': s.status==='A'}" class="px-3 py-1 rounded font-bold">{{ s.status }}</span></td>
                                     <td class="p-4"><input v-model="s.ket_susulan" class="w-full border-b-2 border-gray-300 focus:border-blue-600 outline-none bg-transparent py-1" placeholder="Jadwal Susulan..."></td>
-                                    <td class="p-4 text-center"><button @click="updateSusulan(s)" class="text-blue-600 hover:text-blue-800 font-bold text-xs border border-blue-600 px-3 py-1 rounded hover:bg-blue-50">SIMPAN</button></td>
+                                    <td class="p-4 text-center"><button @click="removeSusulan(s)" class="text-red-500 hover:text-red-700 p-2 rounded hover:bg-red-100 transition"><i class="fas fa-trash-alt"></i></button></td>
                                 </tr>
                                 <tr v-if="susulanList.length === 0"><td colspan="5" class="p-8 text-center text-green-600 font-bold">Tidak ada siswa susulan pada data ini.</td></tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- TOMBOL SIMPAN TERPUSAT -->
+                    <div class="mt-6 flex justify-end">
+                        <button @click="saveAllSusulan" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold shadow-lg hover:bg-blue-700 transition transform hover:scale-105 flex items-center gap-2">
+                            <i class="fas fa-save"></i> SIMPAN SEMUA JADWAL
+                        </button>
                     </div>
                 </div>
 
@@ -372,16 +302,11 @@
                     let list = [];
                     if (this.reportSource === 'LIVE') {
                         list = this.allStudents.filter(s => ['S','I','A'].includes(s.status));
-                        if (this.filterReportClass !== 'SEMUA') {
-                            list = list.filter(s => s.kelas === this.filterReportClass);
-                        }
+                        if (this.filterReportClass !== 'SEMUA') list = list.filter(s => s.kelas === this.filterReportClass);
                     } else {
-                        // LOGIKA AMBIL DARI ARSIP
                         const archive = this.archives.find(a => a.id === this.reportSource);
                         if (archive && archive.records) {
-                            list = archive.records
-                                .filter(r => ['S','I','A'].includes(r.status))
-                                .map(r => ({ id: r.id || Math.random(), nama: r.nama, kelas: archive.kelas, status: r.status, ket_susulan: r.ket_susulan }));
+                            list = archive.records.filter(r => ['S','I','A'].includes(r.status)).map(r => ({ id: r.id || Math.random(), nama: r.nama, kelas: archive.kelas, status: r.status, ket_susulan: r.ket_susulan }));
                         }
                     }
                     return list.sort((a,b) => (a.kelas === b.kelas) ? a.nama.localeCompare(b.nama) : a.kelas.localeCompare(b.kelas));
@@ -435,18 +360,39 @@
                 clearBulk() { this.bulkInput = new Array(30).fill(''); },
                 async deleteStudent(id) { if(confirm("Hapus?")) await deleteDoc(doc(db, "data_absensi", id)); },
                 
+                // --- NEW LOGIC: OVERWRITE IF EXIST ---
                 async saveAttendance() {
-                    this.isLoading = true; const batch = writeBatch(db); const currentSnapshot = [];
+                    this.isLoading = true;
+                    const batch = writeBatch(db);
+                    const currentSnapshot = [];
+
+                    // 1. Update Live Status
                     this.filteredStudents.forEach(s => {
                         const ref = doc(db, "data_absensi", s.id);
                         batch.update(ref, { status: s.status });
                         currentSnapshot.push({ id: s.id, nama: s.nama, status: s.status, ket_susulan: s.ket_susulan || '' });
                     });
+
                     try {
                         await batch.commit();
-                        await addDoc(collection(db, "history_absensi"), { kelas: this.selectedClass, tanggal: this.attendanceDate, records: currentSnapshot, timestamp: new Date().toISOString() });
-                        alert("Absensi & Arsip Tersimpan!");
-                    } catch(e) { alert(e.message); } finally { this.isLoading = false; }
+
+                        // 2. Check Archive (Overwrite Logic)
+                        const qCheck = query(collection(db, "history_absensi"), where("kelas", "==", this.selectedClass), where("tanggal", "==", this.attendanceDate));
+                        const snapCheck = await getDocs(qCheck);
+
+                        const archiveData = { kelas: this.selectedClass, tanggal: this.attendanceDate, records: currentSnapshot, timestamp: new Date().toISOString() };
+
+                        if (!snapCheck.empty) {
+                            // Overwrite
+                            const docId = snapCheck.docs[0].id;
+                            await updateDoc(doc(db, "history_absensi", docId), archiveData);
+                            alert(`Data Absensi Kelas ${this.selectedClass} tanggal ${this.attendanceDate} DIPERBARUI (Tertimpa)!`);
+                        } else {
+                            // Create New
+                            await addDoc(collection(db, "history_absensi"), archiveData);
+                            alert(`Data Absensi Kelas ${this.selectedClass} tanggal ${this.attendanceDate} DISIMPAN!`);
+                        }
+                    } catch(e) { alert("Gagal: " + e.message); } finally { this.isLoading = false; }
                 },
 
                 viewArchive(arc) { this.viewArchiveModal = JSON.parse(JSON.stringify(arc)); },
@@ -455,16 +401,57 @@
                     try { await updateDoc(doc(db, "history_absensi", this.viewArchiveModal.id), { records: this.viewArchiveModal.records }); alert("Arsip diupdate!"); this.viewArchiveModal = null; } catch(e) { alert(e.message); }
                 },
                 async deleteArchive(id) { if(confirm("Hapus arsip?")) await deleteDoc(doc(db, "history_absensi", id)); },
-
+                
+                // REMOVE SUSULAN -> SET 'H'
+                async removeSusulan(student) {
+                    if(!confirm(`Keluarkan ${student.nama} dari daftar susulan?`)) return;
+                    if (this.reportSource === 'LIVE') {
+                        try { await updateDoc(doc(db, "data_absensi", student.id), { status: 'H', ket_susulan: '' }); } catch(e) { alert("Gagal: " + e.message); }
+                    } else {
+                        try {
+                            const archive = this.archives.find(a => a.id === this.reportSource);
+                            const updatedRecords = archive.records.map(rec => rec.nama === student.nama ? { ...rec, status: 'H', ket_susulan: '' } : rec);
+                            await updateDoc(doc(db, "history_absensi", this.reportSource), { records: updatedRecords });
+                            alert("Arsip diperbarui.");
+                        } catch(e) { alert("Gagal update arsip: " + e.message); }
+                    }
+                },
+                
                 async updateSusulan(student) {
                     if (this.reportSource === 'LIVE') {
-                        try { await updateDoc(doc(db, "data_absensi", student.id), { ket_susulan: student.ket_susulan }); alert("Tersimpan."); } catch(e) {}
+                        try { await updateDoc(doc(db, "data_absensi", student.id), { ket_susulan: student.ket_susulan }); alert("Tersimpan."); } catch(e) { alert("Gagal: " + e.message); }
                     } else {
-                        alert("Untuk mengedit data Arsip, gunakan menu Arsip Absensi.");
+                        // Update Archive
+                        try {
+                             const archive = this.archives.find(a => a.id === this.reportSource);
+                             const updatedRecords = archive.records.map(rec => rec.nama === student.nama ? { ...rec, ket_susulan: student.ket_susulan } : rec);
+                             await updateDoc(doc(db, "history_absensi", this.reportSource), { records: updatedRecords });
+                             alert("Jadwal Arsip diperbarui.");
+                        } catch(e) { alert("Gagal update arsip: " + e.message); }
                     }
                 },
 
-                // PDF LOGIC
+                // --- SAVE ALL (BATCH) ---
+                async saveAllSusulan() {
+                    if(this.susulanList.length === 0) return alert("Data kosong.");
+                    this.isLoading = true;
+                    try {
+                        if(this.reportSource === 'LIVE') {
+                            const batch = writeBatch(db);
+                            this.susulanList.forEach(s => { const ref = doc(db, "data_absensi", s.id); batch.update(ref, { ket_susulan: s.ket_susulan }); });
+                            await batch.commit();
+                        } else {
+                            const archive = this.archives.find(a => a.id === this.reportSource);
+                            const updatedRecords = archive.records.map(rec => {
+                                const ui = this.susulanList.find(s => s.nama === rec.nama);
+                                return ui ? { ...rec, ket_susulan: ui.ket_susulan } : rec;
+                            });
+                            await updateDoc(doc(db, "history_absensi", this.reportSource), { records: updatedRecords });
+                        }
+                        alert("Semua tersimpan!");
+                    } catch(e) { alert("Gagal: "+e.message); } finally { this.isLoading = false; }
+                },
+
                 handleLogoUpload(event) {
                     const file = event.target.files[0];
                     if (file) { const r = new FileReader(); r.onload = (e) => { this.sekolah.logoBase64 = e.target.result; this.sekolah.logoPreview = e.target.result; }; r.readAsDataURL(file); }
@@ -494,7 +481,6 @@
                     doc.text(`Total: ${records.length} | Hadir: ${hadir} | Absen: ${records.length-hadir}`, 14, finalY);
                     doc.save(`Absensi_${arc.kelas}.pdf`);
                 },
-
                 countStatus(records, status) { return records.filter(r => r.status === status).length; },
                 formatDate(iso) { return new Date(iso).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); },
                 updateStats() { this.stats.total = this.allStudents.length; this.stats.hadir = this.allStudents.filter(s => s.status === 'H').length; this.stats.absen = this.stats.total - this.stats.hadir; },
