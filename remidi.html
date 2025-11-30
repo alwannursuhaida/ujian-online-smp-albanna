@@ -18,7 +18,7 @@
 
     <div id="app" class="flex-1 flex flex-col">
 
-        <!-- NAVBAR -->
+        <!-- NAVBAR (TANPA TOMBOL MENU) -->
         <nav class="bg-blue-900 text-white p-4 shadow-lg sticky top-0 z-50">
             <div class="max-w-4xl mx-auto flex justify-between items-center">
                 <div class="flex items-center gap-3">
@@ -30,23 +30,21 @@
                         <p class="text-xs text-blue-200">SMP ALBANNA</p>
                     </div>
                 </div>
+                <!-- Hanya tombol Keluar yang tersisa -->
                 <div class="flex gap-2">
-                    <a href="index.html" class="text-xs bg-blue-800 hover:bg-blue-700 px-3 py-2 rounded font-bold transition">
-                        <i class="fas fa-home"></i> MENU
-                    </a>
-                    <button v-if="isLoggedIn" @click="logout" class="text-xs bg-red-600 hover:bg-red-700 px-3 py-2 rounded font-bold transition">
-                        KELUAR
+                    <button v-if="isLoggedIn" @click="logout" class="text-xs bg-red-600 hover:bg-red-700 px-3 py-2 rounded font-bold transition shadow">
+                        KELUAR <i class="fas fa-sign-out-alt ml-1"></i>
                     </button>
                 </div>
             </div>
         </nav>
 
-        <!-- 1. HALAMAN LOGIN (KELAS -> NAMA) -->
+        <!-- 1. HALAMAN LOGIN (INPUT KELAS -> NAMA DARI DB) -->
         <div v-if="!isLoggedIn" class="flex-1 flex flex-col items-center justify-center p-4 animate-fade-in">
             <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-t-8 border-blue-600">
                 <div class="text-center mb-6">
                     <h2 class="text-2xl font-bold text-gray-800">CEK KELULUSAN</h2>
-                    <p class="text-sm text-gray-500">Pilih kelas dan nama untuk melihat status.</p>
+                    <p class="text-sm text-gray-500">Pilih kelas dan nama Anda.</p>
                 </div>
 
                 <div class="space-y-4">
@@ -61,7 +59,7 @@
                         </select>
                     </div>
 
-                    <!-- 2. Pilih Nama (Dropdown dari Absensi) -->
+                    <!-- 2. Pilih Nama (Dropdown Dinamis) -->
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nama Lengkap</label>
                         <select v-model="form.nama" :disabled="!form.kelas || studentList.length === 0" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-600 outline-none disabled:bg-gray-200 disabled:text-gray-400">
@@ -69,12 +67,12 @@
                             <option v-for="s in studentList" :key="s.id" :value="s.nama">{{ s.nama }}</option>
                         </select>
                         
-                        <!-- Status Loading / Kosong -->
+                        <!-- Indikator Loading/Kosong -->
                         <p v-if="isLoadingList" class="text-xs text-blue-500 mt-1 animate-pulse">
-                            <i class="fas fa-spinner fa-spin"></i> Memuat daftar siswa...
+                            <i class="fas fa-spinner fa-spin"></i> Mengambil data siswa...
                         </p>
                         <p v-if="!isLoadingList && form.kelas && studentList.length === 0" class="text-xs text-red-400 mt-1 italic">
-                            * Data siswa kelas {{ form.kelas }} belum diinput di menu Absensi.
+                            * Belum ada data siswa di kelas ini.
                         </p>
                     </div>
 
@@ -221,20 +219,20 @@
             data() {
                 return {
                     isLoading: false,
-                    isLoadingList: false, // Loading dropdown nama
+                    isLoadingList: false,
                     isLoggedIn: false,
                     activeTab: 'rapor',
                     isAdminMode: false,
                     form: { nama: '', kelas: '' },
-                    studentList: [], // List nama siswa dari DB Absen
+                    studentList: [], // List Nama dari Database
                     
                     // DATA
-                    studentResults: [], // Hasil ujian siswa ini
-                    bankSoalCache: {},  // Cache untuk hitung nilai
-                    scheduleList: [],   // Jadwal remidi
+                    studentResults: [], 
+                    bankSoalCache: {},  
+                    scheduleList: [],   
                     newSchedule: { mapel: '', hari: '', waktu: '' },
                     
-                    masterMapel: ['MATEMATIKA', 'IPA', 'BAHASA INGGRIS', 'BAHASA INDONESIA', 'BAHASA BALI', 'SENI BUDAYA', 'BAHASA ARAB', 'PJOK', 'IPS', 'PAI', 'INFORMATIKA', 'PKN', 'KKA']
+                    masterMapel: ['MATEMATIKA', 'IPA', 'BAHASA INGGRIS', 'BAHASA INDONESIA', 'BAHASA BALI', 'SENI BUDAYA', 'BAHASA ARAB', 'OLAHRAGA', 'IPS', 'PAI', 'INFORMATIKA', 'PKN', 'KKA']
                 }
             },
             mounted() {
@@ -254,20 +252,26 @@
                     snap.forEach(doc => { this.bankSoalCache[doc.id] = doc.data(); });
                 },
 
-                // --- FETCH NAMA SISWA DARI DB ABSENSI ---
+                // --- TARIK DATA SISWA (SEMUA STATUS) ---
                 async fetchStudents() {
                     if(!this.form.kelas) return;
                     this.isLoadingList = true;
                     this.studentList = [];
-                    this.form.nama = ''; // Reset nama
+                    this.form.nama = ''; 
 
                     try {
-                        const q = query(collection(db, "data_absensi"), where("kelas", "==", this.form.kelas), orderBy("nama"));
-                        const snap = await getDocs(q);
-                        this.studentList = snap.docs.map(doc => doc.data());
-                    } catch (e) {
-                        console.error("Gagal load siswa:", e);
-                        // Fallback: Biarkan kosong agar user tahu harus diinput dulu di absensi
+                        // Ambil semua siswa di kelas ini (Tanpa filter status 'H')
+                        // Agar siswa yang absen/sakit pun bisa login cek jadwal remidi
+                        const q = query(collection(db, "data_absensi"), where("kelas", "==", this.form.kelas));
+                        const snapshot = await getDocs(q);
+                        
+                        // Sort manual client-side untuk menghindari error index
+                        this.studentList = snapshot.docs
+                            .map(doc => doc.data())
+                            .sort((a,b) => a.nama.localeCompare(b.nama));
+                            
+                    } catch(e) {
+                        console.error("Error fetching students:", e);
                     } finally {
                         this.isLoadingList = false;
                     }
@@ -278,19 +282,16 @@
                     this.isLoading = true;
 
                     try {
-                        // Query manual (ambil semua lalu filter nama di client-side)
+                        // Query jawaban siswa berdasarkan kelas
                         const q = query(collection(db, "jawaban_siswa"), where("student.kelas", "==", this.form.kelas));
                         const snap = await getDocs(q);
                         
-                        // Filter Nama (Case Insensitive)
+                        // Filter Nama di Client-side (Case Insensitive & Trim)
                         this.studentResults = snap.docs
                             .map(doc => doc.data())
                             .filter(d => d.student.nama.trim().toUpperCase() === this.form.nama.trim().toUpperCase());
 
-                        if(this.studentResults.length === 0) {
-                            // Tetap login, tapi tampilkan data kosong
-                            // alert("Data ujian belum ditemukan. Anda akan masuk ke dashboard kosong.");
-                        }
+                        // Login berhasil meski data kosong (untuk melihat jadwal remidi)
                         this.isLoggedIn = true;
                     } catch(e) {
                         alert("Gagal memuat data: " + e.message);
@@ -302,7 +303,7 @@
                 logout() {
                     this.isLoggedIn = false;
                     this.studentResults = [];
-                    this.studentList = []; // Reset list dropdown
+                    this.studentList = [];
                     this.form = { nama: '', kelas: '' };
                     this.isAdminMode = false;
                 },
@@ -310,19 +311,17 @@
                 // --- KALKULASI NILAI ---
                 getStudentScore(mapelName) {
                     const result = this.studentResults.find(r => r.mapel === mapelName);
-                    if (!result) return null; // Belum ujian
+                    if (!result) return null; 
 
                     const exam = this.bankSoalCache[result.examId];
-                    if (!exam) return 0; // Soal terhapus
+                    if (!exam) return 0; 
 
                     let score = 0;
                     exam.soal.forEach((q, idx) => {
-                        // 1. Auto Score (PG/BS)
                         if (['PG', 'BS'].includes(q.type) && result.answers[idx] === q.answer) {
                             score += parseInt(q.poin);
                         }
-                        // 2. Manual Score (Esai)
-                        if (['URAIAN', 'ESAI'].includes(q.type) && result.manualScores && result.manualScores[idx] !== undefined) {
+                        if (['URAIAN', 'ESAI', 'ISIAN'].includes(q.type) && result.manualScores && result.manualScores[idx] !== undefined) {
                             score += parseInt(result.manualScores[idx]);
                         }
                     });
