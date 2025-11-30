@@ -37,7 +37,6 @@
                 <button @click="activeTab = 'input_absen'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'input_absen' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
                     <i class="fas fa-user-check w-5"></i> Input Absensi
                 </button>
-                <!-- MENU BARU: ARSIP -->
                 <button @click="activeTab = 'arsip'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'arsip' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
                     <i class="fas fa-archive w-5"></i> Arsip Absensi
                 </button>
@@ -97,7 +96,7 @@
                     </div>
                 </div>
 
-                <!-- 2. DATA SISWA (INPUT MASSAL) -->
+                <!-- 2. DATA SISWA -->
                 <div v-show="activeTab === 'data_siswa'">
                     <div class="bg-white p-6 rounded-xl shadow-sm border mb-6">
                         <div class="flex justify-between items-center">
@@ -108,14 +107,13 @@
                                 </select>
                             </div>
                             <div class="flex gap-2">
-                                <button @click="downloadTemplate" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 flex items-center gap-2 text-sm font-bold"><i class="fas fa-file-excel"></i> Download Template</button>
+                                <button @click="downloadTemplate" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 flex items-center gap-2 text-sm font-bold"><i class="fas fa-file-excel"></i> Template</button>
                                 <label class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 flex items-center gap-2 text-sm font-bold cursor-pointer"><i class="fas fa-upload"></i> Upload Excel<input type="file" class="hidden" accept=".xlsx, .xls" @change="handleFileUpload"></label>
                             </div>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <!-- Tabel Live -->
                         <div class="bg-white rounded-xl shadow overflow-hidden border h-fit">
                             <div class="bg-slate-800 text-white p-3 flex justify-between items-center">
                                 <h3 class="font-bold text-sm">TERDAFTAR DI KELAS {{ selectedClass }}</h3>
@@ -129,12 +127,10 @@
                                             <td class="p-3 font-bold text-slate-700">{{ s.nama }}</td>
                                             <td class="p-3 text-right w-12"><button @click="deleteStudent(s.id)" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button></td>
                                         </tr>
-                                        <tr v-if="filteredStudents.length === 0"><td colspan="3" class="p-8 text-center text-gray-400">Belum ada data siswa.</td></tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
-                        <!-- Tabel Input Massal -->
                         <div class="bg-white rounded-xl shadow overflow-hidden border h-fit">
                             <div class="bg-blue-900 text-white p-3"><h3 class="font-bold text-sm"><i class="fas fa-edit mr-2"></i>INPUT SISWA BARU (COPY-PASTE)</h3></div>
                             <div class="p-4 bg-blue-50 border-b border-blue-100 text-xs text-blue-800"><i class="fas fa-info-circle"></i> <strong>Tips:</strong> Copy 1 kolom nama dari Excel, lalu Paste di baris pertama.</div>
@@ -163,7 +159,6 @@
                                     <option v-for="c in kelasList" :value="c">{{ c }}</option>
                                 </select>
                             </div>
-                            <!-- KOLOM TANGGAL (BARU) -->
                             <div class="w-1/2">
                                 <label class="block text-sm font-bold text-gray-700 mb-1">Tanggal Ujian</label>
                                 <input type="date" v-model="attendanceDate" class="w-full p-2 border rounded bg-white shadow-sm">
@@ -200,31 +195,34 @@
                     </div>
                 </div>
 
-                <!-- 4. ARSIP ABSENSI (BARU) -->
+                <!-- 4. ARSIP ABSENSI -->
                 <div v-show="activeTab === 'arsip'">
                     <div class="bg-white p-6 rounded-xl shadow-sm border mb-6">
-                        <h2 class="text-xl font-bold text-slate-800 mb-2">Arsip Riwayat Absensi</h2>
-                        <p class="text-sm text-gray-500">Data absensi yang tersimpan per tanggal dan kelas.</p>
+                        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div><h2 class="text-xl font-bold text-slate-800">Arsip Absensi</h2><p class="text-sm text-gray-500">Riwayat absensi yang tersimpan.</p></div>
+                            <div class="flex gap-2 w-full md:w-auto">
+                                <select v-model="filterArchiveClass" class="p-2 border rounded text-sm w-full md:w-32"><option value="">Semua Kelas</option><option v-for="c in kelasList" :value="c">{{ c }}</option></select>
+                                <input type="date" v-model="filterArchiveDate" class="p-2 border rounded text-sm w-full md:w-auto">
+                            </div>
+                        </div>
                     </div>
 
-                    <div v-if="archives.length === 0" class="text-center text-gray-400 py-10">
-                        <i class="fas fa-box-open fa-3x mb-4"></i>
-                        <p>Belum ada arsip tersimpan.</p>
-                    </div>
+                    <div v-if="filteredArchives.length === 0" class="text-center text-gray-400 py-10"><i class="fas fa-box-open fa-3x mb-4"></i><p>Tidak ada arsip ditemukan.</p></div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div v-for="arc in archives" :key="arc.id" class="bg-white p-4 rounded-lg shadow border hover:shadow-md transition">
+                        <div v-for="arc in filteredArchives" :key="arc.id" class="bg-white p-4 rounded-lg shadow border hover:shadow-md transition relative group">
                             <div class="flex justify-between items-start mb-3">
                                 <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2 py-1 rounded">Kelas {{ arc.kelas }}</span>
-                                <span class="text-xs text-gray-500 font-mono">{{ formatDate(arc.tanggal) }}</span>
+                                <span class="text-xs text-gray-500 font-bold">{{ formatDate(arc.tanggal) }}</span>
                             </div>
                             <div class="flex justify-between items-center text-sm mb-4">
                                 <span class="text-green-600 font-bold"><i class="fas fa-check-circle"></i> Hadir: {{ countStatus(arc.records, 'H') }}</span>
                                 <span class="text-red-500 font-bold"><i class="fas fa-times-circle"></i> Absen: {{ arc.records.length - countStatus(arc.records, 'H') }}</span>
                             </div>
                             <div class="flex gap-2 pt-3 border-t">
-                                <button @click="viewArchive(arc)" class="flex-1 bg-blue-50 text-blue-600 text-xs font-bold py-2 rounded hover:bg-blue-100"><i class="fas fa-eye"></i> Lihat/Edit</button>
-                                <button @click="deleteArchive(arc.id)" class="px-3 bg-red-50 text-red-600 text-xs font-bold py-2 rounded hover:bg-red-100"><i class="fas fa-trash"></i></button>
+                                <button @click="viewArchive(arc)" class="flex-1 bg-blue-50 text-blue-600 text-xs font-bold py-2 rounded hover:bg-blue-100"><i class="fas fa-eye"></i> Lihat</button>
+                                <button @click="downloadArchivePDF(arc)" class="bg-green-50 text-green-600 px-3 py-2 rounded text-xs font-bold hover:bg-green-100"><i class="fas fa-file-pdf"></i></button>
+                                <button @click="deleteArchive(arc.id)" class="bg-red-50 text-red-600 px-3 py-2 rounded text-xs font-bold hover:bg-red-100"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>
                     </div>
@@ -232,19 +230,43 @@
 
                 <!-- 5. LAPORAN & SUSULAN -->
                 <div v-show="activeTab === 'susulan'">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border mb-6 flex justify-between items-center">
-                        <div class="flex gap-4 items-center">
-                            <div class="border-2 border-dashed border-gray-300 p-2 rounded text-center cursor-pointer hover:bg-gray-50 relative w-32 h-16 flex items-center justify-center group">
-                                <input type="file" accept="image/*" @change="handleLogoUpload" class="absolute inset-0 opacity-0 cursor-pointer z-10">
-                                <img v-if="sekolah.logoPreview" :src="sekolah.logoPreview" class="max-h-full max-w-full object-contain">
-                                <span v-else class="text-xs text-gray-400 group-hover:text-blue-500"><i class="fas fa-cloud-upload-alt"></i> Upload Logo</span>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border mb-6">
+                        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div class="w-full md:w-1/2">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Sumber Data Laporan</label>
+                                <select v-model="reportSource" class="w-full p-2 border-2 border-blue-100 rounded font-bold text-blue-900">
+                                    <option value="LIVE">📝 Data Hari Ini (Live Input)</option>
+                                    <optgroup label="Riwayat Arsip">
+                                        <option v-for="arc in archives" :value="arc.id">📂 {{ formatDate(arc.tanggal) }} - Kelas {{ arc.kelas }}</option>
+                                    </optgroup>
+                                </select>
                             </div>
-                            <div>
-                                <h3 class="font-bold text-gray-800">Laporan Siswa Tidak Hadir</h3>
-                                <p class="text-sm text-gray-500">Unduh PDF berdasarkan data saat ini ({{ formatDate(attendanceDate) }}).</p>
+                            <div class="flex gap-4 items-center w-full md:w-auto justify-end">
+                                <div class="border-2 border-dashed border-gray-300 p-1 rounded cursor-pointer hover:bg-gray-50 relative w-12 h-12 flex items-center justify-center" title="Upload Logo">
+                                    <input type="file" accept="image/*" @change="handleLogoUpload" class="absolute inset-0 opacity-0 cursor-pointer z-10">
+                                    <img v-if="sekolah.logoPreview" :src="sekolah.logoPreview" class="max-h-full max-w-full object-contain">
+                                    <i v-else class="fas fa-image text-gray-400"></i>
+                                </div>
+                                <button @click="downloadPDFReport" class="bg-red-600 text-white px-6 py-3 rounded font-bold shadow hover:bg-red-700 flex items-center gap-2"><i class="fas fa-file-pdf"></i> UNDUH LAPORAN</button>
                             </div>
                         </div>
-                        <button @click="downloadPDFReport" class="bg-red-600 text-white px-6 py-3 rounded font-bold shadow hover:bg-red-700 flex items-center gap-2"><i class="fas fa-file-pdf"></i> UNDUH LAPORAN PDF</button>
+                        
+                        <!-- FILTER KELAS (HANYA UNTUK LIVE) -->
+                        <div class="mt-4 pt-4 border-t flex items-center gap-2" v-if="reportSource === 'LIVE'">
+                            <span class="text-sm font-bold text-gray-600">Filter Tampilan:</span>
+                            <select v-model="filterReportClass" class="p-1 border rounded text-sm">
+                                <option value="SEMUA">Semua Kelas</option>
+                                <option v-for="c in kelasList" :value="c">{{ c }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 flex justify-between items-center">
+                        <div>
+                            <h3 class="font-bold text-red-800">Daftar Siswa Perlu Ujian Susulan</h3>
+                            <p class="text-sm text-red-600">Sumber: {{ reportSource === 'LIVE' ? 'Input Hari Ini' : 'Arsip Terpilih' }}</p>
+                        </div>
+                        <div class="text-xl font-bold text-red-800 bg-red-200 px-4 py-1 rounded-full">{{ susulanList.length }} Siswa</div>
                     </div>
 
                     <div class="bg-white rounded-xl shadow overflow-hidden border">
@@ -260,7 +282,7 @@
                                     <td class="p-4"><input v-model="s.ket_susulan" class="w-full border-b-2 border-gray-300 focus:border-blue-600 outline-none bg-transparent py-1" placeholder="Jadwal Susulan..."></td>
                                     <td class="p-4 text-center"><button @click="updateSusulan(s)" class="text-blue-600 hover:text-blue-800 font-bold text-xs border border-blue-600 px-3 py-1 rounded hover:bg-blue-50">SIMPAN</button></td>
                                 </tr>
-                                <tr v-if="susulanList.length === 0"><td colspan="5" class="p-8 text-center text-green-600 font-bold">Semua siswa hadir!</td></tr>
+                                <tr v-if="susulanList.length === 0"><td colspan="5" class="p-8 text-center text-green-600 font-bold">Tidak ada siswa susulan pada data ini.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -321,11 +343,15 @@
                     activeTab: 'dashboard',
                     isLoading: true,
                     selectedClass: '7A',
-                    attendanceDate: new Date().toISOString().split('T')[0], // Default Hari Ini
+                    attendanceDate: new Date().toISOString().split('T')[0],
                     newStudentName: '',
                     allStudents: [],
-                    archives: [], // Data Arsip
-                    viewArchiveModal: null, // Data Modal Edit Arsip
+                    archives: [],
+                    reportSource: 'LIVE',
+                    filterReportClass: 'SEMUA',
+                    filterArchiveClass: '',
+                    filterArchiveDate: '',
+                    viewArchiveModal: null,
                     chartInstance: null,
                     stats: { hadir: 0, absen: 0, total: 0 },
                     sekolah: { logoBase64: null, logoPreview: null },
@@ -335,7 +361,31 @@
             computed: {
                 kelasList() { return ['7A','7B','7C','7D','7E','7F','8A','8B','8C','8D','8E','8F','9A','9B','9C','9D','9E']; },
                 filteredStudents() { return this.allStudents.filter(s => s.kelas === this.selectedClass).sort((a,b) => a.nama.localeCompare(b.nama)); },
-                susulanList() { return this.allStudents.filter(s => ['S','I','A'].includes(s.status)).sort((a,b) => a.kelas.localeCompare(b.kelas)); },
+                filteredArchives() {
+                    return this.archives.filter(arc => {
+                        const matchClass = this.filterArchiveClass ? arc.kelas === this.filterArchiveClass : true;
+                        const matchDate = this.filterArchiveDate ? arc.tanggal === this.filterArchiveDate : true;
+                        return matchClass && matchDate;
+                    });
+                },
+                susulanList() {
+                    let list = [];
+                    if (this.reportSource === 'LIVE') {
+                        list = this.allStudents.filter(s => ['S','I','A'].includes(s.status));
+                        if (this.filterReportClass !== 'SEMUA') {
+                            list = list.filter(s => s.kelas === this.filterReportClass);
+                        }
+                    } else {
+                        // LOGIKA AMBIL DARI ARSIP
+                        const archive = this.archives.find(a => a.id === this.reportSource);
+                        if (archive && archive.records) {
+                            list = archive.records
+                                .filter(r => ['S','I','A'].includes(r.status))
+                                .map(r => ({ id: r.id || Math.random(), nama: r.nama, kelas: archive.kelas, status: r.status, ket_susulan: r.ket_susulan }));
+                        }
+                    }
+                    return list.sort((a,b) => (a.kelas === b.kelas) ? a.nama.localeCompare(b.nama) : a.kelas.localeCompare(b.kelas));
+                },
                 pageTitle() {
                     const titles = { 'dashboard': 'Dashboard Statistik', 'data_siswa': 'Manajemen Data Siswa', 'input_absen': 'Input Absensi Harian', 'susulan': 'Laporan & Jadwal Susulan', 'arsip': 'Arsip Absensi' };
                     return titles[this.activeTab];
@@ -346,20 +396,15 @@
                 allStudents: { handler() { this.updateStats(); }, deep: true }
             },
             mounted() {
-                // Load Data Siswa (Realtime)
                 const q = query(collection(db, "data_absensi"));
                 onSnapshot(q, (snapshot) => {
                     this.allStudents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    this.isLoading = false; 
-                    this.updateStats();
+                    this.isLoading = false; this.updateStats();
                     if(this.activeTab === 'dashboard') this.renderChart();
                 }, () => this.isLoading = false);
 
-                // Load Arsip (Realtime)
-                const qArsip = query(collection(db, "history_absensi"), orderBy("tanggal", "desc"));
-                onSnapshot(qArsip, (snap) => {
-                    this.archives = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                });
+                const qArsip = query(collection(db, "history_absensi"), orderBy("timestamp", "desc"));
+                onSnapshot(qArsip, (snap) => { this.archives = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })); });
             },
             methods: {
                 handlePaste(event, startIndex) {
@@ -369,8 +414,7 @@
                     rows.forEach((name, i) => { if (startIndex + i < this.bulkInput.length) this.bulkInput[startIndex + i] = name.trim().toUpperCase(); });
                 },
                 downloadTemplate() {
-                    const ws = XLSX.utils.aoa_to_sheet([["Nama Siswa"]]); 
-                    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Template Siswa"); XLSX.writeFile(wb, "Template_Nama_Siswa.xlsx");
+                    const ws = XLSX.utils.aoa_to_sheet([["Nama Siswa"]]); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Template"); XLSX.writeFile(wb, "Template_Siswa.xlsx");
                 },
                 handleFileUpload(event) {
                     const file = event.target.files[0]; if (!file) return;
@@ -380,88 +424,47 @@
                         const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
                         let count = 0;
                         for (let i = 1; i < jsonData.length; i++) { if (jsonData[i][0] && count < this.bulkInput.length) { this.bulkInput[count] = String(jsonData[i][0]).toUpperCase().trim(); count++; } }
-                        alert(`Dimuat ${count} nama.`);
                     }; reader.readAsArrayBuffer(file);
                 },
                 async saveBulkStudents() {
                     const names = this.bulkInput.filter(n => n.trim() !== ''); if (names.length === 0) return alert("Kosong!");
                     this.isLoading = true; const batch = writeBatch(db);
                     names.forEach(name => { batch.set(doc(collection(db, "data_absensi")), { nama: name, kelas: this.selectedClass, status: 'H', ket_susulan: '' }); });
-                    try { await batch.commit(); alert(`Berhasil tambah ${names.length} siswa!`); this.bulkInput = new Array(30).fill(''); } catch(e) { alert("Gagal: " + e.message); } finally { this.isLoading = false; }
+                    try { await batch.commit(); this.bulkInput = new Array(30).fill(''); alert("Disimpan!"); } catch(e) { alert(e.message); } finally { this.isLoading = false; }
                 },
                 clearBulk() { this.bulkInput = new Array(30).fill(''); },
-                async deleteStudent(id) { if(confirm("Hapus siswa?")) await deleteDoc(doc(db, "data_absensi", id)); },
+                async deleteStudent(id) { if(confirm("Hapus?")) await deleteDoc(doc(db, "data_absensi", id)); },
                 
-                // --- SAVE ATTENDANCE & ARCHIVE ---
                 async saveAttendance() {
-                    this.isLoading = true;
-                    const batch = writeBatch(db);
-                    const currentSnapshot = []; // Untuk Arsip
-
-                    // 1. Update Status Live
+                    this.isLoading = true; const batch = writeBatch(db); const currentSnapshot = [];
                     this.filteredStudents.forEach(s => {
                         const ref = doc(db, "data_absensi", s.id);
                         batch.update(ref, { status: s.status });
-                        // Siapkan data snapshot
                         currentSnapshot.push({ id: s.id, nama: s.nama, status: s.status, ket_susulan: s.ket_susulan || '' });
                     });
-
                     try {
-                        await batch.commit(); // Commit update live dulu
-                        
-                        // 2. Cek apakah arsip hari ini sudah ada (Optional: Overwrite atau Create New)
-                        // Disini kita create new dulu, logic overwrite agak kompleks untuk batch
-                        // Kita cari manual kalau mau overwrite:
-                        const qCheck = query(collection(db, "history_absensi"), where("kelas", "==", this.selectedClass), where("tanggal", "==", this.attendanceDate));
-                        const snapCheck = await getDocs(qCheck);
-                        
-                        if (!snapCheck.empty) {
-                            // Update Existing Archive
-                            const archiveId = snapCheck.docs[0].id;
-                            await updateDoc(doc(db, "history_absensi", archiveId), { records: currentSnapshot, timestamp: new Date().toISOString() });
-                            alert(`Arsip Kelas ${this.selectedClass} Tanggal ${this.attendanceDate} DIPERBARUI!`);
-                        } else {
-                            // Create New Archive
-                            await addDoc(collection(db, "history_absensi"), {
-                                kelas: this.selectedClass,
-                                tanggal: this.attendanceDate,
-                                records: currentSnapshot,
-                                timestamp: new Date().toISOString()
-                            });
-                            alert(`Absensi Kelas ${this.selectedClass} Tanggal ${this.attendanceDate} DISIMPAN & DIARSIPKAN!`);
-                        }
-
-                    } catch(e) { alert("Gagal: " + e.message); } finally { this.isLoading = false; }
+                        await batch.commit();
+                        await addDoc(collection(db, "history_absensi"), { kelas: this.selectedClass, tanggal: this.attendanceDate, records: currentSnapshot, timestamp: new Date().toISOString() });
+                        alert("Absensi & Arsip Tersimpan!");
+                    } catch(e) { alert(e.message); } finally { this.isLoading = false; }
                 },
 
-                // --- ARSIP ACTIONS ---
-                viewArchive(arc) {
-                    // Clone object untuk modal edit
-                    this.viewArchiveModal = JSON.parse(JSON.stringify(arc));
-                },
+                viewArchive(arc) { this.viewArchiveModal = JSON.parse(JSON.stringify(arc)); },
                 async updateArchiveData() {
                     if(!this.viewArchiveModal) return;
-                    if(!confirm("Simpan perubahan pada arsip ini?")) return;
-                    try {
-                        await updateDoc(doc(db, "history_absensi", this.viewArchiveModal.id), {
-                            records: this.viewArchiveModal.records
-                        });
-                        this.viewArchiveModal = null;
-                        alert("Arsip berhasil diperbarui.");
-                    } catch(e) { alert("Gagal update: " + e.message); }
+                    try { await updateDoc(doc(db, "history_absensi", this.viewArchiveModal.id), { records: this.viewArchiveModal.records }); alert("Arsip diupdate!"); this.viewArchiveModal = null; } catch(e) { alert(e.message); }
                 },
-                async deleteArchive(id) {
-                    if(confirm("Hapus arsip ini permanen?")) await deleteDoc(doc(db, "history_absensi", id));
-                },
-                countStatus(records, status) {
-                    return records.filter(r => r.status === status).length;
-                },
-                formatDate(iso) { return new Date(iso).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); },
+                async deleteArchive(id) { if(confirm("Hapus arsip?")) await deleteDoc(doc(db, "history_absensi", id)); },
 
                 async updateSusulan(student) {
-                    try { await updateDoc(doc(db, "data_absensi", student.id), { ket_susulan: student.ket_susulan }); alert("Tersimpan."); } 
-                    catch(e) { alert("Gagal: "+e.message); }
+                    if (this.reportSource === 'LIVE') {
+                        try { await updateDoc(doc(db, "data_absensi", student.id), { ket_susulan: student.ket_susulan }); alert("Tersimpan."); } catch(e) {}
+                    } else {
+                        alert("Untuk mengedit data Arsip, gunakan menu Arsip Absensi.");
+                    }
                 },
+
+                // PDF LOGIC
                 handleLogoUpload(event) {
                     const file = event.target.files[0];
                     if (file) { const r = new FileReader(); r.onload = (e) => { this.sekolah.logoBase64 = e.target.result; this.sekolah.logoPreview = e.target.result; }; r.readAsDataURL(file); }
@@ -469,22 +472,34 @@
                 downloadPDFReport() {
                     if(this.susulanList.length === 0) return alert("Tidak ada data.");
                     const { jsPDF } = window.jspdf; const doc = new jsPDF();
+                    let titleSuffix = this.reportSource === 'LIVE' ? `(LIVE - ${new Date().toLocaleDateString('id-ID')})` : "(Arsip)";
                     if (this.sekolah.logoBase64) doc.addImage(this.sekolah.logoBase64, 'PNG', 15, 10, 20, 20); 
                     doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.text("SMP ALBANNA", 40, 18);
-                    doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.text("Laporan Ketidakhadiran & Ujian Susulan", 40, 24);
-                    doc.text(`Tanggal Laporan: ${this.formatDate(this.attendanceDate)}`, 40, 29);
+                    doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.text(`Laporan Ketidakhadiran ${titleSuffix}`, 40, 24);
                     doc.setLineWidth(0.5); doc.line(10, 35, 200, 35);
                     doc.autoTable({ startY: 40, head: [['No', 'Nama', 'Kelas', 'Status', 'Keterangan']], body: this.susulanList.map((s,i)=>[i+1, s.nama, s.kelas, s.status, s.ket_susulan]) });
-                    doc.save(`Laporan_Susulan_${this.attendanceDate}.pdf`);
+                    doc.save(`Laporan_Susulan.pdf`);
                 },
-                updateStats() {
-                    this.stats.total = this.allStudents.length;
-                    this.stats.hadir = this.allStudents.filter(s => s.status === 'H').length;
-                    this.stats.absen = this.stats.total - this.stats.hadir;
+                downloadArchivePDF(arc) {
+                    const { jsPDF } = window.jspdf; const doc = new jsPDF();
+                    if (this.sekolah.logoBase64) doc.addImage(this.sekolah.logoBase64, 'PNG', 15, 10, 20, 20); 
+                    doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.text("SMP ALBANNA", 40, 18);
+                    doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.text("BERITA ACARA PRESENSI UJIAN", 40, 24);
+                    doc.text(`Tanggal: ${this.formatDate(arc.tanggal)} | Kelas: ${arc.kelas}`, 40, 29);
+                    doc.setLineWidth(0.5); doc.line(10, 35, 200, 35);
+                    const records = arc.records.sort((a,b) => a.nama.localeCompare(b.nama));
+                    doc.autoTable({ startY: 40, head: [['No', 'Nama', 'Status', 'Ket']], body: records.map((s,i)=>[i+1, s.nama, s.status==='H'?'Hadir':(s.status==='S'?'Sakit':(s.status==='I'?'Izin':'Alpha')), s.ket_susulan||'']) });
+                    const hadir = records.filter(r=>r.status==='H').length;
+                    let finalY = doc.lastAutoTable.finalY + 10;
+                    doc.text(`Total: ${records.length} | Hadir: ${hadir} | Absen: ${records.length-hadir}`, 14, finalY);
+                    doc.save(`Absensi_${arc.kelas}.pdf`);
                 },
+
+                countStatus(records, status) { return records.filter(r => r.status === status).length; },
+                formatDate(iso) { return new Date(iso).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); },
+                updateStats() { this.stats.total = this.allStudents.length; this.stats.hadir = this.allStudents.filter(s => s.status === 'H').length; this.stats.absen = this.stats.total - this.stats.hadir; },
                 renderChart() {
-                    const ctx = document.getElementById('attendanceChart');
-                    if(!ctx) return;
+                    const ctx = document.getElementById('attendanceChart'); if(!ctx) return;
                     if(this.chartInstance) this.chartInstance.destroy();
                     this.chartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: ['Hadir', 'Tidak'], datasets: [{ data: [this.stats.hadir, this.stats.absen], backgroundColor: ['#16a34a', '#dc2626'] }] } });
                 }
