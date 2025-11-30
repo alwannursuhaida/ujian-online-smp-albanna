@@ -59,7 +59,7 @@
                         <div class="space-y-4">
                             <!-- INFO LOGO -->
                             <div class="bg-blue-50 p-4 rounded text-center border border-blue-100 text-blue-800 text-sm">
-                                <i class="fas fa-magic mr-2"></i> Menggunakan Kop & Logo Otomatis (Server).
+                                <i class="fas fa-magic mr-2"></i> Menggunakan Kop Otomatis (Server).
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">
@@ -176,7 +176,7 @@
                 this.currentUser = JSON.parse(session);
                 this.storageKey = `guru_kisi_draft_${this.currentUser.username}`;
                 
-                this.loadSidebarImage(); // Fetch Logo from repo
+                this.loadSidebarImage(); // Load KOP
 
                 const draft = localStorage.getItem(this.storageKey);
                 if(draft && !this.editingId) {
@@ -219,7 +219,9 @@
                 },
                 lanjutKeKisiKisi() {
                     const guru = (this.namaGuru || '').trim();
-                    if (!guru || !this.kelas || !this.semester || !this.selectedMapel) return alert("Lengkapi Identitas!");
+                    if (!guru || !this.kelas || !this.semester || !this.selectedMapel) {
+                        return alert("Lengkapi Identitas (Mapel, Guru, Kelas, Semester)!");
+                    }
                     this.step = 2; window.scrollTo(0, 0);
                 },
                 tambahSoal() { this.soalList.push({ kd: '', level: '', indikator: '', bentuk: '' }); setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 100); },
@@ -231,7 +233,7 @@
                     try {
                         const dataToSave = {
                             config: { mapel: this.selectedMapel, kelas: this.kelas, semester: this.semester, guru: this.namaGuru },
-                            // sekolah: { logoBase64: this.sekolah.logoBase64 }, // LOGO HAPUS DR DB
+                            // logoBase64 tidak perlu disimpan di DB, ambil dari repo saat generate PDF
                             soalList: this.soalList,
                             uploadedBy: this.currentUser.username,
                             timestamp: new Date().toISOString()
@@ -243,6 +245,8 @@
                         this.editingId = null; this.resetData();
                     } catch(e) { alert("Gagal: " + e.message); } finally { this.isLoading = false; }
                 },
+                
+                handleLogoUpload() {}, // Disabled
 
                 generatePDF(data) {
                     try {
@@ -251,14 +255,14 @@
                         const pageWidth = doc.internal.pageSize.getWidth();
                         const pageHeight = doc.internal.pageSize.getHeight();
 
-                        // 1. SIDEBAR IMAGE
+                        // 1. SIDEBAR IMAGE (KOP.PNG) - LEBIH KECIL
                         if (this.sidebarLogo) {
-                            // x=1.5mm (sekitar 4-5pt), width=33mm (agar tidak terlalu besar), height=full
-                            doc.addImage(this.sidebarLogo, 'PNG', 1.5, 0, 33, pageHeight);
+                            // x=1.8mm (5pt), width=20mm (40% smaller)
+                            doc.addImage(this.sidebarLogo, 'PNG', 1.8, 0, 20, pageHeight);
                         }
 
-                        // Margin konten digeser ke kanan
-                        const contentX = 45; 
+                        // Margin konten digeser (agar tidak tertimpa sidebar)
+                        const contentX = 35;
 
                         // 2. JUDUL & IDENTITAS (TANPA HEADER SEKOLAH)
                         let y = 30;
