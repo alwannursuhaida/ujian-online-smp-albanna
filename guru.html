@@ -238,6 +238,7 @@
                     try {
                         const dataToSave = {
                             config: { mapel: this.selectedMapel, kelas: this.kelas, semester: this.semester, guru: this.namaGuru },
+                            // No logo stored in DB
                             soalList: this.soalList,
                             uploadedBy: this.currentUser.username,
                             timestamp: new Date().toISOString()
@@ -257,7 +258,7 @@
                         const pageWidth = doc.internal.pageSize.getWidth();
                         const pageHeight = doc.internal.pageSize.getHeight();
 
-                        // 1. SIDEBAR IMAGE (KOP.PNG)
+                        // 1. SIDEBAR IMAGE (KOP.PNG) - FIXED LAYOUT
                         const drawSidebar = () => {
                             if (this.sidebarLogo) {
                                 // X=0, Y=0, W=45.9, H=297 (Full Height A4)
@@ -265,13 +266,13 @@
                             }
                         };
 
-                        // Margin konten digeser ke kanan
+                        // Margin konten digeser (agar tidak tertimpa sidebar 45.9mm + margin)
                         const contentX = 50; 
 
                         // Draw Sidebar on Page 1
                         drawSidebar();
 
-                        // 2. JUDUL (Tanpa Header Sekolah)
+                        // 2. JUDUL & IDENTITAS (TANPA HEADER TEKS SEKOLAH)
                         let y = 30;
                         doc.setFont("helvetica", "bold"); doc.setFontSize(12);
                         doc.text(`KISI-KISI ${data.config.mapel.toUpperCase()}`, (pageWidth + contentX)/2 - 10, y, {align:'center'});
@@ -286,12 +287,14 @@
                         doc.autoTable({
                             startY: y + 20,
                             margin: { left: contentX, right: 15 },
-                            head: [['No', 'TP (Tujuan Pemb.)', 'Level', 'Indikator', 'Bentuk']],
+                            head: [['No', 'Tujuan Pembelajaran', 'Level', 'Indikator', 'Bentuk']],
                             body: data.soalList.map((s, i) => [i+1, s.kd, s.level, s.indikator, s.bentuk]),
                             theme: 'grid',
+                            headStyles: { fillColor: [30, 58, 138], textColor: [255, 255, 255], fontStyle: 'bold' },
                             styles: { fontSize: 9, cellPadding: 2 },
                             columnStyles: { 0: { cellWidth: 10 }, 2: { cellWidth: 20 }, 4: { cellWidth: 25 } },
                             didDrawPage: function (data) {
+                                // Draw Sidebar di setiap halaman baru
                                 if (data.pageNumber > 1) {
                                     drawSidebar();
                                 }
