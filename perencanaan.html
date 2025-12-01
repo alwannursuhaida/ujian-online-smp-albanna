@@ -490,8 +490,6 @@
                     catch(e) { 
                         this.currentUser = { username: 'tamu', name: 'Mode Tamu' }; 
                         this.storageKey = `rpp_library_tamu`;
-                        // DEFAULT LOGO FOR TAMU
-                        this.sekolah.logoBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="; 
                         this.loadFromLibrary();
                         return;
                     }
@@ -500,7 +498,7 @@
                 this.currentUser = JSON.parse(session);
                 this.storageKey = `rpp_library_${this.currentUser.username}`;
                 
-                // LOAD OTOMATIS
+                // LOAD OTOMATIS KOP
                 this.loadSidebarImage();
                 this.loadFromLibrary();
             },
@@ -630,7 +628,7 @@
                 addLampiran() { this.form.lampiran.push({ nama: '', keterangan: '' }); },
                 removeLampiran(index) { if(this.form.lampiran.length > 1) this.form.lampiran.splice(index, 1); },
                 
-                // --- PDF GENERATION ---
+                // --- PDF GENERATION (SIDEBAR FIXED) ---
                 generatePDF(dataRaw) {
                     // Clean Data
                     const data = JSON.parse(JSON.stringify(dataRaw));
@@ -642,13 +640,13 @@
                     // FUNGSI GAMBAR SIDEBAR (Agar muncul di setiap halaman)
                     const drawSidebar = () => {
                         if (this.sidebarLogo) {
-                            // Posisi & Ukuran Sesuai Request: x=8.9mm, y=16.6mm, w=29.3mm, h=263.7mm
-                            doc.addImage(this.sidebarLogo, 'PNG', 8.9, 16.6, 29.3, 263.7);
+                            // Posisi & Ukuran Sesuai Guru.html: x=0, y=0, w=45.9mm, h=297mm
+                            doc.addImage(this.sidebarLogo, 'PNG', 0, 0, 45.9, 297);
                         }
                     };
 
-                    // Margin konten digeser ke kanan agar tidak tertimpa sidebar
-                    const contentX = 45; 
+                    // Margin konten digeser ke kanan agar tidak tertimpa sidebar (45.9mm + margin)
+                    const contentX = 50; 
 
                     // Draw Sidebar on Page 1
                     drawSidebar();
@@ -679,6 +677,7 @@
 
                     const fmtPrinsip = (t, p) => p.length ? `${t} (${p.join(', ')})` : t;
 
+                    // TABLE ROWS (Remove Header Row)
                     const rows = [
                         [{content: '1. IDENTIFIKASI', colSpan: 2, styles: {fillColor: [230, 230, 230], fontStyle: 'bold', halign: 'center'}}],
                         ['Identitas', `Nama: ${data.nama}\nFase: ${data.fase} | Waktu: ${data.waktu}\nJudul: ${data.lingkupMateri}`],
@@ -704,8 +703,11 @@
                     ];
 
                     doc.autoTable({
-                        startY: 45, margin: { left: contentX, right: 15 },
-                        head: [['Komponen', 'Deskripsi']], body: rows,
+                        startY: y + 15, 
+                        margin: { left: contentX, right: 15 },
+                        // HAPUS HEADER
+                        // head: [['Komponen', 'Deskripsi']], 
+                        body: rows,
                         theme: 'grid', 
                         columnStyles: { 0: { cellWidth: 45, fontStyle: 'bold' } },
                         styles: { fontSize: 9, cellPadding: 3 },
