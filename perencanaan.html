@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perencanaan Pembelajaran - SMP ALBANNA</title>
+    
+    <!-- FAVICON -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     
@@ -21,10 +25,7 @@
         .animate-float { animation: float 6s ease-in-out infinite; }
         @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-20px); } 100% { transform: translateY(0px); } }
         
-        .bg-glass {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-        }
+        .bg-glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
 
         .details-grid {
             display: grid;
@@ -104,7 +105,6 @@
                             <button @click="viewPlan(index)" class="py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition"><i class="fas fa-eye"></i> Lihat</button>
                             <button @click="deletePlan(index)" class="py-2 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition"><i class="fas fa-trash"></i> Hapus</button>
                         </div>
-                        <!-- TOMBOL PDF YANG DIPERBAIKI -->
                         <button @click.stop="generatePDF(plan)" class="w-full mt-2 py-2 bg-green-50 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 transition flex items-center justify-center gap-1 relative z-10 cursor-pointer border border-green-100">
                             <i class="fas fa-file-pdf"></i> Ekstrak PDF
                         </button>
@@ -131,7 +131,6 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- PILIH MAPEL -->
                         <div class="md:col-span-2">
                             <label class="block text-sm font-bold text-gray-700 mb-2">Mata Pelajaran <span class="text-red-500">*</span></label>
                             <select v-model="form.mapel" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none font-bold text-blue-900">
@@ -139,7 +138,6 @@
                                 <option v-for="m in mapelList" :value="m">{{ m }}</option>
                             </select>
                         </div>
-
                         <div class="md:col-span-2">
                             <label class="block text-sm font-bold text-gray-700 mb-2">Lingkup Materi (Judul Modul) <span class="text-red-500">*</span></label>
                             <input v-model="form.lingkupMateri" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 outline-none font-bold text-lg text-blue-900 placeholder-gray-300" placeholder="Contoh: Sistem Pencernaan Manusia">
@@ -218,7 +216,7 @@
                             <div><label class="font-bold text-teal-800 text-sm mb-1 block">Lintas Disiplin Ilmu</label><textarea v-model="form.lintasDisiplin" rows="2" class="w-full p-3 border rounded-lg bg-teal-50/50 focus:bg-white transition text-sm"></textarea></div>
                         </div>
 
-                        <!-- TUJUAN PEMBELAJARAN & INDIKATOR -->
+                        <!-- TUJUAN PEMBELAJARAN & INDIKATOR (FIXED - DUPLICATE REMOVED) -->
                         <div class="space-y-4 bg-teal-50 p-4 rounded-xl border border-teal-200">
                             <h3 class="font-bold text-teal-900 flex items-center gap-2"><i class="fas fa-bullseye"></i> Tujuan Pembelajaran & Indikator</h3>
                             <div v-for="(item, index) in form.tujuanPembelajaran" :key="index" class="bg-white p-4 rounded-lg border border-teal-200 shadow-sm relative">
@@ -525,13 +523,16 @@
                 },
                 
                 saveToLibrary(planData) {
+                    // Create deep copy to remove Vue reactivity proxies before saving
+                    const cleanData = JSON.parse(JSON.stringify(planData));
+                    
                     if (this.editingIndex !== null) {
                         // Update existing
-                        this.savedPlans[this.editingIndex] = { ...planData, lastUpdated: new Date().toISOString() };
+                        this.savedPlans[this.editingIndex] = { ...cleanData, lastUpdated: new Date().toISOString() };
                         alert("✅ Perubahan disimpan!");
                     } else {
                         // Create new
-                        this.savedPlans.unshift({ ...planData, id: Date.now(), lastUpdated: new Date().toISOString() });
+                        this.savedPlans.unshift({ ...cleanData, id: Date.now(), lastUpdated: new Date().toISOString() });
                         alert("✅ Perencanaan baru berhasil dibuat!");
                     }
                     localStorage.setItem(this.storageKey, JSON.stringify(this.savedPlans));
@@ -613,9 +614,10 @@
 
                 saveFinal() {
                     if (!this.form.lingkupMateri) return alert("Judul Lingkup Materi belum diisi!");
-                    this.saveToLibrary(this.form);
-                    this.generatePDF(this.form); // Auto download
-                    this.switchView('list');
+                    // Pass a clean copy to generatePDF and saveToLibrary
+                    const cleanForm = JSON.parse(JSON.stringify(this.form));
+                    this.saveToLibrary(cleanForm);
+                    this.generatePDF(cleanForm); 
                 },
 
                 resetForm() {
@@ -642,65 +644,105 @@
                 removeLampiran(index) { if(this.form.lampiran.length > 1) this.form.lampiran.splice(index, 1); },
                 
                 // --- PDF GENERATION ---
-                generatePDF(data) {
+                generatePDF(dataRaw) {
+                    // Pastikan data bersih dari proxy
+                    const data = JSON.parse(JSON.stringify(dataRaw));
+                    
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
                     const pageWidth = doc.internal.pageSize.getWidth();
-                    const pageHeight = doc.internal.pageSize.getHeight();
-
-                    // SIDEBAR KOP
-                    if (this.sidebarLogo) doc.addImage(this.sidebarLogo, 'PNG', 8.9, 16.6, 29.3, 263.7);
+                    
+                    // SIDEBAR KOP (LOOP SETIAP HALAMAN)
+                    const drawSidebar = () => {
+                         if (this.sekolah.logoBase64) {
+                            doc.addImage(this.sekolah.logoBase64, 'PNG', 8.9, 16.6, 29.3, 263.7);
+                        }
+                    };
 
                     const contentX = 45; // Margin Kiri
 
-                    // JUDUL MODUL (TANPA HEADER SEKOLAH)
-                    doc.setFont("helvetica", "bold"); doc.setFontSize(14);
-                    doc.text("MODUL AJAR / PERENCANAAN PEMBELAJARAN", (pageWidth+contentX)/2, 30, {align:'center'});
+                    // Draw Sidebar on Page 1
+                    drawSidebar();
+
+                    // HEADER
+                    doc.setFontSize(16); doc.setFont("helvetica", "bold");
+                    doc.text("MODUL AJAR / PERENCANAAN PEMBELAJARAN", 105, 45, {align:'center'});
                     doc.setFontSize(12);
-                    doc.text(`SMP ALBANNA - ${data.mapel}`, (pageWidth+contentX)/2, 37, {align:'center'});
+                    doc.text(`SMP ALBANNA - ${data.mapel}`, 105, 52, {align:'center'});
+                    doc.line(contentX, 55, pageWidth-10, 55);
 
-                    // FORMAT TP
+                    // IDENTITAS
+                    doc.setFontSize(10); doc.setFont("helvetica", "normal");
+                    doc.text(`Judul: ${data.lingkupMateri}`, contentX, 62);
+                    doc.text(`Fase: ${data.fase}  |  Waktu: ${data.waktu}`, contentX, 67);
+                    doc.text(`Guru: ${data.nama}`, contentX, 72);
+
+                    // FORMAT TP UNTUK TABEL
                     let tpString = '';
-                    data.tujuanPembelajaran.forEach((t, i) => {
-                        tpString += `${i+1}. ${t.text}\n`;
-                        t.indikators.forEach(ind => tpString += `   - ${ind.text}\n`);
-                    });
+                    if (data.tujuanPembelajaran && Array.isArray(data.tujuanPembelajaran)) {
+                        data.tujuanPembelajaran.forEach((t, i) => {
+                            tpString += `${i+1}. ${t.text}\n`;
+                            if (t.indikators && Array.isArray(t.indikators)) {
+                                t.indikators.forEach(ind => {
+                                    tpString += `   - ${ind.text}\n`;
+                                });
+                            }
+                            tpString += '\n';
+                        });
+                    }
 
-                    const fmtPrinsip = (t, p) => p.length ? `${t} (${p.join(', ')})` : t;
+                    const fmtPrinsip = (title, prinsip) => {
+                        if (!prinsip || prinsip.length === 0) return title;
+                        return `${title} (${prinsip.join(', ')})`;
+                    };
 
+                    // TABLE CONTENT
                     const rows = [
                         [{content: '1. IDENTIFIKASI', colSpan: 2, styles: {fillColor: [220, 220, 220], fontStyle: 'bold'}}],
-                        ['Identitas', `Nama: ${data.nama}\nFase: ${data.fase} | Waktu: ${data.waktu}\nJudul: ${data.lingkupMateri}`],
-                        ['Peserta Didik', data.pesertaDidik], ['Materi', data.materi], ['Profil Lulusan', data.profil.join(', ')],
+                        ['Peserta Didik', data.pesertaDidik || '-'],
+                        ['Materi Pelajaran', data.materi || '-'],
+                        ['Profil Lulusan', data.profil ? data.profil.join(', ') : '-'],
                         
                         [{content: '2. DESAIN PEMBELAJARAN', colSpan: 2, styles: {fillColor: [220, 220, 220], fontStyle: 'bold'}}],
-                        ['Capaian Pembelajaran', data.cp], ['Lintas Disiplin', data.lintasDisiplin], ['Tujuan & Indikator', tpString],
-                        ['Topik', data.topik], ['Pedagogi', data.pedagogi], ['Kemitraan', data.kemitraan],
-                        ['Lingkungan', data.lingkungan], ['Digital', data.digital],
-
+                        ['Capaian Pembelajaran', data.cp || '-'],
+                        ['Lintas Disiplin Ilmu', data.lintasDisiplin || '-'],
+                        ['Tujuan & Indikator', tpString || '-'],
+                        ['Topik Pembelajaran', data.topik || '-'],
+                        ['Praktik Pedagogis', data.pedagogi || '-'],
+                        ['Kemitraan Pembelajaran', data.kemitraan || '-'],
+                        ['Lingkungan Pembelajaran', data.lingkungan || '-'],
+                        ['Pemanfaatan Digital', data.digital || '-'],
+                        
                         [{content: '3. PENGALAMAN BELAJAR', colSpan: 2, styles: {fillColor: [220, 220, 220], fontStyle: 'bold'}}],
-                        [fmtPrinsip('Awal', data.pengalamanAwal.prinsip), data.pengalamanAwal.deskripsi],
-                        [fmtPrinsip('Inti (Paham)', data.pengalamanIntiMemahami.prinsip), data.pengalamanIntiMemahami.deskripsi],
-                        [fmtPrinsip('Inti (Aplikasi)', data.pengalamanIntiMengaplikasi.prinsip), data.pengalamanIntiMengaplikasi.deskripsi],
-                        [fmtPrinsip('Inti (Refleksi)', data.pengalamanIntiMerefleksi.prinsip), data.pengalamanIntiMerefleksi.deskripsi],
-                        [fmtPrinsip('Penutup', data.pengalamanPenutup.prinsip), data.pengalamanPenutup.deskripsi],
-
-                        [{content: '4. ASESMEN', colSpan: 2, styles: {fillColor: [220, 220, 220], fontStyle: 'bold'}}],
-                        ['Awal', `${data.asesmenAwal.deskripsi}\n[${data.asesmenAwal.metode.join(', ')}]`],
-                        ['Proses', `${data.asesmenProses.deskripsi}\n[${data.asesmenProses.metode.join(', ')}]`],
-                        ['Akhir', `${data.asesmenAkhir.deskripsi}\n[${data.asesmenAkhir.metode.join(', ')}]`],
-                        ['Lampiran', data.lampiran.map(l=>`${l.nama}: ${l.keterangan}`).join('\n')]
+                        [fmtPrinsip('Kegiatan Awal', data.pengalamanAwal.prinsip), data.pengalamanAwal.deskripsi],
+                        [fmtPrinsip('Inti - Memahami', data.pengalamanIntiMemahami.prinsip), data.pengalamanIntiMemahami.deskripsi],
+                        [fmtPrinsip('Inti - Mengaplikasi', data.pengalamanIntiMengaplikasi.prinsip), data.pengalamanIntiMengaplikasi.deskripsi],
+                        [fmtPrinsip('Inti - Merefleksi', data.pengalamanIntiMerefleksi.prinsip), data.pengalamanIntiMerefleksi.deskripsi],
+                        [fmtPrinsip('Kegiatan Penutup', data.pengalamanPenutup.prinsip), data.pengalamanPenutup.deskripsi],
+                        
+                        [{content: '4. ASESMEN & LAMPIRAN', colSpan: 2, styles: {fillColor: [220, 220, 220], fontStyle: 'bold'}}],
+                        ['Asesmen Awal', `${data.asesmenAwal.deskripsi}\n[${data.asesmenAwal.metode.join(', ')}]`],
+                        ['Asesmen Proses', `${data.asesmenProses.deskripsi}\n[${data.asesmenProses.metode.join(', ')}]`],
+                        ['Asesmen Akhir', `${data.asesmenAkhir.deskripsi}\n[${data.asesmenAkhir.metode.join(', ')}]`],
+                        ['Lampiran', data.lampiran ? data.lampiran.map(l=>`${l.nama}: ${l.keterangan}`).join('\n') : '-']
                     ];
 
                     doc.autoTable({
-                        startY: 45, margin: { left: contentX },
-                        head: [['Komponen', 'Deskripsi']], body: rows,
-                        theme: 'grid', columnStyles: { 0: { cellWidth: 45, fontStyle: 'bold' } },
-                        styles: { fontSize: 9, cellPadding: 3 }
+                        startY: 78,
+                        margin: { left: contentX },
+                        head: [['Komponen', 'Deskripsi / Indikator']],
+                        body: rows,
+                        theme: 'grid',
+                        columnStyles: { 0: { cellWidth: 60, fontStyle: 'bold' } },
+                        styles: { fontSize: 9, cellPadding: 3 },
+                        didDrawPage: function (data) {
+                            // Draw sidebar on every new page
+                            drawSidebar();
+                        }
                     });
 
                     let finalY = doc.lastAutoTable.finalY + 20;
-                    if (finalY > 250) { doc.addPage(); finalY = 20; }
+                    if (finalY > 250) { doc.addPage(); finalY = 20; drawSidebar(); }
                     const ttdX = pageWidth - 50;
                     doc.text(`Denpasar, ${new Date().toLocaleDateString('id-ID')}`, ttdX, finalY, {align:'center'});
                     doc.text("Guru Mata Pelajaran,", ttdX, finalY+5, {align:'center'});
