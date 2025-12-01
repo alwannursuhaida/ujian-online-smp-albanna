@@ -104,8 +104,8 @@
                             <button @click="viewPlan(index)" class="py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition"><i class="fas fa-eye"></i> Lihat</button>
                             <button @click="deletePlan(index)" class="py-2 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition"><i class="fas fa-trash"></i> Hapus</button>
                         </div>
-                        <!-- TOMBOL PDF DI LUAR GRID UTAMA -->
-                        <button @click="generatePDF(plan)" class="w-full mt-2 py-2 bg-green-50 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 transition flex items-center justify-center gap-1">
+                        <!-- TOMBOL PDF YANG DIPERBAIKI -->
+                        <button @click.stop="generatePDF(plan)" class="w-full mt-2 py-2 bg-green-50 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 transition flex items-center justify-center gap-1 relative z-10 cursor-pointer border border-green-100">
                             <i class="fas fa-file-pdf"></i> Ekstrak PDF
                         </button>
                     </div>
@@ -278,10 +278,12 @@
                         <button @click="step = 5" class="text-sm text-gray-400 hover:text-indigo-700 font-bold"><i class="fas fa-arrow-left"></i> Kembali</button>
                     </div>
                     <div class="space-y-6">
+                        <!-- Awal -->
                         <div class="bg-indigo-50 p-5 rounded-xl border border-indigo-100">
                             <div class="flex justify-between mb-2 items-center"><h3 class="font-bold text-indigo-900"><i class="fas fa-door-open mr-2"></i>A. Kegiatan Awal</h3><div class="flex gap-2"><label v-for="p in prinsip" :key="'a'+p" class="text-[10px] bg-white px-2 py-0.5 rounded cursor-pointer border"><input type="checkbox" :value="p" v-model="form.pengalamanAwal.prinsip"> {{p}}</label></div></div>
                             <textarea v-model="form.pengalamanAwal.deskripsi" rows="3" class="w-full p-3 border rounded-lg text-sm" placeholder="Deskripsi kegiatan..."></textarea>
                         </div>
+                        <!-- Inti -->
                         <div class="border-2 border-dashed border-gray-300 p-5 rounded-xl space-y-4">
                             <h3 class="font-bold text-gray-700"><i class="fas fa-layer-group mr-2"></i>B. Kegiatan Inti</h3>
                             <div v-for="(sec, key) in {Memahami: 'blue', Mengaplikasi: 'yellow', Merefleksi: 'purple'}" :key="key" :class="`pl-4 border-l-4 border-${sec}-400`">
@@ -289,6 +291,7 @@
                                 <textarea v-model="form['pengalamanInti'+key].deskripsi" rows="2" class="w-full p-2 border rounded text-sm"></textarea>
                             </div>
                         </div>
+                        <!-- Penutup -->
                         <div class="bg-green-50 p-5 rounded-xl border border-green-100">
                             <div class="flex justify-between mb-2 items-center"><h3 class="font-bold text-green-900"><i class="fas fa-flag-checkered mr-2"></i>C. Kegiatan Penutup</h3><div class="flex gap-2"><label v-for="p in prinsip" :key="'t'+p" class="text-[10px] bg-white px-2 py-0.5 rounded cursor-pointer border"><input type="checkbox" :value="p" v-model="form.pengalamanPenutup.prinsip"> {{p}}</label></div></div>
                             <textarea v-model="form.pengalamanPenutup.deskripsi" rows="3" class="w-full p-3 border rounded-lg text-sm" placeholder="Deskripsi kegiatan..."></textarea>
@@ -335,19 +338,99 @@
             </div>
         </transition>
 
-        <!-- MODAL VIEW -->
-        <div v-if="viewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white w-full max-w-4xl h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-                <div class="p-5 border-b bg-slate-50 flex justify-between items-center">
-                    <div><h3 class="font-bold text-xl text-slate-800">{{ viewModal.lingkupMateri }}</h3><p class="text-xs text-gray-500">{{ viewModal.fase }} | {{ viewModal.nama }}</p></div>
-                    <button @click="viewModal = null" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button>
-                </div>
-                <div class="flex-1 overflow-y-auto p-8 bg-gray-50 space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border"><h4 class="font-bold text-blue-800 border-b pb-2 mb-2">I. Identitas</h4><div class="grid details-grid"><div class="details-label">Nama Penyusun</div><div class="details-colon">:</div><div class="details-value">{{ viewModal.nama }}</div><div class="details-label">Mata Pelajaran</div><div class="details-colon">:</div><div class="details-value">{{ viewModal.mapel }}</div><div class="details-label">Lingkup Materi</div><div class="details-colon">:</div><div class="details-value">{{ viewModal.lingkupMateri }}</div></div></div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border"><h4 class="font-bold text-green-800 border-b pb-2 mb-2">II. Tujuan & Indikator</h4><div v-for="(t, i) in viewModal.tujuanPembelajaran" :key="i" class="mb-2"><p class="font-bold text-sm">{{i+1}}. {{t.text}}</p><ul class="list-disc pl-5 text-xs text-gray-600"><li v-for="ind in t.indikators">{{ind.text}}</li></ul></div></div>
+        <!-- MODAL VIEW (READ ONLY) -->
+        <transition name="fade">
+            <div v-if="viewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div class="bg-white w-full max-w-4xl h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+                    <div class="p-5 border-b bg-slate-50 flex justify-between items-center">
+                        <div><h3 class="font-bold text-xl text-slate-800">{{ viewModal.lingkupMateri }}</h3><p class="text-xs text-gray-500">{{ viewModal.fase }} | {{ viewModal.nama }}</p></div>
+                        <button @click="viewModal = null" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-8 bg-gray-50 space-y-6">
+                        
+                        <!-- 1. IDENTITAS -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border">
+                            <h4 class="font-bold text-blue-800 border-b pb-4 mb-4">I. IDENTITAS</h4>
+                            <div class="grid details-grid">
+                                <div class="details-label">Nama Penyusun</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.nama }}</div>
+                                <div class="details-label">Institusi</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.institusi }}</div>
+                                <div class="details-label">Fase / Kelas</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.fase }}</div>
+                                <div class="details-label">Mata Pelajaran</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.mapel }}</div>
+                                <div class="details-label">Lingkup Materi</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.lingkupMateri }}</div>
+                                <div class="details-label">Alokasi Waktu</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.waktu }}</div>
+                            </div>
+                        </div>
+
+                        <!-- 2. IDENTIFIKASI -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border">
+                            <h4 class="font-bold text-blue-800 border-b pb-4 mb-4">II. IDENTIFIKASI</h4>
+                            <div class="grid details-grid">
+                                <div class="details-label">Peserta Didik</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.pesertaDidik }}</div>
+                                <div class="details-label">Materi Pelajaran</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.materi }}</div>
+                                <div class="details-label">Profil Lulusan</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.profil.join(', ') }}</div>
+                            </div>
+                        </div>
+
+                        <!-- 3. DESAIN PEMBELAJARAN -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border">
+                            <h4 class="font-bold text-blue-800 border-b pb-4 mb-4">III. DESAIN PEMBELAJARAN</h4>
+                            <div class="grid details-grid">
+                                <div class="details-label">Capaian Pembelajaran</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.cp }}</div>
+                                <div class="details-label">Lintas Disiplin Ilmu</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.lintasDisiplin }}</div>
+                                
+                                <!-- TAMPILKAN TP & ITP SECARA LIST -->
+                                <div class="details-label">Tujuan & Indikator</div> <div class="details-colon">:</div> 
+                                <div class="details-value">
+                                    <div v-for="(t, i) in viewModal.tujuanPembelajaran" :key="i" class="mb-3">
+                                        <p class="font-bold">{{ i+1 }}. {{ t.text }}</p>
+                                        <ul class="list-disc pl-5 text-sm text-gray-600">
+                                            <li v-for="ind in t.indikators">{{ ind.text }}</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="details-label">Topik Pembelajaran</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.topik }}</div>
+                                <div class="details-label">Praktik Pedagogis</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.pedagogi }}</div>
+                                <div class="details-label">Kemitraan Pembelajaran</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.kemitraan }}</div>
+                                <div class="details-label">Lingkungan Pembelajaran</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.lingkungan }}</div>
+                                <div class="details-label">Pemanfaatan Digital</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.digital }}</div>
+                            </div>
+                        </div>
+
+                        <!-- 4. PENGALAMAN BELAJAR -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border">
+                            <h4 class="font-bold text-blue-800 border-b pb-4 mb-4">IV. PENGALAMAN BELAJAR</h4>
+                            <div class="grid details-grid">
+                                <div class="details-label">A. Kegiatan Awal</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.pengalamanAwal.deskripsi }} ({{ viewModal.pengalamanAwal.prinsip.join(', ') }})</div>
+                                <div class="details-label">B. Kegiatan Inti</div> <div class="details-colon">:</div> 
+                                <div class="details-value">
+                                    1. Memahami: {{ viewModal.pengalamanIntiMemahami.deskripsi }} ({{ viewModal.pengalamanIntiMemahami.prinsip.join(', ') }})<br><br>
+                                    2. Mengaplikasi: {{ viewModal.pengalamanIntiMengaplikasi.deskripsi }} ({{ viewModal.pengalamanIntiMengaplikasi.prinsip.join(', ') }})<br><br>
+                                    3. Merefleksi: {{ viewModal.pengalamanIntiMerefleksi.deskripsi }} ({{ viewModal.pengalamanIntiMerefleksi.prinsip.join(', ') }})
+                                </div>
+                                <div class="details-label">C. Kegiatan Penutup</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.pengalamanPenutup.deskripsi }} ({{ viewModal.pengalamanPenutup.prinsip.join(', ') }})</div>
+                            </div>
+                        </div>
+
+                        <!-- 5. ASESMEN -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border">
+                            <h4 class="font-bold text-blue-800 border-b pb-4 mb-4">V. ASESMEN & LAMPIRAN</h4>
+                            <div class="grid details-grid">
+                                <div class="details-label">Asesmen Awal</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.asesmenAwal.deskripsi }} (Metode: {{ viewModal.asesmenAwal.metode.join(', ') }})</div>
+                                <div class="details-label">Asesmen Proses</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.asesmenProses.deskripsi }} (Metode: {{ viewModal.asesmenProses.metode.join(', ') }})</div>
+                                <div class="details-label">Asesmen Akhir</div> <div class="details-colon">:</div> <div class="details-value">{{ viewModal.asesmenAkhir.deskripsi }} (Metode: {{ viewModal.asesmenAkhir.metode.join(', ') }})</div>
+                                <div class="details-label">Lampiran</div> <div class="details-colon">:</div> 
+                                <div class="details-value">
+                                    <ul class="list-disc pl-4">
+                                        <li v-for="lamp in viewModal.lampiran">{{ lamp.nama }} - {{ lamp.keterangan }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </transition>
 
     </div>
 
@@ -357,10 +440,186 @@
         createApp({
             data() {
                 return {
-                    currentUser: null, storageKey: '', viewMode: 'list', step: 1, savedPlans: [], viewModal: null, editingIndex: null,
-                    sidebarLogo: null, // KOP
-                    mapelList: ['AGAMA ISLAM', 'BAHASA ARAB', 'BAHASA BALI', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 'INFORMATIKA', 'IPA', 'IPS', 'KKA', 'MATEMATIKA', 'OLAHRAGA', 'PKN', 'SENI BUDAYA'],
+                    currentUser: null,
+                    storageKey: '',
+                    viewMode: 'list', // 'list' or 'form'
+                    step: 1,
+                    savedPlans: [],
+                    viewModal: null,
+                    editingIndex: null, // Jika null berarti Mode Baru
+                    sekolah: { logoBase64: null, logoPreview: null },
+                    
+                    // LIST MAPEL LENGKAP
+                    mapelList: [
+                        'AGAMA ISLAM', 'BAHASA ARAB', 'BAHASA BALI', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 
+                        'INFORMATIKA', 'IPA', 'IPS', 'KKA', 'MATEMATIKA', 'OLAHRAGA', 'PKN', 'SENI BUDAYA'
+                    ],
+
+                    // FORM DATA
                     form: {
+                        mapel: '', lingkupMateri: '', nama: '', institusi: 'SMP Albanna', fase: '', waktu: '',
+                        pesertaDidik: '', materi: '', profil: [],
+                        cp: '', lintasDisiplin: '', 
+                        // UPDATE: TP ARRAY
+                        tujuanPembelajaran: [ { text: '', indikators: [{ text: '' }] } ],
+                        topik: '', pedagogi: '', kemitraan: '', lingkungan: '', digital: '',
+                        pengalamanAwal: { prinsip: [], deskripsi: '' },
+                        pengalamanIntiMemahami: { prinsip: [], deskripsi: '' },
+                        pengalamanIntiMengaplikasi: { prinsip: [], deskripsi: '' },
+                        pengalamanIntiMerefleksi: { prinsip: [], deskripsi: '' },
+                        pengalamanPenutup: { prinsip: [], deskripsi: '' },
+                        asesmenAwal: { metode: [], deskripsi: '' },
+                        asesmenProses: { metode: [], deskripsi: '' },
+                        asesmenAkhir: { metode: [], deskripsi: '' },
+                        lampiran: [{ nama: '', keterangan: '' }]
+                    },
+                    // OPTIONS
+                    prinsip: ['Berkesadaran', 'Bermakna', 'Menggembirakan'],
+                    profilOptions: ["Keimanan dan Ketakwaan", "Kewargaan", "Penalaran Kritis", "Kreativitas", "Kolaborasi", "Kemandirian", "Kesehatan", "Komunikasi"],
+                    methodsAwal: ['Tanya Jawab', 'Kuis', 'Mind Map', 'Observasi'],
+                    methodsProses: ['Observasi', 'Penilaian Diri', 'Antar Teman', 'Kinerja', 'Proyek'],
+                    methodsAkhir: ['Tes Tulis', 'Tes Lisan', 'Produk', 'Portofolio']
+                }
+            },
+            mounted() {
+                // CEK SESSION
+                const session = sessionStorage.getItem('cbt_user_session');
+                if (!session) {
+                    try { window.location.href = 'index.html'; } 
+                    catch(e) { 
+                        this.currentUser = { username: 'tamu', name: 'Mode Tamu' }; 
+                        this.storageKey = `rpp_library_tamu`;
+                        // DEFAULT LOGO FOR TAMU
+                        this.sekolah.logoBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="; 
+                        this.loadFromLibrary();
+                        return;
+                    }
+                    return;
+                }
+                this.currentUser = JSON.parse(session);
+                this.storageKey = `rpp_library_${this.currentUser.username}`;
+                
+                // GENERATE DEFAULT LOGO (TEXT)
+                this.createDefaultLogo();
+
+                this.loadFromLibrary();
+            },
+            methods: {
+                // --- LOGO AUTOMATION ---
+                createDefaultLogo() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 300; canvas.height = 100;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = "white"; ctx.fillRect(0, 0, 300, 100);
+                    ctx.fillStyle = "#1e3a8a"; ctx.font = "bold 30px Arial";
+                    ctx.fillText("SMP ALBANNA", 20, 60);
+                    this.sekolah.logoBase64 = canvas.toDataURL("image/png");
+                },
+
+                // --- NAVIGATION & STORAGE ---
+                switchView(mode) { this.viewMode = mode; if(mode === 'list') this.resetForm(); },
+                
+                loadFromLibrary() {
+                    const data = localStorage.getItem(this.storageKey);
+                    if(data) this.savedPlans = JSON.parse(data);
+                },
+                
+                saveToLibrary(planData) {
+                    if (this.editingIndex !== null) {
+                        // Update existing
+                        this.savedPlans[this.editingIndex] = { ...planData, lastUpdated: new Date().toISOString() };
+                        alert("✅ Perubahan disimpan!");
+                    } else {
+                        // Create new
+                        this.savedPlans.unshift({ ...planData, id: Date.now(), lastUpdated: new Date().toISOString() });
+                        alert("✅ Perencanaan baru berhasil dibuat!");
+                    }
+                    localStorage.setItem(this.storageKey, JSON.stringify(this.savedPlans));
+                    this.switchView('list');
+                },
+
+                deletePlan(index) {
+                    if(confirm("Hapus perencanaan ini?")) {
+                        this.savedPlans.splice(index, 1);
+                        localStorage.setItem(this.storageKey, JSON.stringify(this.savedPlans));
+                    }
+                },
+
+                editPlan(index) {
+                    this.form = JSON.parse(JSON.stringify(this.savedPlans[index])); // Deep copy
+                    this.editingIndex = index;
+                    this.viewMode = 'form';
+                    this.step = 1;
+                },
+
+                viewPlan(index) {
+                    this.viewModal = this.savedPlans[index];
+                },
+
+                createNew() {
+                    this.resetForm();
+                    this.editingIndex = null;
+                    this.viewMode = 'form';
+                    this.step = 1;
+                },
+
+                // --- MANAJEMEN TP & INDIKATOR ---
+                addTP() {
+                    this.form.tujuanPembelajaran.push({ text: '', indikators: [{ text: '' }] });
+                },
+                removeTP(index) {
+                    if (this.form.tujuanPembelajaran.length > 1) {
+                        this.form.tujuanPembelajaran.splice(index, 1);
+                    }
+                },
+                addIndikator(tpIndex) {
+                    this.form.tujuanPembelajaran[tpIndex].indikators.push({ text: '' });
+                },
+                removeIndikator(tpIndex, indIndex) {
+                    if (this.form.tujuanPembelajaran[tpIndex].indikators.length > 1) {
+                        this.form.tujuanPembelajaran[tpIndex].indikators.splice(indIndex, 1);
+                    }
+                },
+
+
+                // --- FORM LOGIC ---
+                nextStep() {
+                    // VALIDASI PER STEP
+                    if (this.step === 1) {
+                        if (!this.form.lingkupMateri || !this.form.nama || !this.form.fase || !this.form.mapel) 
+                            return alert("Mohon lengkapi Identitas Utama & Judul Modul!");
+                    }
+                    else if (this.step === 3) {
+                        if (!this.form.pesertaDidik || !this.form.materi) return alert("Mohon isi analisis identifikasi!");
+                    }
+                    else if (this.step === 5) {
+                        // Validasi TP
+                        for (let t of this.form.tujuanPembelajaran) {
+                            if (!t.text) return alert("Isi teks Tujuan Pembelajaran!");
+                            for (let i of t.indikators) {
+                                if (!i.text) return alert("Isi semua Indikator!");
+                            }
+                        }
+                        if (!this.form.topik) return alert("Topik Pembelajaran wajib diisi!");
+                    }
+                    
+                    this.step++;
+                    window.scrollTo(0,0);
+                },
+
+                saveDraft() {
+                    alert("Progres tersimpan sementara di memori.");
+                },
+
+                saveFinal() {
+                    if (!this.form.lingkupMateri) return alert("Judul Lingkup Materi belum diisi!");
+                    this.saveToLibrary(this.form);
+                    this.generatePDF(this.form); // Auto download
+                    this.switchView('list');
+                },
+
+                resetForm() {
+                    this.form = {
                         mapel: '', lingkupMateri: '', nama: '', institusi: 'SMP Albanna', fase: '', waktu: '',
                         pesertaDidik: '', materi: '', profil: [],
                         cp: '', lintasDisiplin: '', 
@@ -375,67 +634,14 @@
                         asesmenProses: { metode: [], deskripsi: '' },
                         asesmenAkhir: { metode: [], deskripsi: '' },
                         lampiran: [{ nama: '', keterangan: '' }]
-                    },
-                    prinsip: ['Berkesadaran', 'Bermakna', 'Menggembirakan'],
-                    profilOptions: ["Keimanan dan Ketakwaan", "Kewargaan", "Penalaran Kritis", "Kreativitas", "Kolaborasi", "Kemandirian", "Kesehatan", "Komunikasi"],
-                    methodsAwal: ['Tanya Jawab', 'Kuis', 'Mind Map', 'Observasi'],
-                    methodsProses: ['Observasi', 'Penilaian Diri', 'Antar Teman', 'Kinerja', 'Proyek'],
-                    methodsAkhir: ['Tes Tulis', 'Tes Lisan', 'Produk', 'Portofolio']
-                }
-            },
-            mounted() {
-                const session = sessionStorage.getItem('cbt_user_session');
-                if (!session) { try { window.location.href = 'index.html'; } catch(e) { this.currentUser = { username: 'tamu', name: 'Mode Tamu' }; this.storageKey = `rpp_library_tamu`; } } 
-                else { this.currentUser = JSON.parse(session); this.storageKey = `rpp_library_${this.currentUser.username}`; }
-                
-                this.loadSidebarImage();
-                this.loadFromLibrary();
-            },
-            methods: {
-                async loadSidebarImage() {
-                    try {
-                        const response = await fetch('kop.png');
-                        const blob = await response.blob();
-                        const reader = new FileReader();
-                        reader.onloadend = () => { this.sidebarLogo = reader.result; };
-                        reader.readAsDataURL(blob);
-                    } catch (e) { console.log("kop.png not found"); }
+                    };
+                    this.step = 1;
                 },
-                switchView(mode) { this.viewMode = mode; if(mode === 'list') this.resetForm(); },
-                loadFromLibrary() { const data = localStorage.getItem(this.storageKey); if(data) this.savedPlans = JSON.parse(data); },
-                saveToLibrary(planData) {
-                    if (this.editingIndex !== null) this.savedPlans[this.editingIndex] = { ...planData, lastUpdated: new Date().toISOString() };
-                    else this.savedPlans.unshift({ ...planData, id: Date.now(), lastUpdated: new Date().toISOString() });
-                    localStorage.setItem(this.storageKey, JSON.stringify(this.savedPlans));
-                    this.switchView('list');
-                },
-                deletePlan(index) { if(confirm("Hapus?")) { this.savedPlans.splice(index, 1); localStorage.setItem(this.storageKey, JSON.stringify(this.savedPlans)); } },
-                editPlan(index) { this.form = JSON.parse(JSON.stringify(this.savedPlans[index])); this.editingIndex = index; this.viewMode = 'form'; this.step = 1; },
-                viewPlan(index) { this.viewModal = this.savedPlans[index]; },
-                createNew() { this.resetForm(); this.editingIndex = null; this.viewMode = 'form'; this.step = 1; },
-                
-                addTP() { this.form.tujuanPembelajaran.push({ text: '', indikators: [{ text: '' }] }); },
-                removeTP(i) { if(this.form.tujuanPembelajaran.length>1) this.form.tujuanPembelajaran.splice(i, 1); },
-                addIndikator(ti) { this.form.tujuanPembelajaran[ti].indikators.push({ text: '' }); },
-                removeIndikator(ti, ii) { if(this.form.tujuanPembelajaran[ti].indikators.length>1) this.form.tujuanPembelajaran[ti].indikators.splice(ii, 1); },
 
-                nextStep() { this.step++; window.scrollTo(0,0); },
-                saveDraft() { alert("Tersimpan sementara."); },
-                saveFinal() { if (!this.form.lingkupMateri) return alert("Isi Judul!"); this.saveToLibrary(this.form); this.generatePDF(this.form); alert("Berhasil!"); },
-                resetForm() { 
-                    this.form = { 
-                        mapel: '', lingkupMateri: '', nama: '', institusi: 'SMP Albanna', fase: '', waktu: '', 
-                        pesertaDidik: '', materi: '', profil: [], cp: '', lintasDisiplin: '', 
-                        tujuanPembelajaran: [{text:'', indikators:[{text:''}]}], 
-                        topik: '', pedagogi: '', kemitraan: '', lingkungan: '', digital: '', 
-                        pengalamanAwal: { prinsip: [], deskripsi: '' }, pengalamanIntiMemahami: { prinsip: [], deskripsi: '' }, pengalamanIntiMengaplikasi: { prinsip: [], deskripsi: '' }, pengalamanIntiMerefleksi: { prinsip: [], deskripsi: '' }, pengalamanPenutup: { prinsip: [], deskripsi: '' }, 
-                        asesmenAwal: { metode: [], deskripsi: '' }, asesmenProses: { metode: [], deskripsi: '' }, asesmenAkhir: { metode: [], deskripsi: '' }, 
-                        lampiran: [{ nama: '', keterangan: '' }] 
-                    }; this.step = 1; 
-                },
                 addLampiran() { this.form.lampiran.push({ nama: '', keterangan: '' }); },
-                removeLampiran(i) { if(this.form.lampiran.length>1) this.form.lampiran.splice(i, 1); },
-
+                removeLampiran(index) { if(this.form.lampiran.length > 1) this.form.lampiran.splice(index, 1); },
+                
+                // --- PDF GENERATION ---
                 generatePDF(data) {
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
@@ -463,23 +669,23 @@
                     const fmtPrinsip = (t, p) => p.length ? `${t} (${p.join(', ')})` : t;
 
                     const rows = [
-                        [{content: '1. IDENTIFIKASI', colSpan: 2, styles: {fillColor: [240, 240, 240], fontStyle: 'bold'}}],
+                        [{content: '1. IDENTIFIKASI', colSpan: 2, styles: {fillColor: [220, 220, 220], fontStyle: 'bold'}}],
                         ['Identitas', `Nama: ${data.nama}\nFase: ${data.fase} | Waktu: ${data.waktu}\nJudul: ${data.lingkupMateri}`],
                         ['Peserta Didik', data.pesertaDidik], ['Materi', data.materi], ['Profil Lulusan', data.profil.join(', ')],
                         
-                        [{content: '2. DESAIN PEMBELAJARAN', colSpan: 2, styles: {fillColor: [240, 240, 240], fontStyle: 'bold'}}],
-                        ['CP', data.cp], ['Lintas Disiplin', data.lintasDisiplin], ['Tujuan & Indikator', tpString],
+                        [{content: '2. DESAIN PEMBELAJARAN', colSpan: 2, styles: {fillColor: [220, 220, 220], fontStyle: 'bold'}}],
+                        ['Capaian Pembelajaran', data.cp], ['Lintas Disiplin', data.lintasDisiplin], ['Tujuan & Indikator', tpString],
                         ['Topik', data.topik], ['Pedagogi', data.pedagogi], ['Kemitraan', data.kemitraan],
                         ['Lingkungan', data.lingkungan], ['Digital', data.digital],
 
-                        [{content: '3. PENGALAMAN BELAJAR', colSpan: 2, styles: {fillColor: [240, 240, 240], fontStyle: 'bold'}}],
+                        [{content: '3. PENGALAMAN BELAJAR', colSpan: 2, styles: {fillColor: [220, 220, 220], fontStyle: 'bold'}}],
                         [fmtPrinsip('Awal', data.pengalamanAwal.prinsip), data.pengalamanAwal.deskripsi],
                         [fmtPrinsip('Inti (Paham)', data.pengalamanIntiMemahami.prinsip), data.pengalamanIntiMemahami.deskripsi],
                         [fmtPrinsip('Inti (Aplikasi)', data.pengalamanIntiMengaplikasi.prinsip), data.pengalamanIntiMengaplikasi.deskripsi],
                         [fmtPrinsip('Inti (Refleksi)', data.pengalamanIntiMerefleksi.prinsip), data.pengalamanIntiMerefleksi.deskripsi],
                         [fmtPrinsip('Penutup', data.pengalamanPenutup.prinsip), data.pengalamanPenutup.deskripsi],
 
-                        [{content: '4. ASESMEN', colSpan: 2, styles: {fillColor: [240, 240, 240], fontStyle: 'bold'}}],
+                        [{content: '4. ASESMEN', colSpan: 2, styles: {fillColor: [220, 220, 220], fontStyle: 'bold'}}],
                         ['Awal', `${data.asesmenAwal.deskripsi}\n[${data.asesmenAwal.metode.join(', ')}]`],
                         ['Proses', `${data.asesmenProses.deskripsi}\n[${data.asesmenProses.metode.join(', ')}]`],
                         ['Akhir', `${data.asesmenAkhir.deskripsi}\n[${data.asesmenAkhir.metode.join(', ')}]`],
