@@ -4,10 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Kisi-Kisi Guru - SMP ALBANNA</title>
-    
-    <!-- FAVICON -->
-    <link rel="icon" href="logo.png" type="image/png">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     
@@ -62,7 +58,7 @@
                         <div class="text-center mb-8"><h2 class="text-xl font-bold text-gray-700">Langkah 1: Identitas Dokumen</h2></div>
                         <div class="space-y-4">
                             <!-- INFO LOGO -->
-                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 text-center text-sm text-blue-800">
+                            <div class="bg-blue-50 p-4 rounded text-center border border-blue-100 text-blue-800 text-sm">
                                 <i class="fas fa-magic mr-2"></i> Menggunakan Kop Otomatis (Server).
                             </div>
 
@@ -125,7 +121,7 @@
                     </div>
                 </div>
 
-                <!-- TAB 3: MONITORING (Updated: PJOK -> OLAHRAGA) -->
+                <!-- TAB 3: MONITORING -->
                 <div v-if="activeTab === 'monitoring'">
                     <h2 class="text-xl font-bold text-gray-700 mb-6">Status Pengumpulan (Seluruh Guru)</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -143,6 +139,7 @@
         <div v-if="modalItem" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div class="bg-white w-full max-w-3xl h-[80vh] rounded-xl shadow-2xl flex flex-col overflow-hidden"><div class="p-4 border-b flex justify-between items-center bg-slate-50"><h3 class="font-bold text-lg">{{ modalItem.config.mapel }} - Kelas {{ modalItem.config.kelas }}</h3><button @click="modalItem = null" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button></div><div class="flex-1 overflow-y-auto p-6"><table class="w-full text-sm border-collapse border"><thead class="bg-gray-100"><tr><th class="border p-2 w-10">No</th><th class="border p-2">TP</th><th class="border p-2">Level</th><th class="border p-2">Indikator</th><th class="border p-2">Bentuk</th></tr></thead><tbody><tr v-for="(s, i) in modalItem.soalList" :key="i"><td class="border p-2 text-center">{{ i+1 }}</td><td class="border p-2">{{ s.kd }}</td><td class="border p-2">{{ s.level }}</td><td class="border p-2">{{ s.indikator }}</td><td class="border p-2">{{ s.bentuk }}</td></tr></tbody></table></div><div class="p-4 border-t text-right"><button @click="regeneratePDF(modalItem)" class="bg-red-600 text-white px-4 py-2 rounded font-bold hover:bg-red-700 text-sm"><i class="fas fa-print mr-2"></i> Cetak PDF</button></div></div>
         </div>
+
     </div>
 
     <script type="module">
@@ -165,7 +162,7 @@
         createApp({
             data() {
                 return {
-                    currentUser: null, storageKey: '', activeTab: 'input', step: 1, isLoading: false, lastSaved: null, hasDraft: false,
+                    currentUser: null, storageKey: '', activeTab: 'input', step: 1, isLoading: false, lastSaved: null,
                     selectedMapel: '', namaGuru: '', kelas: '', semester: '',
                     sidebarLogo: null,
                     mapelList: ['AGAMA ISLAM', 'BAHASA ARAB', 'BAHASA BALI', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 'INFORMATIKA', 'IPA', 'IPS', 'KKA', 'MATEMATIKA', 'OLAHRAGA', 'PKN', 'SENI BUDAYA'],
@@ -181,7 +178,8 @@
                 this.currentUser = JSON.parse(session);
                 this.storageKey = `guru_kisi_draft_${this.currentUser.username}`;
                 
-                this.loadSidebarImage(); // Load KOP
+                // LOAD KOP OTOMATIS
+                this.loadSidebarImage();
 
                 const draft = localStorage.getItem(this.storageKey);
                 if(draft && !this.editingId) {
@@ -199,7 +197,7 @@
                 kelas() { this.saveDraft() }, semester() { this.saveDraft() }, step() { this.saveDraft() }
             },
             methods: {
-                // LOAD KOP.PNG DARI REPO
+                // LOAD KOP.PNG
                 async loadSidebarImage() {
                     try {
                         const response = await fetch('kop.png');
@@ -259,16 +257,21 @@
                         const pageWidth = doc.internal.pageSize.getWidth();
                         const pageHeight = doc.internal.pageSize.getHeight();
 
-                        // 1. SIDEBAR IMAGE (KOP.PNG) - FIXED LAYOUT
-                        if (this.sidebarLogo) {
-                            // x=8.9mm, y=16.6mm, w=29.3mm, h=263.7mm (Same as perencanaan.html)
-                            doc.addImage(this.sidebarLogo, 'PNG', 8.9, 16.6, 29.3, 263.7);
-                        }
+                        // 1. SIDEBAR IMAGE (KOP.PNG)
+                        const drawSidebar = () => {
+                            if (this.sidebarLogo) {
+                                // X=0, Y=0, W=45.9, H=297 (Full Height A4)
+                                doc.addImage(this.sidebarLogo, 'PNG', 0, 0, 45.9, 297);
+                            }
+                        };
 
-                        // Margin konten digeser (agar tidak tertimpa sidebar)
-                        const contentX = 45; 
+                        // Margin konten digeser ke kanan
+                        const contentX = 50; 
 
-                        // 2. JUDUL & IDENTITAS (TANPA HEADER TEKS SEKOLAH)
+                        // Draw Sidebar on Page 1
+                        drawSidebar();
+
+                        // 2. JUDUL (Tanpa Header Sekolah)
                         let y = 30;
                         doc.setFont("helvetica", "bold"); doc.setFontSize(12);
                         doc.text(`KISI-KISI ${data.config.mapel.toUpperCase()}`, (pageWidth + contentX)/2 - 10, y, {align:'center'});
@@ -289,9 +292,8 @@
                             styles: { fontSize: 9, cellPadding: 2 },
                             columnStyles: { 0: { cellWidth: 10 }, 2: { cellWidth: 20 }, 4: { cellWidth: 25 } },
                             didDrawPage: function (data) {
-                                // Draw Sidebar di setiap halaman baru
-                                if (data.pageNumber > 1 && this.sidebarLogo) {
-                                    doc.addImage(this.sidebarLogo, 'PNG', 8.9, 16.6, 29.3, 263.7);
+                                if (data.pageNumber > 1) {
+                                    drawSidebar();
                                 }
                             }.bind(this)
                         });
@@ -301,7 +303,7 @@
                         if (finalY > 250) { 
                             doc.addPage(); 
                             finalY = 20; 
-                            if (this.sidebarLogo) doc.addImage(this.sidebarLogo, 'PNG', 8.9, 16.6, 29.3, 263.7);
+                            drawSidebar(); 
                         }
                         const ttdX = pageWidth - 50;
                         doc.text(`Denpasar, ${new Date().toLocaleDateString('id-ID')}`, ttdX, finalY, {align:'center'});
