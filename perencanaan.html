@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perencanaan Pembelajaran - SMP ALBANNA</title>
     
-    <!-- FAVICON -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
+    <!-- FAVICON (LOGO SEKOLAH) -->
+    <link rel="icon" href="logo.png" type="image/png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -447,8 +447,7 @@
                     savedPlans: [],
                     viewModal: null,
                     editingIndex: null, // Jika null berarti Mode Baru
-                    sekolah: { logoBase64: null, logoPreview: null },
-                    sidebarLogo: null,
+                    sidebarLogo: null, // KOP from Server
                     
                     // LIST MAPEL LENGKAP
                     mapelList: [
@@ -503,25 +502,13 @@
                 this.loadFromLibrary();
             },
             methods: {
+                // LOAD GAMBAR KOP.PNG (SERVER/REPO)
                 async loadSidebarImage() {
                     try {
                         const response = await fetch('kop.png');
                         const blob = await response.blob();
                         const reader = new FileReader();
-                        reader.onloadend = () => {
-                            const img = new Image();
-                            img.onload = () => {
-                                const canvas = document.createElement('canvas');
-                                const ctx = canvas.getContext('2d');
-                                const MAX_HEIGHT = 1200; 
-                                let w = img.width; let h = img.height;
-                                if (h > MAX_HEIGHT) { w *= MAX_HEIGHT / h; h = MAX_HEIGHT; }
-                                canvas.width = w; canvas.height = h;
-                                ctx.drawImage(img, 0, 0, w, h);
-                                this.sidebarLogo = canvas.toDataURL('image/jpeg', 0.8);
-                            };
-                            img.src = reader.result;
-                        };
+                        reader.onloadend = () => { this.sidebarLogo = reader.result; };
                         reader.readAsDataURL(blob);
                     } catch (e) { console.log("kop.png not found"); }
                 },
@@ -535,13 +522,15 @@
                 },
                 
                 saveToLibrary(planData) {
+                    // Clean copy
+                    const cleanData = JSON.parse(JSON.stringify(planData));
                     if (this.editingIndex !== null) {
                         // Update existing
-                        this.savedPlans[this.editingIndex] = { ...planData, lastUpdated: new Date().toISOString() };
+                        this.savedPlans[this.editingIndex] = { ...cleanData, lastUpdated: new Date().toISOString() };
                         alert("✅ Perubahan disimpan!");
                     } else {
                         // Create new
-                        this.savedPlans.unshift({ ...planData, id: Date.now(), lastUpdated: new Date().toISOString() });
+                        this.savedPlans.unshift({ ...cleanData, id: Date.now(), lastUpdated: new Date().toISOString() });
                         alert("✅ Perencanaan baru berhasil dibuat!");
                     }
                     localStorage.setItem(this.storageKey, JSON.stringify(this.savedPlans));
@@ -647,14 +636,16 @@
                     const pageWidth = doc.internal.pageSize.getWidth();
                     const pageHeight = doc.internal.pageSize.getHeight();
 
-                    // SIDEBAR KOP
+                    // FUNGSI GAMBAR SIDEBAR (Agar muncul di setiap halaman)
                     const drawSidebar = () => {
                         if (this.sidebarLogo) {
+                            // Posisi & Ukuran Sesuai Request: x=8.9mm, y=16.6mm, w=29.3mm, h=263.7mm
                             doc.addImage(this.sidebarLogo, 'PNG', 8.9, 16.6, 29.3, 263.7);
                         }
                     };
 
-                    const contentX = 45; // Margin Kiri
+                    // Margin konten digeser ke kanan agar tidak tertimpa sidebar
+                    const contentX = 45; 
 
                     // Draw Sidebar on Page 1
                     drawSidebar();
