@@ -704,9 +704,10 @@
                     ];
 
                     doc.autoTable({
-                        startY: 45, margin: { left: contentX },
+                        startY: 45, margin: { left: contentX, right: 15 },
                         head: [['Komponen', 'Deskripsi']], body: rows,
-                        theme: 'grid', columnStyles: { 0: { cellWidth: 45, fontStyle: 'bold' } },
+                        theme: 'grid', 
+                        columnStyles: { 0: { cellWidth: 45, fontStyle: 'bold' } },
                         styles: { fontSize: 9, cellPadding: 3 },
                         didDrawPage: function (data) {
                             if (data.pageNumber > 1) {
