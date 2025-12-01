@@ -18,7 +18,7 @@
 
     <div id="app" class="flex-1 flex flex-col">
 
-        <!-- NAVBAR (TANPA TOMBOL MENU) -->
+        <!-- NAVBAR -->
         <nav class="bg-blue-900 text-white p-4 shadow-lg sticky top-0 z-50">
             <div class="max-w-4xl mx-auto flex justify-between items-center">
                 <div class="flex items-center gap-3">
@@ -30,8 +30,10 @@
                         <p class="text-xs text-blue-200">SMP ALBANNA</p>
                     </div>
                 </div>
-                <!-- Hanya tombol Keluar yang tersisa -->
                 <div class="flex gap-2">
+                    <a href="index.html" class="text-xs bg-blue-800 hover:bg-blue-700 px-3 py-2 rounded font-bold transition">
+                        <i class="fas fa-home"></i> MENU
+                    </a>
                     <button v-if="isLoggedIn" @click="logout" class="text-xs bg-red-600 hover:bg-red-700 px-3 py-2 rounded font-bold transition shadow">
                         KELUAR <i class="fas fa-sign-out-alt ml-1"></i>
                     </button>
@@ -39,7 +41,7 @@
             </div>
         </nav>
 
-        <!-- 1. HALAMAN LOGIN (INPUT KELAS -> NAMA DARI DB) -->
+        <!-- 1. HALAMAN LOGIN -->
         <div v-if="!isLoggedIn" class="flex-1 flex flex-col items-center justify-center p-4 animate-fade-in">
             <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-t-8 border-blue-600">
                 <div class="text-center mb-6">
@@ -48,7 +50,7 @@
                 </div>
 
                 <div class="space-y-4">
-                    <!-- 1. Pilih Kelas (Paling Atas) -->
+                    <!-- Pilih Kelas -->
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Kelas</label>
                         <select v-model="form.kelas" @change="fetchStudents" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-600 outline-none">
@@ -59,20 +61,15 @@
                         </select>
                     </div>
 
-                    <!-- 2. Pilih Nama (Dropdown Dinamis) -->
+                    <!-- Pilih Nama -->
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nama Lengkap</label>
                         <select v-model="form.nama" :disabled="!form.kelas || studentList.length === 0" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-600 outline-none disabled:bg-gray-200 disabled:text-gray-400">
                             <option value="" disabled>-- Pilih Nama Siswa --</option>
                             <option v-for="s in studentList" :key="s.id" :value="s.nama">{{ s.nama }}</option>
                         </select>
-                        
-                        <!-- Indikator Loading/Kosong -->
                         <p v-if="isLoadingList" class="text-xs text-blue-500 mt-1 animate-pulse">
                             <i class="fas fa-spinner fa-spin"></i> Mengambil data siswa...
-                        </p>
-                        <p v-if="!isLoadingList && form.kelas && studentList.length === 0" class="text-xs text-red-400 mt-1 italic">
-                            * Belum ada data siswa di kelas ini.
                         </p>
                     </div>
 
@@ -93,9 +90,8 @@
                     <h2 class="text-2xl font-bold text-gray-800">{{ form.nama }}</h2>
                     <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">Kelas {{ form.kelas }}</span>
                 </div>
-                <div class="text-right hidden md:block">
-                    <p class="text-xs text-gray-400 uppercase font-bold">KKM / Batas Lulus</p>
-                    <p class="text-3xl font-bold text-blue-600">75</p>
+                <div class="text-right hidden md:block text-gray-500 text-xs">
+                    KKTP Berbeda Tiap Mapel
                 </div>
             </div>
 
@@ -109,35 +105,41 @@
                 </button>
             </div>
 
-            <!-- TAB 1: STATUS NILAI -->
+            <!-- TAB 1: STATUS NILAI (DENGAN KKTP DINAMIS) -->
             <div v-if="activeTab === 'rapor'" class="bg-white rounded-xl shadow-sm overflow-hidden border">
                 <table class="w-full text-left">
                     <thead class="bg-gray-50 border-b text-gray-500 text-xs uppercase">
                         <tr>
                             <th class="p-4">Mata Pelajaran</th>
-                            <th class="p-4 text-center">Nilai Akhir</th>
-                            <th class="p-4 text-center">Status</th>
+                            <th class="p-4 text-center w-24">KKTP</th> <!-- KOLOM BARU -->
+                            <th class="p-4 text-center w-24">Nilai Akhir</th>
+                            <th class="p-4 text-center w-32">Status</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         <tr v-for="mapel in masterMapel" :key="mapel" class="hover:bg-gray-50">
                             <td class="p-4 font-bold text-gray-700">{{ mapel }}</td>
                             
+                            <!-- KKTP -->
+                            <td class="p-4 text-center text-xs font-bold text-gray-400 bg-gray-50 border-l border-r">
+                                {{ getKKM(mapel) }}
+                            </td>
+
                             <!-- NILAI -->
-                            <td class="p-4 text-center font-mono font-bold text-gray-600">
+                            <td class="p-4 text-center font-mono font-bold text-gray-800">
                                 {{ getStudentScore(mapel) !== null ? getStudentScore(mapel) : '-' }}
                             </td>
 
-                            <!-- STATUS -->
+                            <!-- STATUS (DINAMIS BERDASARKAN KKTP MAPEL) -->
                             <td class="p-4 text-center">
                                 <div v-if="getStudentScore(mapel) === null" class="text-xs text-gray-400 italic">
                                     Belum Ada Data
                                 </div>
                                 <div v-else>
-                                    <span v-if="getStudentScore(mapel) >= 75" class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                                    <span v-if="getStudentScore(mapel) >= getKKM(mapel)" class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm flex items-center justify-center gap-1">
                                         <i class="fas fa-check-circle"></i> LOLOS
                                     </span>
-                                    <span v-else class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm animate-pulse">
+                                    <span v-else class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm animate-pulse flex items-center justify-center gap-1">
                                         <i class="fas fa-exclamation-circle"></i> REMIDI
                                     </span>
                                 </div>
@@ -150,7 +152,6 @@
             <!-- TAB 2: JADWAL REMIDI -->
             <div v-if="activeTab === 'jadwal'">
                 
-                <!-- Tombol Edit (Admin) -->
                 <div class="mb-4 flex justify-between items-center">
                     <h3 class="font-bold text-gray-700">Jadwal Pelaksanaan Remidi</h3>
                     <button @click="enableAdminMode" :class="['text-xs px-3 py-1 rounded font-bold border transition', isAdminMode ? 'bg-red-100 text-red-600 border-red-200' : 'bg-white text-gray-400 border-gray-200 hover:border-blue-400 hover:text-blue-500']">
@@ -158,13 +159,12 @@
                     </button>
                 </div>
 
-                <!-- Form Tambah Jadwal (Admin Only) -->
                 <div v-if="isAdminMode" class="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-200">
                     <h4 class="text-xs font-bold text-blue-800 uppercase mb-2">Tambah Jadwal Baru</h4>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
                         <select v-model="newSchedule.mapel" class="p-2 rounded border text-sm"><option value="" disabled>Pilih Mapel</option><option v-for="m in masterMapel" :value="m">{{m}}</option></select>
                         <input v-model="newSchedule.hari" placeholder="Hari, Tanggal" class="p-2 rounded border text-sm">
-                        <input v-model="newSchedule.waktu" placeholder="Waktu (ex: 08.00 - 09.00)" class="p-2 rounded border text-sm">
+                        <input v-model="newSchedule.waktu" placeholder="Waktu" class="p-2 rounded border text-sm">
                         <button @click="addSchedule" class="bg-blue-600 text-white rounded font-bold text-sm hover:bg-blue-700">TAMBAH</button>
                     </div>
                 </div>
@@ -173,16 +173,10 @@
                     <div v-if="scheduleList.length === 0" class="text-center text-gray-400 py-10 bg-white rounded-xl border border-dashed">
                         <p>Belum ada jadwal remidi yang dirilis.</p>
                     </div>
-                    
                     <div v-for="item in scheduleList" :key="item.id" class="bg-white p-4 rounded-xl shadow-sm border flex justify-between items-center hover:shadow-md transition">
                         <div class="flex gap-4 items-center">
-                            <div class="bg-blue-100 text-blue-800 w-12 h-12 rounded-lg flex items-center justify-center shrink-0">
-                                <i class="fas fa-calendar-day text-xl"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-gray-800">{{ item.mapel }}</h4>
-                                <p class="text-sm text-gray-500"><i class="far fa-clock mr-1"></i> {{ item.hari }} | {{ item.waktu }}</p>
-                            </div>
+                            <div class="bg-blue-100 text-blue-800 w-12 h-12 rounded-lg flex items-center justify-center shrink-0"><i class="fas fa-calendar-day text-xl"></i></div>
+                            <div><h4 class="font-bold text-gray-800">{{ item.mapel }}</h4><p class="text-sm text-gray-500"><i class="far fa-clock mr-1"></i> {{ item.hari }} | {{ item.waktu }}</p></div>
                         </div>
                         <button v-if="isAdminMode" @click="deleteSchedule(item.id)" class="text-red-400 hover:text-red-600 px-2"><i class="fas fa-trash"></i></button>
                     </div>
@@ -191,10 +185,7 @@
 
         </div>
 
-        <!-- FOOTER -->
-        <footer class="text-center p-6 text-xs text-gray-400">
-            &copy; 2025 SMP ALBANNA - Sistem Informasi Akademik
-        </footer>
+        <footer class="text-center p-6 text-xs text-gray-400">&copy; 2025 SMP ALBANNA</footer>
 
     </div>
 
@@ -218,138 +209,75 @@
         createApp({
             data() {
                 return {
-                    isLoading: false,
-                    isLoadingList: false,
-                    isLoggedIn: false,
-                    activeTab: 'rapor',
-                    isAdminMode: false,
-                    form: { nama: '', kelas: '' },
+                    isLoading: false, isLoadingList: false, isLoggedIn: false,
+                    activeTab: 'rapor', isAdminMode: false, form: { nama: '', kelas: '' },
+                    studentList: [], studentResults: [], bankSoalCache: {}, scheduleList: [], newSchedule: { mapel: '', hari: '', waktu: '' },
                     
-                    // DATA
-                    studentResults: [], 
-                    studentList: [],
-                    bankSoalCache: {},  
-                    scheduleList: [],   
-                    newSchedule: { mapel: '', hari: '', waktu: '' },
-                    
-                    // UPDATE: PAI DIGANTI MENJADI AGAMA ISLAM, PJOK MENJADI OLAHRAGA
-                    masterMapel: ['MATEMATIKA', 'IPA', 'BAHASA INGGRIS', 'BAHASA INDONESIA', 'BAHASA BALI', 'SENI BUDAYA', 'BAHASA ARAB', 'OLAHRAGA', 'IPS', 'AGAMA ISLAM', 'INFORMATIKA', 'PKN', 'KKA']
+                    // MAPEL LENGKAP
+                    masterMapel: [
+                        'AGAMA ISLAM', 'BAHASA ARAB', 'BAHASA BALI', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 
+                        'INFORMATIKA', 'IPA', 'IPS', 'KKA', 'MATEMATIKA', 'OLAHRAGA', 'PKN', 'SENI BUDAYA'
+                    ]
                 }
             },
             mounted() {
-                // Load Jadwal Realtime
                 const qSch = query(collection(db, "jadwal_remidi"), orderBy("mapel"));
-                onSnapshot(qSch, (snap) => {
-                    this.scheduleList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                });
-                
-                // Pre-load Bank Soal (untuk kunci jawaban)
+                onSnapshot(qSch, (snap) => { this.scheduleList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })); });
                 this.loadBankSoal();
             },
             methods: {
+                // --- KKM / KKTP LOGIC ---
+                getKKM(mapel) {
+                    if(!mapel) return 75;
+                    const m = mapel.toUpperCase();
+                    // 70: MATEMATIKA, IPA, BAHASA BALI
+                    if (['MATEMATIKA', 'IPA', 'BAHASA BALI'].includes(m)) return 70;
+                    // 75: SISANYA
+                    return 75;
+                },
+
                 async loadBankSoal() {
                     const q = query(collection(db, "bank_soal"));
                     const snap = await getDocs(q);
                     snap.forEach(doc => { this.bankSoalCache[doc.id] = doc.data(); });
                 },
-
-                // --- TARIK DATA SISWA (SEMUA STATUS) ---
                 async fetchStudents() {
                     if(!this.form.kelas) return;
-                    this.isLoadingList = true;
-                    this.studentList = [];
-                    this.form.nama = ''; 
-
+                    this.isLoadingList = true; this.studentList = []; this.form.nama = ''; 
                     try {
                         const q = query(collection(db, "data_absensi"), where("kelas", "==", this.form.kelas));
                         const snapshot = await getDocs(q);
-                        
-                        this.studentList = snapshot.docs
-                            .map(doc => doc.data())
-                            .sort((a,b) => a.nama.localeCompare(b.nama));
-                            
-                    } catch(e) {
-                        console.error("Error fetching students:", e);
-                    } finally {
-                        this.isLoadingList = false;
-                    }
+                        this.studentList = snapshot.docs.map(doc => doc.data()).sort((a,b) => a.nama.localeCompare(b.nama));
+                    } catch(e) { console.error(e); } finally { this.isLoadingList = false; }
                 },
-
                 async checkStatus() {
                     if(!this.form.nama || !this.form.kelas) return alert("Lengkapi identitas!");
                     this.isLoading = true;
-
                     try {
-                        // Query jawaban siswa berdasarkan kelas
                         const q = query(collection(db, "jawaban_siswa"), where("student.kelas", "==", this.form.kelas));
                         const snap = await getDocs(q);
-                        
-                        // Filter Nama di Client-side (Case Insensitive & Trim)
-                        this.studentResults = snap.docs
-                            .map(doc => doc.data())
-                            .filter(d => d.student.nama.trim().toUpperCase() === this.form.nama.trim().toUpperCase());
-
-                        // Login berhasil meski data kosong
+                        this.studentResults = snap.docs.map(doc => doc.data()).filter(d => d.student.nama.trim().toUpperCase() === this.form.nama.trim().toUpperCase());
+                        if(this.studentResults.length === 0) { /* Alert optional */ }
                         this.isLoggedIn = true;
-                    } catch(e) {
-                        alert("Gagal memuat data: " + e.message);
-                    } finally {
-                        this.isLoading = false;
-                    }
+                    } catch(e) { alert("Error: " + e.message); } finally { this.isLoading = false; }
                 },
-
-                logout() {
-                    this.isLoggedIn = false;
-                    this.studentResults = [];
-                    this.studentList = [];
-                    this.form = { nama: '', kelas: '' };
-                    this.isAdminMode = false;
-                },
-
-                // --- KALKULASI NILAI ---
+                logout() { this.isLoggedIn = false; this.studentResults = []; this.form = { nama: '', kelas: '' }; this.isAdminMode = false; },
+                
                 getStudentScore(mapelName) {
                     const result = this.studentResults.find(r => r.mapel === mapelName);
                     if (!result) return null; 
-
                     const exam = this.bankSoalCache[result.examId];
                     if (!exam) return 0; 
-
                     let score = 0;
                     exam.soal.forEach((q, idx) => {
-                        if (['PG', 'BS'].includes(q.type) && result.answers[idx] === q.answer) {
-                            score += parseInt(q.poin);
-                        }
-                        if (['URAIAN', 'ESAI', 'ISIAN'].includes(q.type) && result.manualScores && result.manualScores[idx] !== undefined) {
-                            score += parseInt(result.manualScores[idx]);
-                        }
+                        if (['PG', 'BS'].includes(q.type) && result.answers[idx] === q.answer) score += parseInt(q.poin);
+                        if (['URAIAN', 'ESAI', 'ISIAN'].includes(q.type) && result.manualScores && result.manualScores[idx] !== undefined) score += parseInt(result.manualScores[idx]);
                     });
                     return score;
                 },
-
-                // --- ADMIN JADWAL ---
-                enableAdminMode() {
-                    if(this.isAdminMode) {
-                        this.isAdminMode = false;
-                    } else {
-                        const pass = prompt("Masukkan Password Admin:");
-                        if(pass === 'admin123') {
-                            this.isAdminMode = true;
-                        } else {
-                            alert("Password Salah!");
-                        }
-                    }
-                },
-                async addSchedule() {
-                    if(!this.newSchedule.mapel || !this.newSchedule.hari || !this.newSchedule.waktu) return alert("Lengkapi jadwal!");
-                    try {
-                        await addDoc(collection(db, "jadwal_remidi"), this.newSchedule);
-                        this.newSchedule = { mapel: '', hari: '', waktu: '' };
-                        alert("Jadwal ditambahkan.");
-                    } catch(e) { alert("Gagal: " + e.message); }
-                },
-                async deleteSchedule(id) {
-                    if(confirm("Hapus jadwal ini?")) await deleteDoc(doc(db, "jadwal_remidi", id));
-                }
+                enableAdminMode() { if(this.isAdminMode) { this.isAdminMode = false; } else { const pass = prompt("Password Admin:"); if(pass === 'admin123') this.isAdminMode = true; else alert("Salah!"); } },
+                async addSchedule() { if(!this.newSchedule.mapel) return; await addDoc(collection(db, "jadwal_remidi"), this.newSchedule); alert("Tersimpan"); },
+                async deleteSchedule(id) { if(confirm("Hapus?")) await deleteDoc(doc(db, "jadwal_remidi", id)); }
             }
         }).mount('#app');
     </script>
