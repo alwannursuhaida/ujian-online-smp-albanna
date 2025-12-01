@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perencanaan Pembelajaran - SMP ALBANNA</title>
     
-    <!-- FAVICON (LOGO SEKOLAH) -->
+    <!-- FAVICON -->
     <link rel="icon" href="logo.png" type="image/png">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -447,7 +447,8 @@
                     savedPlans: [],
                     viewModal: null,
                     editingIndex: null, // Jika null berarti Mode Baru
-                    sidebarLogo: null, // KOP from Server
+                    sekolah: { logoBase64: null, logoPreview: null },
+                    sidebarLogo: null,
                     
                     // LIST MAPEL LENGKAP
                     mapelList: [
@@ -489,6 +490,8 @@
                     catch(e) { 
                         this.currentUser = { username: 'tamu', name: 'Mode Tamu' }; 
                         this.storageKey = `rpp_library_tamu`;
+                        // DEFAULT LOGO FOR TAMU
+                        this.sekolah.logoBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="; 
                         this.loadFromLibrary();
                         return;
                     }
@@ -627,7 +630,7 @@
                 addLampiran() { this.form.lampiran.push({ nama: '', keterangan: '' }); },
                 removeLampiran(index) { if(this.form.lampiran.length > 1) this.form.lampiran.splice(index, 1); },
                 
-                // --- PDF GENERATION (SIDEBAR & CONTENT SHIFTED) ---
+                // --- PDF GENERATION ---
                 generatePDF(dataRaw) {
                     // Clean Data
                     const data = JSON.parse(JSON.stringify(dataRaw));
@@ -701,12 +704,9 @@
                     ];
 
                     doc.autoTable({
-                        startY: y + 15, 
-                        margin: { left: contentX, right: 15 },
-                        head: [['Komponen', 'Deskripsi']], 
-                        body: rows,
-                        theme: 'grid', 
-                        columnStyles: { 0: { cellWidth: 45, fontStyle: 'bold' } },
+                        startY: 45, margin: { left: contentX },
+                        head: [['Komponen', 'Deskripsi']], body: rows,
+                        theme: 'grid', columnStyles: { 0: { cellWidth: 45, fontStyle: 'bold' } },
                         styles: { fontSize: 9, cellPadding: 3 },
                         didDrawPage: function (data) {
                             if (data.pageNumber > 1) {
