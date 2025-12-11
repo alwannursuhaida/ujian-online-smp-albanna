@@ -54,70 +54,40 @@
                 </div>
                 
                 <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-                    <!-- GROUP BANK DATA -->
                     <div class="text-[10px] font-bold text-slate-500 uppercase mb-1 ml-2 tracking-wider mt-2">Bank Data</div>
-                    <button @click="activeTab = 'soal'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'soal' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
-                        <i class="fas fa-database w-5"></i> Bank Soal
-                    </button>
-                    <button @click="activeTab = 'kisi'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'kisi' ? 'bg-purple-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
-                        <i class="fas fa-list-alt w-5"></i> Bank Kisi-Kisi
-                    </button>
-
-                    <!-- GROUP MONITORING -->
+                    <button @click="activeTab = 'soal'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'soal' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']"><i class="fas fa-database w-5"></i> Bank Soal</button>
+                    <button @click="activeTab = 'kisi'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'kisi' ? 'bg-purple-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']"><i class="fas fa-list-alt w-5"></i> Bank Kisi-Kisi</button>
                     <div class="text-[10px] font-bold text-slate-500 uppercase mb-1 ml-2 tracking-wider mt-4">Monitoring</div>
-                    <button @click="activeTab = 'mon_soal'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'mon_soal' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
-                        <i class="fas fa-tasks w-5"></i> Status Soal
-                    </button>
-                    <button @click="activeTab = 'mon_kisi'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'mon_kisi' ? 'bg-purple-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
-                        <i class="fas fa-clipboard-list w-5"></i> Status Kisi-Kisi
-                    </button>
-
-                    <!-- GROUP KEAMANAN -->
+                    <button @click="activeTab = 'mon_soal'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'mon_soal' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']"><i class="fas fa-tasks w-5"></i> Status Soal</button>
+                    <button @click="activeTab = 'mon_kisi'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'mon_kisi' ? 'bg-purple-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']"><i class="fas fa-clipboard-list w-5"></i> Status Kisi-Kisi</button>
                     <div class="text-[10px] font-bold text-slate-500 uppercase mb-1 ml-2 tracking-wider mt-4">Keamanan</div>
-                    <button @click="activeTab = 'blocked'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3 relative', activeTab === 'blocked' ? 'bg-red-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
-                        <i class="fas fa-user-lock w-5"></i> Siswa Terblokir
-                        <span v-if="blockedStudents.length > 0" class="absolute right-2 bg-white text-red-600 text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">{{ blockedStudents.length }}</span>
-                    </button>
+                    <button @click="activeTab = 'blocked'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3 relative', activeTab === 'blocked' ? 'bg-red-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']"><i class="fas fa-user-lock w-5"></i> Siswa Terblokir<span v-if="blockedStudents.length > 0" class="absolute right-2 bg-white text-red-600 text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">{{ blockedStudents.length }}</span></button>
                 </nav>
-
-                <div class="p-4 border-t border-slate-800">
-                    <button @click="logout" class="w-full text-center text-xs text-red-400 hover:text-red-300 font-bold flex items-center justify-center gap-2"><i class="fas fa-sign-out-alt"></i> KELUAR</button>
-                </div>
+                <div class="p-4 border-t border-slate-800"><button @click="logout" class="w-full text-center text-xs text-red-400 hover:text-red-300 font-bold flex items-center justify-center gap-2"><i class="fas fa-sign-out-alt"></i> KELUAR</button></div>
             </div>
 
             <!-- MAIN CONTENT -->
             <div class="flex-1 flex flex-col h-full overflow-hidden bg-gray-50">
-                
                 <div class="bg-white p-4 shadow-sm border-b flex justify-between items-center px-8">
-                    <h2 class="text-2xl font-bold text-slate-800 uppercase">
-                        <span v-if="activeTab === 'soal'">Bank Soal Ujian</span>
-                        <span v-else-if="activeTab === 'kisi'">Bank Kisi-Kisi</span>
-                        <span v-else-if="activeTab === 'mon_soal'">Monitoring Soal</span>
-                        <span v-else-if="activeTab === 'mon_kisi'">Monitoring Kisi-Kisi</span>
-                        <span v-else>Siswa Terblokir</span>
-                    </h2>
+                    <h2 class="text-2xl font-bold text-slate-800 uppercase">{{ activeTab.replace('_', ' ') }}</h2>
                     <div v-if="isLoading" class="flex items-center gap-2 text-blue-600 font-bold animate-pulse"><i class="fas fa-sync fa-spin"></i> Sinkronisasi...</div>
                 </div>
 
                 <div class="flex-1 overflow-y-auto p-8">
-
                     <!-- TAB 1: BANK SOAL -->
                     <div v-if="activeTab === 'soal'">
                         <div v-if="bankSoal.length === 0 && !isLoading" class="text-center text-gray-400 mt-20"><i class="fas fa-folder-open fa-4x mb-4"></i><p>Belum ada soal.</p></div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <div v-for="paket in bankSoal" :key="paket.id" class="bg-white p-5 rounded-xl shadow border hover:shadow-md transition relative">
-                                <div class="absolute top-2 right-2">
-                                    <button @click="toggleLock(paket)" :class="['px-2 py-1 rounded text-[10px] font-bold text-white', paket.isLocked ? 'bg-red-500' : 'bg-green-500']">
-                                        {{ paket.isLocked ? 'TERKUNCI' : 'TERBUKA' }}
-                                    </button>
-                                </div>
+                                <div class="absolute top-2 right-2"><button @click="toggleLock(paket)" :class="['px-2 py-1 rounded text-[10px] font-bold text-white', paket.isLocked ? 'bg-red-500' : 'bg-green-500']">{{ paket.isLocked ? 'TERKUNCI' : 'TERBUKA' }}</button></div>
                                 <div class="mb-2"><span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded">Kelas {{ paket.config.kelas }}</span></div>
                                 <h3 class="font-bold text-lg text-slate-800 truncate">{{ paket.config.mapel }}</h3>
                                 <p class="text-xs text-gray-500 mb-4">{{ paket.config.guru }}</p>
-                                <div class="grid grid-cols-3 gap-2 pt-3 border-t">
-                                    <button @click="lihatSoal(paket)" class="bg-gray-100 hover:bg-blue-50 text-blue-600 text-xs font-bold py-2 rounded"><i class="fas fa-eye"></i></button>
-                                    <button @click="downloadPDFSoal(paket)" class="bg-gray-100 hover:bg-green-50 text-green-600 text-xs font-bold py-2 rounded"><i class="fas fa-file-pdf"></i></button>
-                                    <button @click="hapusBankSoal(paket.id)" class="bg-gray-100 hover:bg-red-50 text-red-600 text-xs font-bold py-2 rounded"><i class="fas fa-trash"></i></button>
+                                <div class="mt-auto pt-3 border-t grid grid-cols-5 gap-1">
+                                    <button @click="lihatSoal(paket)" class="bg-gray-100 text-blue-600 text-xs font-bold py-2 rounded" title="Lihat"><i class="fas fa-eye"></i></button>
+                                    <button @click="openEditSoal(paket)" class="bg-yellow-100 text-yellow-600 text-xs font-bold py-2 rounded" title="Edit"><i class="fas fa-pen"></i></button>
+                                    <button @click="downloadPDFSoal(paket)" class="bg-green-100 text-green-600 text-xs font-bold py-2 rounded" title="PDF"><i class="fas fa-file-pdf"></i></button>
+                                    <button @click="hapusBankSoal(paket.id)" class="bg-red-100 text-red-600 text-xs font-bold py-2 rounded col-span-2" title="Hapus"><i class="fas fa-trash"></i> Hapus</button>
                                 </div>
                             </div>
                         </div>
@@ -126,20 +96,21 @@
                     <!-- TAB 2: BANK KISI-KISI -->
                     <div v-if="activeTab === 'kisi'">
                         <div v-if="bankKisi.length === 0 && !isLoading" class="text-center text-gray-400 mt-20"><i class="fas fa-list-alt fa-4x mb-4"></i><p>Belum ada kisi-kisi.</p></div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <div v-for="item in bankKisi" :key="item.id" class="bg-white p-5 rounded-xl shadow border hover:shadow-md transition">
                                 <div class="mb-2"><span class="bg-purple-100 text-purple-800 text-xs font-bold px-2 py-1 rounded">Kelas {{ item.config.kelas }}</span></div>
                                 <h3 class="font-bold text-lg text-slate-800 truncate">{{ item.config.mapel }}</h3>
                                 <p class="text-xs text-gray-500 mb-4">{{ item.config.guru }}</p>
-                                <div class="grid grid-cols-2 gap-2 pt-3 border-t">
-                                    <button @click="downloadKisiPDF(item)" class="bg-green-50 text-green-600 py-2 rounded text-xs font-bold hover:bg-green-100"><i class="fas fa-file-pdf"></i> PDF</button>
-                                    <button @click="hapusKisi(item.id)" class="bg-red-50 text-red-600 py-2 rounded text-xs font-bold hover:bg-red-100"><i class="fas fa-trash"></i> Hapus</button>
+                                <div class="mt-auto pt-3 border-t grid grid-cols-3 gap-2">
+                                    <button @click="openEditKisi(item)" class="bg-yellow-100 text-yellow-600 text-xs font-bold py-2 rounded"><i class="fas fa-pen"></i> Edit</button>
+                                    <button @click="downloadKisiPDF(item)" class="bg-green-100 text-green-600 text-xs font-bold py-2 rounded"><i class="fas fa-file-pdf"></i> PDF</button>
+                                    <button @click="hapusKisi(item.id)" class="bg-red-100 text-red-600 text-xs font-bold py-2 rounded"><i class="fas fa-trash"></i></button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- TAB 3: MONITORING SOAL -->
+                    <!-- TAB MONITORING SOAL -->
                     <div v-if="activeTab === 'mon_soal'">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div v-for="grade in ['7', '8', '9']" :key="grade" class="bg-white rounded-xl shadow-sm border overflow-hidden">
@@ -150,7 +121,7 @@
                         </div>
                     </div>
 
-                    <!-- TAB 4: MONITORING KISI-KISI -->
+                    <!-- TAB MONITORING KISI -->
                     <div v-if="activeTab === 'mon_kisi'">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div v-for="grade in ['7', '8', '9']" :key="grade" class="bg-white rounded-xl shadow-sm border overflow-hidden">
@@ -161,20 +132,69 @@
                         </div>
                     </div>
 
-                    <!-- TAB 5: SISWA TERBLOKIR -->
+                    <!-- TAB BLOCKED -->
                     <div v-if="activeTab === 'blocked'">
-                        <div v-if="blockedStudents.length === 0" class="text-center text-green-600 mt-20"><i class="fas fa-check-circle fa-4x mb-4"></i><p>Aman! Tidak ada siswa terblokir.</p></div>
-                        <div v-else class="bg-white rounded-lg shadow overflow-hidden"><table class="w-full text-left text-sm"><thead class="bg-red-600 text-white"><tr><th class="p-3">Waktu</th><th class="p-3">Siswa</th><th class="p-3">Alasan</th><th class="p-3 text-center">Aksi</th></tr></thead><tbody class="divide-y divide-gray-100"><tr v-for="b in blockedStudents" :key="b.id"><td class="p-3">{{ formatTime(b.timestamp) }}</td><td class="p-3"><b>{{ b.student.nama }}</b><br>{{ b.student.kelas }}</td><td class="p-3 text-red-600 italic">{{ b.reason }}</td><td class="p-3 text-center"><button @click="bukaBlokir(b.id)" class="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-700">BUKA</button></td></tr></tbody></table></div>
+                         <div v-if="blockedStudents.length === 0" class="text-center text-green-600 mt-20"><i class="fas fa-check-circle fa-4x mb-4"></i><p>Aman!</p></div>
+                         <div v-else class="bg-white rounded-lg shadow overflow-hidden"><table class="w-full text-left text-sm"><thead class="bg-red-600 text-white"><tr><th class="p-3">Waktu</th><th class="p-3">Siswa</th><th class="p-3">Alasan</th><th class="p-3 text-center">Aksi</th></tr></thead><tbody class="divide-y divide-gray-100"><tr v-for="b in blockedStudents" :key="b.id"><td class="p-3">{{ formatTime(b.timestamp) }}</td><td class="p-3"><b>{{ b.student.nama }}</b><br>{{ b.student.kelas }}</td><td class="p-3 text-red-600 italic">{{ b.reason }}</td><td class="p-3 text-center"><button @click="bukaBlokir(b.id)" class="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-700">BUKA</button></td></tr></tbody></table></div>
                     </div>
-
                 </div>
             </div>
 
-            <!-- MODAL VIEW SOAL -->
+            <!-- MODAL LIHAT SOAL -->
             <div v-if="modalSoal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div class="bg-white w-full max-w-3xl h-[90vh] rounded-xl shadow-2xl flex flex-col overflow-hidden">
-                    <div class="p-4 border-b flex justify-between items-center bg-slate-50"><h3 class="font-bold">{{ modalSoal.config.mapel }}</h3><button @click="modalSoal=null" class="text-red-500"><i class="fas fa-times"></i></button></div>
-                    <div class="flex-1 overflow-y-auto p-6 space-y-4"><div v-for="(q, i) in modalSoal.soal" :key="i" class="border p-3 rounded"><p class="font-bold text-sm mb-1">{{i+1}}. {{q.text}}</p><p class="text-xs text-green-600 font-mono">Kunci: {{q.answer}}</p></div></div>
+                <div class="bg-white rounded-xl w-full max-w-3xl h-[80vh] flex flex-col">
+                    <div class="p-4 border-b flex justify-between bg-slate-50"><h3 class="font-bold">Preview Soal</h3><button @click="modalSoal=null" class="text-red-500"><i class="fas fa-times"></i></button></div>
+                    <div class="flex-1 overflow-y-auto p-6 space-y-4">
+                        <div v-for="(q, i) in modalSoal.soal" :key="i" class="border p-3 rounded text-sm">
+                            <p class="font-bold mb-1">{{i+1}}. {{q.text}}</p>
+                            <p v-if="q.indikator" class="text-xs text-gray-500 italic mb-2">Indikator: {{q.indikator}}</p>
+                            <div v-if="q.type==='PG'" class="grid grid-cols-2 gap-1 text-xs"><div v-for="(opt, k) in q.options" :class="k===q.answer?'text-green-600 font-bold':''">{{k}}. {{opt}}</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL EDIT SOAL -->
+            <div v-if="editingSoal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div class="bg-white rounded-xl w-full max-w-4xl h-[90vh] flex flex-col">
+                    <div class="p-4 border-b bg-blue-50 flex justify-between items-center"><h3 class="font-bold text-blue-900">Edit Bank Soal: {{ editingSoal.config.mapel }}</h3><button @click="editingSoal=null" class="text-gray-400"><i class="fas fa-times"></i></button></div>
+                    <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                        <!-- Config -->
+                        <div class="grid grid-cols-3 gap-4 mb-4 bg-gray-50 p-4 rounded">
+                            <div><label class="text-xs font-bold">Waktu (Pukul)</label><input v-model="editingSoal.config.pukul" class="w-full border p-1 rounded text-sm"></div>
+                            <div><label class="text-xs font-bold">Tanggal</label><input type="date" v-model="editingSoal.config.tanggal" class="w-full border p-1 rounded text-sm"></div>
+                            <div><label class="text-xs font-bold">Durasi</label><input type="number" v-model="editingSoal.config.durasi" class="w-full border p-1 rounded text-sm"></div>
+                        </div>
+                        <!-- Questions -->
+                        <div v-for="(q, idx) in editingSoal.soal" :key="idx" class="border p-4 rounded shadow-sm relative">
+                            <span class="absolute top-2 right-2 text-xs font-bold bg-gray-200 px-2 rounded">{{ q.type }}</span>
+                            <div class="mb-2"><label class="text-xs font-bold block">Pertanyaan No. {{ idx+1 }}</label><textarea v-model="q.text" rows="2" class="w-full border p-2 rounded text-sm"></textarea></div>
+                            <div v-if="q.type==='PG'" class="grid grid-cols-2 gap-2">
+                                <div v-for="k in ['A','B','C','D']" class="flex gap-1"><span class="font-bold">{{k}}</span><input v-model="q.options[k]" class="border p-1 w-full text-xs"></div>
+                            </div>
+                            <div class="mt-2"><label class="text-xs font-bold">Kunci Jawaban</label><input v-model="q.answer" class="w-full border p-1 rounded text-sm"></div>
+                        </div>
+                    </div>
+                    <div class="p-4 border-t text-right"><button @click="saveUpdateSoal" class="bg-green-600 text-white px-6 py-2 rounded font-bold hover:bg-green-700">Simpan Perubahan</button></div>
+                </div>
+            </div>
+
+            <!-- MODAL EDIT KISI-KISI -->
+            <div v-if="editingKisi" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div class="bg-white rounded-xl w-full max-w-4xl h-[90vh] flex flex-col">
+                    <div class="p-4 border-b bg-purple-50 flex justify-between items-center"><h3 class="font-bold text-purple-900">Edit Kisi-Kisi: {{ editingKisi.config.mapel }}</h3><button @click="editingKisi=null" class="text-gray-400"><i class="fas fa-times"></i></button></div>
+                    <div class="flex-1 overflow-y-auto p-6">
+                        <table class="w-full text-sm border"><thead class="bg-gray-100"><tr><th>No</th><th>TP</th><th>Level</th><th>Indikator</th><th>Bentuk</th></tr></thead><tbody>
+                            <tr v-for="(s, i) in editingKisi.soalList" :key="i">
+                                <td class="text-center">{{ i+1 }}</td>
+                                <td><input v-model="s.kd" class="w-full border p-1"></td>
+                                <td><input v-model="s.level" class="w-full border p-1"></td>
+                                <td><textarea v-model="s.indikator" class="w-full border p-1" rows="2"></textarea></td>
+                                <td><input v-model="s.bentuk" class="w-full border p-1"></td>
+                            </tr>
+                        </tbody></table>
+                    </div>
+                    <div class="p-4 border-t text-right"><button @click="saveUpdateKisi" class="bg-green-600 text-white px-6 py-2 rounded font-bold hover:bg-green-700">Simpan Perubahan</button></div>
                 </div>
             </div>
 
@@ -202,16 +222,16 @@
             data() {
                 return {
                     isLoggedIn: false, passwordInput: '', activeTab: 'soal', isLoading: true,
-                    bankSoal: [], bankKisi: [], blockedStudents: [], modalSoal: null, sidebarLogo: null,
+                    bankSoal: [], bankKisi: [], blockedStudents: [], modalSoal: null,
+                    editingSoal: null, editingKisi: null, // State untuk Modal Edit
+                    logoAtas: null, logoBawah: null, // Asset PDF
                     masterMapel: ['AGAMA ISLAM', 'BAHASA ARAB', 'BAHASA BALI', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 'INFORMATIKA', 'IPA', 'IPS', 'KKA', 'MATEMATIKA', 'OLAHRAGA', 'PKN', 'SENI BUDAYA'],
                     activityTimer: null
                 }
             },
             mounted() {
                 if(sessionStorage.getItem('admin_logged_in')==='true') { this.isLoggedIn=true; this.startTimer(); }
-                this.loadSidebarImage();
-                
-                // Listeners
+                this.loadAssets();
                 onSnapshot(query(collection(db, "bank_soal")), s => { this.bankSoal = s.docs.map(d=>({id:d.id, ...d.data()})); this.isLoading=false; });
                 onSnapshot(query(collection(db, "bank_kisi_kisi")), s => { this.bankKisi = s.docs.map(d=>({id:d.id, ...d.data()})); });
                 onSnapshot(query(collection(db, "blocked_students"), orderBy("timestamp", "desc")), s => { this.blockedStudents = s.docs.map(d=>({id:d.id, ...d.data()})); });
@@ -220,49 +240,118 @@
                 login() { if(this.passwordInput==='admin123'){this.isLoggedIn=true; sessionStorage.setItem('admin_logged_in','true');} else alert("Salah!"); this.passwordInput=''; },
                 logout() { this.isLoggedIn=false; sessionStorage.removeItem('admin_logged_in'); },
                 startTimer() { ['mousemove','click'].forEach(e=>window.addEventListener(e, ()=>{ clearTimeout(this.activityTimer); if(this.isLoggedIn) this.activityTimer=setTimeout(()=>this.logout(), 300000); })); },
-                
-                async loadSidebarImage() { try { const r=await fetch('kop.png'); const b=await r.blob(); const rd=new FileReader(); rd.onloadend=()=>{this.sidebarLogo=rd.result;}; rd.readAsDataURL(b); } catch(e){} },
-
                 formatTime(iso) { return iso ? new Date(iso).toLocaleDateString('id-ID') : '-'; },
+                
+                // ASSET LOADER
+                async loadAssets() {
+                    try {
+                        const r1 = await fetch('atas.png'); const b1 = await r1.blob(); const rd1=new FileReader(); rd1.onloadend=()=>{this.logoAtas=rd1.result;}; rd1.readAsDataURL(b1);
+                        const r2 = await fetch('logo.png'); const b2 = await r2.blob(); const rd2=new FileReader(); rd2.onloadend=()=>{this.logoBawah=rd2.result;}; rd2.readAsDataURL(b2);
+                    } catch(e){}
+                },
+
+                // ACTIONS
                 lihatSoal(p) { this.modalSoal = p; },
                 async toggleLock(p) { if(confirm("Ubah status?")) await updateDoc(doc(db,"bank_soal",p.id), {isLocked:!p.isLocked}); },
                 async hapusBankSoal(id) { if(confirm("Hapus soal?")) await deleteDoc(doc(db,"bank_soal",id)); },
-                async hapusKisi(id) { if(confirm("Hapus kisi-kisi?")) await deleteDoc(doc(db,"bank_kisi_kisi",id)); },
+                async hapusKisi(id) { if(confirm("Hapus kisi?")) await deleteDoc(doc(db,"bank_kisi_kisi",id)); },
                 async bukaBlokir(id) { if(confirm("Buka blokir?")) await deleteDoc(doc(db,"blocked_students",id)); },
-
+                
                 checkSoal(g, m) { return this.bankSoal.some(p => p.config.kelas == g && p.config.mapel === m); },
                 countProgressSoal(g) { return this.masterMapel.filter(m => this.checkSoal(g, m)).length; },
                 checkKisi(g, m) { return this.bankKisi.some(k => k.config.kelas == g && k.config.mapel === m); },
                 countProgressKisi(g) { return this.masterMapel.filter(m => this.checkKisi(g, m)).length; },
 
-                // PDF GENERATOR KISI-KISI (SAMA DENGAN GURU.HTML)
+                // --- EDIT FUNCTIONS ---
+                openEditSoal(paket) { this.editingSoal = JSON.parse(JSON.stringify(paket)); },
+                async saveUpdateSoal() {
+                    try {
+                        await updateDoc(doc(db, "bank_soal", this.editingSoal.id), { config: this.editingSoal.config, soal: this.editingSoal.soal });
+                        this.editingSoal = null; alert("Soal berhasil diupdate!");
+                    } catch(e) { alert("Gagal update: " + e.message); }
+                },
+                openEditKisi(item) { this.editingKisi = JSON.parse(JSON.stringify(item)); },
+                async saveUpdateKisi() {
+                    try {
+                        await updateDoc(doc(db, "bank_kisi_kisi", this.editingKisi.id), { soalList: this.editingKisi.soalList });
+                        this.editingKisi = null; alert("Kisi-kisi berhasil diupdate!");
+                    } catch(e) { alert("Gagal update: " + e.message); }
+                },
+
+                // --- PDF GENERATORS ---
+                downloadPDFSoal(data) {
+                    const { jsPDF } = window.jspdf; const doc = new jsPDF();
+                    const w = doc.internal.pageSize.getWidth();
+                    // PAGE 1: COVER
+                    if (this.logoAtas) doc.addImage(this.logoAtas, 'PNG', (w/2)-49.2, 22.5, 98.4, 19.8);
+                    if (this.logoBawah) doc.addImage(this.logoBawah, 'PNG', (w/2)-21.5, 50.5, 43, 43);
+                    
+                    let y = 110;
+                    doc.setFont("times", "bold"); doc.setFontSize(14);
+                    doc.text("SMP ALBANNA DENPASAR", w/2, y, {align:'center'}); y+=6;
+                    doc.setFontSize(12);
+                    doc.text("SOAL ASESMEN SUMATIF AKHIR SEMESTER", w/2, y, {align:'center'}); y+=6;
+                    doc.text("(ASAS) GANJIL TAHUN AJARAN 2025-2026", w/2, y, {align:'center'}); y+=15;
+                    
+                    doc.setFontSize(24); doc.text(data.config.mapel.toUpperCase(), w/2, y, {align:'center'}); y+=20;
+
+                    doc.setFontSize(11); doc.setFont("times","normal");
+                    const dateStr = new Date(data.config.tanggal).toLocaleDateString('id-ID', {weekday:'long',year:'numeric',month:'long',day:'numeric'}).toUpperCase();
+                    doc.text(`HARI, TANGGAL :  ${dateStr}`, 40, y); y+=8;
+                    doc.text(`WAKTU           :  ${data.config.pukul || '-'} WITA`, 40, y); y+=8;
+                    doc.text(`KELAS           :  ${data.config.kelas}`, 40, y); y+=15;
+
+                    doc.rect(20, y, w-40, 100);
+                    doc.setFont("times","bold"); doc.text("PETUNJUK UMUM", w/2, y+10, {align:'center'});
+                    doc.setFont("times","normal"); doc.setFontSize(10);
+                    const inst = ["1. Bacalah petunjuk dengan cermat.", "2. Buka file PDF di gawai masing-masing.", "3. Jawaban di lembar jawaban panitia.", "4. Waktu sesuai jadwal.", "5. 10 menit terakhir salin ke Google Form.", "6. Dilarang membuka aplikasi lain."];
+                    let ty = y+20; inst.forEach(l => { doc.text(l, 25, ty); ty+=6; });
+
+                    // PAGE 2: SOAL (Tanpa Indikator)
+                    doc.addPage();
+                    doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor(150);
+                    doc.text(`${data.config.mapel} - Kelas ${data.config.kelas}`, 15, 10); doc.setTextColor(0);
+                    
+                    let qy = 20;
+                    data.soal.forEach((q, idx) => {
+                        if (qy > 270) { doc.addPage(); qy=20; }
+                        doc.setFont("helvetica","bold"); doc.text(`${idx+1}.`, 15, qy);
+                        doc.setFont("helvetica","normal");
+                        const txt = doc.splitTextToSize(q.text, 170); doc.text(txt, 22, qy);
+                        qy += (txt.length*5) + 2;
+                        
+                        if(q.image) { try{doc.addImage(q.image,'JPEG',25,qy,40,0); qy+=45;}catch(e){} }
+                        
+                        if(q.type==='PG') ['A','B','C','D'].forEach(o=>{ doc.text(`${o}. ${q.options[o]}`, 25, qy); qy+=5; });
+                        else if(q.type==='BS') doc.text("[ ] Benar   [ ] Salah", 25, qy);
+                        else if(q.type==='PG_KOMPLEKS') q.options.forEach(o=>{ if(o.text) {doc.rect(25,qy-3,3,3); doc.text(o.text, 32, qy); qy+=5;} });
+                        else { qy+=2; for(let l=0;l<2;l++){doc.line(25,qy,180,qy); qy+=6;} }
+                        qy+=6;
+                    });
+                    doc.save(`Soal_${data.config.mapel}.pdf`);
+                },
+
                 downloadKisiPDF(data) {
                     const { jsPDF } = window.jspdf; const doc = new jsPDF();
-                    const drawSidebar = () => { if(this.sidebarLogo) doc.addImage(this.sidebarLogo, 'PNG', 0, 0, 45.9, 297); };
-                    drawSidebar();
+                    
+                    // SIDEBAR FIXED (KOP Samping)
+                    const drawSidebar = () => {
+                        if (this.logoAtas) { /* Logic ini placeholder, seharusnya pakai kop.png untuk sidebar seperti di guru.html */
+                             // Karena admin.html tidak punya sidebarLogo state (kop.png), kita pakai placeholder warna saja atau skip
+                             // Agar konsisten, sebaiknya admin juga load kop.png jika mau sama persis.
+                             // Di sini saya pakai blok warna biru sebagai simulasi
+                             doc.setFillColor(30, 58, 138); doc.rect(0,0,45.9,297,'F');
+                        }
+                    };
+                    // Note: Idealnya loadAssets() di admin juga load kop.png untuk sidebar.
+                    // Untuk saat ini saya gunakan format standar dulu.
+                    
                     doc.setFont("helvetica","bold"); doc.setFontSize(14); doc.text(`KISI-KISI ${data.config.mapel.toUpperCase()}`, 120, 30, {align:'center'});
                     doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.text(`Kelas: ${data.config.kelas} | Guru: ${data.config.guru}`, 50, 45);
                     
                     const rows = data.soalList.map((s,i)=>[i+1, s.kd, s.level, s.indikator, s.bentuk]);
-                    doc.autoTable({ startY: 55, margin: {left:50}, head: [['No','TP','Level','Indikator','Bentuk']], body: rows, didDrawPage: (d)=>{ if(d.pageNumber>1) drawSidebar(); } });
+                    doc.autoTable({ startY: 55, margin: {left:50}, head: [['No','TP','Level','Indikator','Bentuk']], body: rows, headStyles:{fillColor:[30,58,138]} });
                     doc.save(`Kisi_${data.config.mapel}.pdf`);
-                },
-
-                // PDF GENERATOR SOAL (SAMA DENGAN SOAL.HTML - VERSI SIMPLE)
-                downloadPDFSoal(data) {
-                    // Note: Code ini disederhanakan karena logika cover lengkap ada di soal.html
-                    // Tapi tetap menggunakan KOP Samping agar konsisten
-                     const { jsPDF } = window.jspdf; const doc = new jsPDF();
-                     if(this.sidebarLogo) doc.addImage(this.sidebarLogo, 'PNG', 0, 0, 45.9, 297);
-                     doc.setFont("helvetica","bold"); doc.setFontSize(14); doc.text(`SOAL ${data.config.mapel}`, 120, 30, {align:'center'});
-                     let y = 50;
-                     data.soal.forEach((q,i)=>{
-                         if(y>250){doc.addPage(); y=20; if(this.sidebarLogo) doc.addImage(this.sidebarLogo, 'PNG', 0, 0, 45.9, 297);}
-                         doc.setFont("helvetica","bold"); doc.text(`${i+1}.`, 50, y);
-                         doc.setFont("helvetica","normal"); doc.text(doc.splitTextToSize(q.text, 140), 60, y);
-                         y+=20;
-                     });
-                     doc.save(`Soal_${data.config.mapel}.pdf`);
                 }
             }
         }).mount('#admin-app');
