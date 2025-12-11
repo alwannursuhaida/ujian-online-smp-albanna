@@ -81,7 +81,7 @@
                     </div>
                 </transition>
 
-                <!-- 2. PENYUSUNAN TP (OTOMASI RESTORED) -->
+                <!-- 2. PENYUSUNAN TP -->
                 <transition name="fade">
                     <div v-if="currentTab === 'tp'">
                         <div class="mb-6 flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-200 w-fit"><span class="font-bold text-indigo-900 text-sm">{{ identitas.mapel }}</span><span class="text-gray-400">|</span><span class="font-bold text-indigo-900 text-sm">Jenjang {{ identitas.jenjang }}</span></div>
@@ -101,7 +101,6 @@
                                         <div class="md:col-span-3"><textarea v-model="tp.c" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Condition (Melalui...)"></textarea></div>
                                         <div class="md:col-span-3"><textarea v-model="tp.d" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Degree (Kriteria)"></textarea></div>
                                     </div>
-                                    <!-- OTOMASI KALIMAT -->
                                     <div class="bg-indigo-50 p-2 rounded border border-indigo-100 flex items-center gap-2">
                                         <i class="fas fa-magic text-indigo-400 text-xs"></i>
                                         <p class="text-xs text-indigo-900 italic font-medium">"{{ generateSentence(tp) }}"</p>
@@ -112,7 +111,7 @@
                     </div>
                 </transition>
 
-                <!-- 3. INPUT NILAI (LENGKAP: ASAS, RERATA, & NILAI RAPOR) -->
+                <!-- 3. INPUT NILAI -->
                 <transition name="fade">
                     <div v-if="currentTab === 'nilai'">
                         <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -150,7 +149,7 @@
                                             <!-- ASAS HEADER -->
                                             <th colspan="2" class="p-2 text-center text-xs font-bold header-asas text-orange-800">ASESMEN SUMATIF AKHIR SEMESTER (ASAS)</th>
                                             
-                                            <!-- RATA-RATA HEADER (DIHAPUS TEXT BULAT KE ATAS) -->
+                                            <!-- RATA-RATA HEADER -->
                                             <th colspan="3" class="p-2 text-center text-xs font-bold header-avg text-green-800">RATA-RATA</th>
                                             
                                             <!-- NILAI AKHIR RAPOR HEADER -->
@@ -194,11 +193,9 @@
 
                                             <!-- ASAS COLUMNS -->
                                             <td class="p-0 bg-orange-50/30 border-l-2">
-                                                <!-- ASAS Tes (Auto Read-Only) -->
                                                 <input type="text" class="excel-input font-bold text-orange-700 bg-orange-100 cursor-not-allowed" :value="s.asasTesScore" readonly title="Nilai otomatis dari Jawaban Siswa">
                                             </td>
                                             <td class="p-0 bg-orange-50/30">
-                                                <!-- ASAS Non-Tes (Manual) -->
                                                 <input type="text" :class="['excel-input font-bold text-orange-700', getValidationClass(getGrade(s.id, 'asas_nontes'))]" :value="getGrade(s.id, 'asas_nontes')" @input="updateGrade(s.id, 'asas_nontes', $event.target.value)">
                                             </td>
 
@@ -207,7 +204,7 @@
                                             <td class="p-0 bg-green-50/30 text-center font-bold text-green-800">{{ calculateRataLM(s.id) }}</td>
                                             <td class="p-0 bg-green-50/30 text-center font-bold text-green-800">{{ calculateRataASAS(s.id, s.asasTesScore) }}</td>
 
-                                            <!-- NILAI AKHIR RAPOR (BARU) -->
+                                            <!-- NILAI AKHIR RAPOR -->
                                             <td class="p-0 bg-blue-100 text-center font-extrabold text-blue-900 border-l-2">
                                                 {{ calculateNilaiRapor(s.id, s.asasTesScore) }}
                                             </td>
@@ -273,7 +270,8 @@
                     
                     // STORAGE STRUKTUR: grades[kelas][mapel][siswa_id][key]
                     allGrades: {}, 
-                    bankSoalCache: {}, // Untuk hitung nilai ASAS
+                    savedProgress: {}, // { "7A_MATEMATIKA": true }
+                    bankSoalCache: {}, 
 
                     mapelList: ['AGAMA ISLAM', 'BAHASA ARAB', 'BAHASA BALI', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 'INFORMATIKA', 'IPA', 'IPS', 'KKA', 'MATEMATIKA', 'OLAHRAGA', 'PKN', 'SENI BUDAYA'],
                     classesMap: { '7': ['7A','7B','7C','7D','7E','7F'], '8': ['8A','8B','8C','8D','8E','8F'], '9': ['9A','9B','9C','9D','9E'] }
@@ -308,8 +306,10 @@
                 }
                 const savedGrades = localStorage.getItem('cbt_all_grades');
                 if (savedGrades) this.allGrades = JSON.parse(savedGrades);
+                
+                const savedProg = localStorage.getItem('cbt_saved_progress');
+                if (savedProg) this.savedProgress = JSON.parse(savedProg);
 
-                // Load Bank Soal for ASAS Calc
                 this.loadBankSoal();
             },
             methods: {
@@ -327,7 +327,6 @@
                     this.currentTab = 'nilai'; this.selectedClass = ''; 
                 },
 
-                // --- DATA HANDLING ---
                 getGrade(sid, key) {
                     const c = this.selectedClass; const m = this.identitas.mapel;
                     if (this.allGrades[c] && this.allGrades[c][m] && this.allGrades[c][m][sid]) return this.allGrades[c][m][sid][key] || '';
@@ -341,7 +340,6 @@
                     this.allGrades[c][m][sid][key] = val;
                 },
 
-                // --- ASAS CALCULATION LOGIC ---
                 async loadBankSoal() {
                     const q = query(collection(db, "bank_soal"));
                     const snap = await getDocs(q);
@@ -361,7 +359,6 @@
                     return score;
                 },
 
-                // --- FETCH STUDENTS & SCORES ---
                 async fetchStudentsAndScores() {
                     if(!this.selectedClass) return;
                     this.isLoadingStudents = true;
@@ -400,7 +397,7 @@
                     finally { this.isLoadingStudents = false; }
                 },
 
-                // --- CALCULATIONS (ROUND UP) ---
+                // --- CALCULATIONS ---
                 getVal(sid, key) {
                     const val = this.getGrade(sid, key);
                     return val === '' ? 0 : parseFloat(val);
@@ -434,19 +431,15 @@
                     return Math.ceil(asasTesScore);
                 },
 
-                // --- NEW: NILAI AKHIR RAPOR (AVG OF AVG) ---
                 calculateNilaiRapor(sid, asasTesScore) {
                     const rTP = this.calculateRataTP(sid);
                     const rLM = this.calculateRataLM(sid);
                     const rASAS = this.calculateRataASAS(sid, asasTesScore);
 
-                    // Jika belum ada data sama sekali, return 0/kosong
                     if (rTP === 0 && rLM === 0 && rASAS === 0) return 0;
-                    
                     return Math.ceil((rTP + rLM + rASAS) / 3);
                 },
 
-                // --- UTILS ---
                 isValidScore(val) { if(val==='') return true; const n = Number(val); return !isNaN(n) && n>=0 && n<=100; },
                 getValidationClass(val) { return this.isValidScore(val) ? '' : 'input-error'; },
                 generateSentence(tp) {
@@ -456,34 +449,26 @@
                 
                 handleSaveButton() {
                     if(this.currentTab === 'nilai') {
-                        let incomplete = false;
-                        if (this.studentList.length > 0) {
-                            for (const s of this.studentList) {
-                                for (const tp of this.activeTPs) {
-                                    if (this.getGrade(s.id, tp.uniqueId) === '') { incomplete = true; break; }
-                                }
-                                if (incomplete) break;
-                            }
+                        localStorage.setItem('cbt_all_grades', JSON.stringify(this.allGrades));
+                        
+                        // Mark as Saved for Monitoring
+                        if (this.selectedClass && this.identitas.mapel) {
+                            this.savedProgress[`${this.selectedClass}_${this.identitas.mapel}`] = true;
+                            localStorage.setItem('cbt_saved_progress', JSON.stringify(this.savedProgress));
                         }
-                        if (incomplete) {
-                            Swal.fire({ title: 'Masih Kosong?', text: "Yakin simpan?", icon: 'question', showCancelButton: true, confirmButtonText: 'Ya' }).then((r) => { if(r.isConfirmed) this.saveWithFunnyMessage(); });
-                        } else {
-                            this.saveWithFunnyMessage();
-                        }
+
+                        this.lastSavedGrade = new Date().toLocaleTimeString();
+                        Swal.fire({ title: 'Alhamdulillah! 🤲', text: 'Selamat kamu sudah terbebas/sedikit terbebas dari tagihan wakakur :)', icon: 'success' });
                     } else {
                         const dataTP = { identitas: this.identitas, lingkupMateri: this.lingkupMateri };
                         localStorage.setItem('cbt_input_tp', JSON.stringify(dataTP));
                         Swal.fire({ icon: 'success', title: 'Tersimpan!', timer: 1000, showConfirmButton: false });
                     }
                 },
-                saveWithFunnyMessage() {
-                    localStorage.setItem('cbt_all_grades', JSON.stringify(this.allGrades));
-                    this.lastSavedGrade = new Date().toLocaleTimeString();
-                    Swal.fire({ title: 'Alhamdulillah! 🤲', text: 'Selamat kamu sudah terbebas/sedikit terbebas dari tagihan wakakur :)', icon: 'success' });
-                },
                 
                 hasData(cls, mapel) {
-                    return this.allGrades[cls] && this.allGrades[cls][mapel] && Object.keys(this.allGrades[cls][mapel]).length > 0;
+                    // Check if saved
+                    return this.savedProgress[`${cls}_${mapel}`] === true;
                 },
                 handleGridPaste(e, startRowIdx, targetKey) {
                     e.preventDefault(); const text = (e.clipboardData || window.clipboardData).getData('text'); const rows = text.split(/\r\n|\n|\r/).filter(r => r.trim() !== '');
