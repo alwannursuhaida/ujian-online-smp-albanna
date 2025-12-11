@@ -31,7 +31,6 @@
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <!-- Tombol Menu Dihapus -->
                     <button v-if="isLoggedIn" @click="logout" class="text-xs bg-red-600 hover:bg-red-700 px-3 py-2 rounded font-bold transition shadow">
                         KELUAR <i class="fas fa-sign-out-alt ml-1"></i>
                     </button>
@@ -39,7 +38,7 @@
             </div>
         </nav>
 
-        <!-- 1. HALAMAN LOGIN -->
+        <!-- 1. HALAMAN LOGIN (INPUT KELAS -> NAMA DARI DB) -->
         <div v-if="!isLoggedIn" class="flex-1 flex flex-col items-center justify-center p-4 animate-fade-in">
             <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-t-8 border-blue-600">
                 <div class="text-center mb-6">
@@ -48,7 +47,7 @@
                 </div>
 
                 <div class="space-y-4">
-                    <!-- Pilih Kelas -->
+                    <!-- 1. Pilih Kelas -->
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Kelas</label>
                         <select v-model="form.kelas" @change="fetchStudents" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-600 outline-none">
@@ -59,7 +58,7 @@
                         </select>
                     </div>
 
-                    <!-- Pilih Nama -->
+                    <!-- 2. Pilih Nama -->
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nama Lengkap</label>
                         <select v-model="form.nama" :disabled="!form.kelas || studentList.length === 0" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-600 outline-none disabled:bg-gray-200 disabled:text-gray-400">
@@ -68,6 +67,9 @@
                         </select>
                         <p v-if="isLoadingList" class="text-xs text-blue-500 mt-1 animate-pulse">
                             <i class="fas fa-spinner fa-spin"></i> Mengambil data siswa...
+                        </p>
+                        <p v-if="!isLoadingList && form.kelas && studentList.length === 0" class="text-xs text-red-400 mt-1 italic">
+                            * Belum ada data siswa di kelas ini.
                         </p>
                     </div>
 
@@ -89,7 +91,7 @@
                     <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">Kelas {{ form.kelas }}</span>
                 </div>
                 <div class="text-right hidden md:block text-gray-500 text-xs">
-                    KKTP Berbeda Tiap Mapel
+                    *KKTP berbeda tiap Mapel
                 </div>
             </div>
 
@@ -111,7 +113,7 @@
                             <th class="p-4">Mata Pelajaran</th>
                             <th class="p-4 text-center w-24">KKTP</th>
                             <th class="p-4 text-center w-24">Nilai Akhir</th>
-                            <th class="p-4 text-center w-32">Status</th>
+                            <th class="p-4 text-center w-40">Status</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -124,22 +126,31 @@
                             </td>
 
                             <!-- NILAI -->
-                            <td class="p-4 text-center font-mono font-bold text-gray-800">
+                            <td class="p-4 text-center font-mono font-bold text-gray-600">
                                 {{ getStudentScore(mapel) !== null ? getStudentScore(mapel) : '-' }}
                             </td>
 
-                            <!-- STATUS -->
+                            <!-- STATUS (UPDATED: SUPPORT TUNTAS REMIDI) -->
                             <td class="p-4 text-center">
                                 <div v-if="getStudentScore(mapel) === null" class="text-xs text-gray-400 italic">
                                     Belum Ada Data
                                 </div>
                                 <div v-else>
-                                    <span v-if="getStudentScore(mapel) >= getKKM(mapel)" class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm flex items-center justify-center gap-1">
-                                        <i class="fas fa-check-circle"></i> LOLOS
-                                    </span>
-                                    <span v-else class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm animate-pulse flex items-center justify-center gap-1">
-                                        <i class="fas fa-exclamation-circle"></i> REMIDI
-                                    </span>
+                                    <!-- Cek Tuntas Remidi -->
+                                    <div v-if="isRemedialDone(mapel)">
+                                        <span class="bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-full text-xs font-bold shadow-sm flex items-center justify-center gap-1">
+                                            <i class="fas fa-clipboard-check"></i> TUNTAS REMIDI
+                                        </span>
+                                    </div>
+                                    <!-- Jika Belum Tuntas / Lulus Murni -->
+                                    <div v-else>
+                                        <span v-if="getStudentScore(mapel) >= getKKM(mapel)" class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm flex items-center justify-center gap-1">
+                                            <i class="fas fa-check-circle"></i> LOLOS
+                                        </span>
+                                        <span v-else class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm animate-pulse flex items-center justify-center gap-1">
+                                            <i class="fas fa-exclamation-circle"></i> REMIDI
+                                        </span>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -157,6 +168,7 @@
                     </button>
                 </div>
 
+                <!-- Form Tambah Jadwal (Admin Only) -->
                 <div v-if="isAdminMode" class="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-200">
                     <h4 class="text-xs font-bold text-blue-800 uppercase mb-2">Tambah Jadwal Baru</h4>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
@@ -219,12 +231,14 @@
                 this.loadBankSoal();
             },
             methods: {
+                // --- KKM LOGIC ---
                 getKKM(mapel) {
                     if(!mapel) return 75;
                     const m = mapel.toUpperCase();
                     if (['MATEMATIKA', 'IPA', 'BAHASA BALI'].includes(m)) return 70;
                     return 75; 
                 },
+
                 async loadBankSoal() {
                     const q = query(collection(db, "bank_soal"));
                     const snap = await getDocs(q);
@@ -250,11 +264,30 @@
                     } catch(e) { alert("Error: " + e.message); } finally { this.isLoading = false; }
                 },
                 logout() { this.isLoggedIn = false; this.studentResults = []; this.form = { nama: '', kelas: '' }; this.isAdminMode = false; },
+                
+                // --- HELPER UNTUK CEK STATUS TUNTAS ---
+                getStudentResult(mapelName) {
+                    return this.studentResults.find(r => r.mapel === mapelName);
+                },
+
+                isRemedialDone(mapelName) {
+                    const result = this.getStudentResult(mapelName);
+                    return result && result.isRemedialDone === true;
+                },
+
+                // --- KALKULASI NILAI (UPDATED) ---
                 getStudentScore(mapelName) {
-                    const result = this.studentResults.find(r => r.mapel === mapelName);
+                    const result = this.getStudentResult(mapelName);
                     if (!result) return null; 
+
+                    // JIKA SUDAH TUNTAS REMIDI -> NILAI = KKM
+                    if (result.isRemedialDone) {
+                        return this.getKKM(mapelName);
+                    }
+
                     const exam = this.bankSoalCache[result.examId];
                     if (!exam) return 0; 
+
                     let score = 0;
                     exam.soal.forEach((q, idx) => {
                         if (['PG', 'BS'].includes(q.type) && result.answers[idx] === q.answer) score += parseInt(q.poin);
@@ -262,6 +295,7 @@
                     });
                     return score;
                 },
+
                 enableAdminMode() { if(this.isAdminMode) { this.isAdminMode = false; } else { const pass = prompt("Password Admin:"); if(pass === 'admin123') this.isAdminMode = true; else alert("Salah!"); } },
                 async addSchedule() { if(!this.newSchedule.mapel) return; await addDoc(collection(db, "jadwal_remidi"), this.newSchedule); alert("Tersimpan"); },
                 async deleteSchedule(id) { if(confirm("Hapus?")) await deleteDoc(doc(db, "jadwal_remidi", id)); }
