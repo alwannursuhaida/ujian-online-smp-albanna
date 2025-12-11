@@ -30,6 +30,7 @@
         .header-lm { background-color: #f1f5f9; border-left: 2px solid #94a3b8; }
         .header-asas { background-color: #fff7ed; border-left: 2px solid #ea580c; }
         .header-avg { background-color: #ecfdf5; border-left: 2px solid #059669; }
+        .header-rapor { background-color: #eff6ff; border-left: 2px solid #2563eb; color: #1e40af; }
         
         /* Read Only Input */
         .input-readonly { background-color: #f3f4f6; color: #4b5563; cursor: not-allowed; }
@@ -111,7 +112,7 @@
                     </div>
                 </transition>
 
-                <!-- 3. INPUT NILAI (LENGKAP: ASAS & RERATA) -->
+                <!-- 3. INPUT NILAI (LENGKAP: ASAS, RERATA, & NILAI RAPOR) -->
                 <transition name="fade">
                     <div v-if="currentTab === 'nilai'">
                         <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -149,8 +150,11 @@
                                             <!-- ASAS HEADER -->
                                             <th colspan="2" class="p-2 text-center text-xs font-bold header-asas text-orange-800">ASESMEN SUMATIF AKHIR SEMESTER (ASAS)</th>
                                             
-                                            <!-- RATA-RATA HEADER -->
-                                            <th colspan="3" class="p-2 text-center text-xs font-bold header-avg text-green-800">RATA-RATA (BULAT KE ATAS)</th>
+                                            <!-- RATA-RATA HEADER (DIHAPUS TEXT BULAT KE ATAS) -->
+                                            <th colspan="3" class="p-2 text-center text-xs font-bold header-avg text-green-800">RATA-RATA</th>
+                                            
+                                            <!-- NILAI AKHIR RAPOR HEADER -->
+                                            <th rowspan="2" class="p-2 text-center text-xs font-bold header-rapor">Nilai Akhir (Rapor)</th>
                                         </tr>
                                         <tr class="bg-slate-100 text-slate-600">
                                             <!-- TP & LM COLUMNS -->
@@ -202,6 +206,11 @@
                                             <td class="p-0 bg-green-50/30 text-center font-bold text-green-800 border-l-2">{{ calculateRataTP(s.id) }}</td>
                                             <td class="p-0 bg-green-50/30 text-center font-bold text-green-800">{{ calculateRataLM(s.id) }}</td>
                                             <td class="p-0 bg-green-50/30 text-center font-bold text-green-800">{{ calculateRataASAS(s.id, s.asasTesScore) }}</td>
+
+                                            <!-- NILAI AKHIR RAPOR (BARU) -->
+                                            <td class="p-0 bg-blue-100 text-center font-extrabold text-blue-900 border-l-2">
+                                                {{ calculateNilaiRapor(s.id, s.asasTesScore) }}
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -338,41 +347,13 @@
                     const snap = await getDocs(q);
                     snap.forEach(doc => { this.bankSoalCache[doc.id] = doc.data(); });
                 },
-
-                calculateASASScore(studentAnswers, examId) {
-                    const exam = this.bankSoalCache[examId];
-                    if (!exam) return 0;
-                    let score = 0;
-                    // Logic similar to jawaban.html
-                    exam.soal.forEach((q, idx) => {
-                         // Hitung PG/BS (Otomatis)
-                         if (['PG', 'BS'].includes(q.type) && studentAnswers[idx] === q.answer) score += parseInt(q.poin);
-                         // Hitung Manual (Jika sudah ada di jawaban_siswa.manualScores, tapi disini kita hanya ambil score otomatis dulu untuk ASAS Tes)
-                         // ASAS TES biasanya hanya yang auto-graded atau total final.
-                         // Asumsi: ASAS Tes di sini adalah nilai murni dari sistem ujian (termasuk esai jika sudah dikoreksi di sistem jawaban)
-                         // Kita tarik total nilai yang tersimpan di jawaban_siswa jika ada logicnya, tapi jawaban_siswa struktur raw.
-                         // Kita hitung ulang saja yang auto, plus manual jika ada.
-                    });
-                    
-                    // Simple Logic: Replicate calculateScore from jawaban.html
-                    // Tapi karena kita tidak punya akses ke manualScores di jawaban_siswa sini dengan mudah (kecuali fetch deep),
-                    // Kita akan ambil nilai TOTAL dari dokumen jawaban_siswa jika kita simpan nilai totalnya.
-                    // Oh wait, jawaban_siswa collection doesn't store 'finalScore' explicitly in my previous code.
-                    // It stores answers. So I calculate it here.
-                    
-                    // To simplify: I will calculate Auto Score here.
-                    return score;
-                },
                 
-                // Helper untuk tarik nilai total dari jawaban_siswa (Auto + Manual jika ada)
                 getRealScoreFromDoc(docData) {
                     const exam = this.bankSoalCache[docData.examId];
                     if (!exam) return 0;
                     let score = 0;
                     exam.soal.forEach((q, idx) => {
-                        // Auto
                         if (['PG', 'BS'].includes(q.type) && docData.answers[idx] === q.answer) score += parseInt(q.poin);
-                        // Manual (Jika ada di docData)
                         if (['URAIAN', 'ESAI', 'ISIAN'].includes(q.type) && docData.manualScores && docData.manualScores[idx] !== undefined) {
                             score += parseInt(docData.manualScores[idx]);
                         }
@@ -386,7 +367,6 @@
                     this.isLoadingStudents = true;
                     this.studentList = [];
                     try {
-                        // 1. Get Students from Absensi
                         const qAbsen = query(collection(db, "data_absensi"), where("kelas", "==", this.selectedClass));
                         const snapAbsen = await getDocs(qAbsen);
                         const uniqueMap = new Map();
@@ -395,8 +375,6 @@
                             if(!uniqueMap.has(d.nama)) uniqueMap.set(d.nama, { id: doc.id, nama: d.nama, asasTesScore: 0 });
                         });
 
-                        // 2. Get ASAS Scores from Jawaban
-                        // Kita cari jawaban yang mapel-nya sama dengan identitas.mapel dan kelas sama
                         const qJawaban = query(collection(db, "jawaban_siswa"), where("mapel", "==", this.identitas.mapel), where("student.kelas", "==", this.selectedClass));
                         const snapJawaban = await getDocs(qJawaban);
                         
@@ -405,15 +383,13 @@
                             const sName = data.student.nama;
                             if (uniqueMap.has(sName)) {
                                 const score = this.getRealScoreFromDoc(data);
-                                // Cek Tuntas Remidi?
-                                const finalScore = data.isRemedialDone ? 75 : score; // Contoh logika KKM 75
+                                const finalScore = data.isRemedialDone ? 75 : score; 
                                 uniqueMap.get(sName).asasTesScore = finalScore;
                             }
                         });
 
                         this.studentList = Array.from(uniqueMap.values()).sort((a,b) => a.nama.localeCompare(b.nama));
                         
-                        // Init Vue Model
                         this.studentList.forEach(s => {
                             if (!this.allGrades[this.selectedClass]) this.allGrades[this.selectedClass] = {};
                             if (!this.allGrades[this.selectedClass][this.identitas.mapel]) this.allGrades[this.selectedClass][this.identitas.mapel] = {};
@@ -451,18 +427,23 @@
                 },
 
                 calculateRataASAS(sid, asasTesScore) {
-                    // Rata-rata dari (ASAS Tes Otomatis + ASAS Non Tes Manual)
-                    const nonTes = this.getVal(sid, 'asas_nontes');
-                    // Jika non tes diisi, rata-rata. Jika tidak, pakai nilai tes saja? 
-                    // Usually: (Tes + NonTes) / 2
-                    // Kita anggap jika non-tes 0/kosong, tetap dibagi 2 atau bagaimana?
-                    // Asumsi: Jika NonTes diisi, dibagi 2. Jika tidak, nilai Tes saja.
-                    
                     const nonTesRaw = this.getGrade(sid, 'asas_nontes');
                     if (nonTesRaw !== '') {
                         return Math.ceil((asasTesScore + parseFloat(nonTesRaw)) / 2);
                     }
                     return Math.ceil(asasTesScore);
+                },
+
+                // --- NEW: NILAI AKHIR RAPOR (AVG OF AVG) ---
+                calculateNilaiRapor(sid, asasTesScore) {
+                    const rTP = this.calculateRataTP(sid);
+                    const rLM = this.calculateRataLM(sid);
+                    const rASAS = this.calculateRataASAS(sid, asasTesScore);
+
+                    // Jika belum ada data sama sekali, return 0/kosong
+                    if (rTP === 0 && rLM === 0 && rASAS === 0) return 0;
+                    
+                    return Math.ceil((rTP + rLM + rASAS) / 3);
                 },
 
                 // --- UTILS ---
