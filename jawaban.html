@@ -12,9 +12,6 @@
     <style>
         body { font-family: 'Montserrat', sans-serif; }
         .score-badge { @apply px-2 py-1 rounded text-xs font-bold; }
-        .score-high { @apply bg-green-100 text-green-700; }
-        .score-med { @apply bg-yellow-100 text-yellow-700; }
-        .score-low { @apply bg-red-100 text-red-700; }
         
         /* Custom Radio Button untuk Skor Manual */
         .score-radio:checked + label {
@@ -74,7 +71,7 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <select v-model="selectedMapel" class="p-3 border-2 border-blue-100 rounded-lg bg-gray-50 text-sm font-bold focus:border-blue-500 focus:outline-none transition min-w-[200px]">
-                            <option value="">-- Pilih Mapel --</option>
+                            <option value="">-- Semua Mata Pelajaran --</option>
                             <option v-for="m in availableMapels" :value="m">{{ m }}</option>
                         </select>
 
@@ -98,13 +95,13 @@
                     <table class="w-full text-left border-collapse">
                         <thead class="bg-slate-50 text-slate-600 uppercase text-xs font-bold">
                             <tr>
-                                <th class="p-4 border-b w-16 text-center">No</th>
+                                <th class="p-4 border-b w-10 text-center">No</th>
                                 <th class="p-4 border-b">Nama Siswa</th>
                                 <th class="p-4 border-b">Mata Pelajaran</th>
                                 <th class="p-4 border-b text-center">Status Koreksi</th>
                                 <th class="p-4 border-b text-center">Nilai Akhir</th>
                                 <th class="p-4 border-b text-center">Status Lulus</th>
-                                <th class="p-4 border-b text-center w-48">Aksi</th>
+                                <th class="p-4 border-b text-center w-56">Aksi</th> <!-- Lebar kolom aksi ditambah -->
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 text-sm">
@@ -127,18 +124,43 @@
                                     <span :class="getScoreClass(calculateScore(res), res.mapel)">{{ calculateScore(res) }}</span>
                                 </td>
 
-                                <!-- STATUS KELULUSAN (DINAMIS PER MAPEL) -->
+                                <!-- STATUS KELULUSAN (UPDATE: SUPPORT TUNTAS REMIDI) -->
                                 <td class="p-4 text-center">
-                                    <span :class="isPass(res) ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'" class="px-3 py-1 rounded-full text-xs font-bold">
-                                        {{ isPass(res) ? 'LOLOS' : 'REMIDI' }}
-                                    </span>
+                                    <div v-if="res.isRemedialDone">
+                                        <span class="bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-full text-xs font-bold">
+                                            TUNTAS REMIDI
+                                        </span>
+                                    </div>
+                                    <div v-else>
+                                        <span :class="isPass(res) ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'" class="px-3 py-1 rounded-full text-xs font-bold">
+                                            {{ isPass(res) ? 'LOLOS' : 'REMIDI' }}
+                                        </span>
+                                    </div>
                                     <div class="text-[10px] text-gray-400 mt-1">KKM: {{ getKKM(res.mapel) }}</div>
                                 </td>
 
                                 <td class="p-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <button @click="startCorrection(res)" class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded shadow transition" title="Koreksi Jawaban"><i class="fas fa-check-double"></i></button>
-                                        <button @click="deleteResult(res.id)" class="bg-red-100 text-red-600 hover:bg-red-600 hover:text-white p-2 rounded transition" title="Hapus Data"><i class="fas fa-trash"></i></button>
+                                        
+                                        <!-- 1. KOREKSI (HILANG JIKA SUDAH TUNTAS REMIDI) -->
+                                        <button v-if="!res.isRemedialDone" @click="startCorrection(res)" class="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded shadow transition" title="Koreksi Jawaban">
+                                            <i class="fas fa-check-double"></i>
+                                        </button>
+
+                                        <!-- 2. TOMBOL TUNTAS REMIDI (MUNCUL JIKA NILAI < KKM DAN BELUM TUNTAS) -->
+                                        <button v-if="!isPass(res) && !res.isRemedialDone" @click="markRemedial(res)" class="bg-purple-600 text-white hover:bg-purple-700 p-2 rounded shadow transition animate-pulse" title="Tandai Tuntas Remidi">
+                                            <i class="fas fa-clipboard-check"></i>
+                                        </button>
+
+                                        <!-- 3. BATAL REMIDI (MUNCUL JIKA SUDAH TUNTAS, OPSIONAL UTK KOREKSI SALAH KLIK) -->
+                                        <button v-if="res.isRemedialDone" @click="undoRemedial(res)" class="bg-gray-400 text-white hover:bg-gray-500 p-2 rounded shadow transition" title="Batal Tuntas Remidi">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
+
+                                        <!-- 4. HAPUS -->
+                                        <button @click="deleteResult(res.id)" class="bg-red-100 text-red-600 hover:bg-red-600 hover:text-white p-2 rounded transition" title="Hapus Data">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -148,7 +170,7 @@
             </div>
         </div>
 
-        <!-- MODAL KOREKSI -->
+        <!-- MODAL KOREKSI (SAMA) -->
         <div v-if="isCorrecting && correctionData" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
             <div class="bg-white w-full max-w-4xl h-[90vh] rounded-xl shadow-2xl flex flex-col overflow-hidden animate-fade-in">
                 <div class="p-5 border-b bg-blue-50 flex justify-between items-center">
@@ -160,34 +182,32 @@
                 </div>
                 
                 <div class="flex-1 overflow-y-auto p-6 bg-gray-50">
-                    <!-- INFO SKOR -->
                     <div class="flex justify-between mb-6 bg-white p-4 rounded shadow-sm">
                         <div class="text-center w-1/2 border-r"><p class="text-xs text-gray-500 font-bold uppercase">Nilai Otomatis</p><p class="text-2xl font-bold text-slate-700">{{ tempStats.autoScore }}</p></div>
                         <div class="text-center w-1/2"><p class="text-xs text-gray-500 font-bold uppercase">Nilai Manual</p><p class="text-2xl font-bold text-blue-600">{{ tempStats.manualScore }}</p></div>
                     </div>
-
                     <div class="space-y-6">
                         <div v-for="(ans, idx) in correctionData.answers" :key="idx" class="bg-white border rounded-lg shadow-sm p-4">
                             <div class="flex justify-between mb-3 border-b pb-2">
                                 <span class="font-bold text-sm text-gray-600">Soal No. {{ parseInt(idx)+1 }} <span class="text-xs bg-gray-200 px-2 py-0.5 rounded ml-2 text-gray-600">{{ getQuestionType(correctionData.examId, idx) }}</span></span>
-                                <span class="text-xs font-bold text-gray-400">Bobot: {{ getQuestionPoint(correctionData.examId, idx) }}</span>
+                                <span class="text-xs font-bold text-gray-400">Bobot Max: {{ getQuestionPoint(correctionData.examId, idx) }}</span>
                             </div>
                             <p class="text-sm text-gray-800 mb-4 italic bg-gray-50 p-3 rounded">"{{ getQuestionText(correctionData.examId, idx) }}"</p>
-
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="text-sm space-y-2">
                                     <div><span class="block text-xs font-bold text-gray-400 uppercase">Jawaban Siswa:</span><div class="font-bold text-slate-800 whitespace-pre-wrap border-l-4 border-blue-400 pl-2">{{ formatAnswer(ans) }}</div></div>
-                                    <div v-if="['URAIAN', 'ESAI', 'ISIAN'].includes(getQuestionType(correctionData.examId, idx))"><span class="block text-xs font-bold text-gray-400 uppercase mt-2">Kunci Guru:</span><div class="text-green-700 text-xs whitespace-pre-wrap border-l-4 border-green-400 pl-2">{{ getCorrectAnswer(correctionData.examId, idx) }}</div></div>
+                                    <div v-if="isManualType(correctionData.examId, idx)"><span class="block text-xs font-bold text-gray-400 uppercase mt-2">Kunci Guru:</span><div class="text-green-700 text-xs whitespace-pre-wrap border-l-4 border-green-400 pl-2">{{ getCorrectAnswer(correctionData.examId, idx) }}</div></div>
                                 </div>
-
-                                <!-- Panel Skor Manual -->
-                                <div v-if="['URAIAN', 'ESAI', 'ISIAN'].includes(getQuestionType(correctionData.examId, idx))" class="bg-blue-50 p-3 rounded border border-blue-100">
-                                    <p class="text-xs font-bold text-blue-800 mb-2 text-center uppercase">Berikan Skor</p>
-                                    <div class="flex justify-center gap-2 flex-wrap">
-                                        <template v-for="s in getScoreRange(correctionData.examId, idx)" :key="s">
-                                            <input type="radio" :name="'score_'+idx" :id="'s_'+idx+'_'+s" :value="s" v-model="correctionData.manualScores[idx]" class="hidden score-radio">
-                                            <label :for="'s_'+idx+'_'+s" class="w-8 h-8 flex items-center justify-center border border-blue-300 rounded cursor-pointer hover:bg-blue-200 font-bold text-blue-800 transition">{{ s }}</label>
-                                        </template>
+                                <div v-if="isManualType(correctionData.examId, idx)" class="bg-blue-50 p-3 rounded border border-blue-100">
+                                    <div v-if="!ans || ans.trim() === ''" class="text-center py-4"><p class="text-red-500 font-bold text-sm"><i class="fas fa-times-circle"></i> Tidak Dijawab</p><p class="text-xs text-gray-500">Otomatis Skor: 0</p></div>
+                                    <div v-else>
+                                        <p class="text-xs font-bold text-blue-800 mb-2 text-center uppercase">Berikan Skor (Maks {{ getQuestionPoint(correctionData.examId, idx) }})</p>
+                                        <div class="flex justify-center gap-2 flex-wrap">
+                                            <template v-for="s in getScoreRange(correctionData.examId, idx)" :key="s">
+                                                <input type="radio" :name="'score_'+idx" :id="'s_'+idx+'_'+s" :value="s" v-model="correctionData.manualScores[idx]" class="hidden score-radio">
+                                                <label :for="'s_'+idx+'_'+s" class="w-8 h-8 flex items-center justify-center border border-blue-300 rounded cursor-pointer hover:bg-blue-200 font-bold text-blue-800 transition">{{ s }}</label>
+                                            </template>
+                                        </div>
                                     </div>
                                 </div>
                                 <div v-else class="flex items-center justify-center">
@@ -226,8 +246,7 @@
         createApp({
             data() {
                 return {
-                    isLoading: true,
-                    kelasStructure: {'7': ['7A','7B','7C','7D','7E','7F'], '8': ['8A','8B','8C','8D','8E','8F'], '9': ['9A','9B','9C','9D','9E']},
+                    isLoading: true, kelasStructure: {'7': ['7A','7B','7C','7D','7E','7F'], '8': ['8A','8B','8C','8D','8E','8F'], '9': ['9A','9B','9C','9D','9E']},
                     selectedClass: '7A', selectedMapel: '', allResults: [], bankSoalCache: {},
                     isCorrecting: false, correctionData: null,
                     manualTypes: ['URAIAN', 'ESAI', 'ISIAN']
@@ -246,7 +265,12 @@
                         return matchClass && matchMapel;
                     });
                 },
-                sortedResults() { return [...this.filteredResults].sort((a, b) => a.student.nama.localeCompare(b.student.nama)); },
+                sortedResults() { 
+                    return [...this.filteredResults].sort((a, b) => {
+                        const nameA = a.student?.nama || ''; const nameB = b.student?.nama || '';
+                        return nameA.localeCompare(nameB);
+                    }); 
+                },
                 tempStats() {
                     if (!this.correctionData) return { autoScore: 0, manualScore: 0 };
                     let auto = 0, manual = 0;
@@ -272,26 +296,39 @@
                 });
             },
             methods: {
-                // --- KKM LOGIC (KKTP) ---
                 getKKM(mapel) {
                     if(!mapel) return 75;
                     const m = mapel.toUpperCase();
                     if (['MATEMATIKA', 'IPA', 'BAHASA BALI'].includes(m)) return 70;
-                    return 75; // AGAMA, PKN, INDO, IPS, INGGRIS, INFOR, PJOK/OLAHRAGA, SENBUD, ARAB, KKA
+                    return 75; 
+                },
+                isPass(res) {
+                    // Jika sudah remedial, anggap lulus (karena nilai jadi KKTP)
+                    if (res.isRemedialDone) return true;
+                    return this.calculateScore(res) >= this.getKKM(res.mapel);
                 },
 
-                // Cek Status Lulus
-                isPass(res) {
-                    const score = this.calculateScore(res);
+                // --- NEW: FITUR TUNTAS REMIDI ---
+                async markRemedial(res) {
                     const kkm = this.getKKM(res.mapel);
-                    return score >= kkm;
+                    if(confirm(`Tandai siswa ini SUDAH TUNTAS REMIDI?\n\nNilai akhir akan otomatis diset menjadi KKTP (${kkm}).`)) {
+                        try {
+                            await updateDoc(doc(db, "jawaban_siswa", res.id), { isRemedialDone: true });
+                        } catch(e) { alert("Gagal update: " + e.message); }
+                    }
+                },
+                async undoRemedial(res) {
+                    if(confirm("Batalkan status Tuntas Remidi? Nilai akan kembali ke nilai asli ujian.")) {
+                        try {
+                            await updateDoc(doc(db, "jawaban_siswa", res.id), { isRemedialDone: false });
+                        } catch(e) { alert("Gagal update: " + e.message); }
+                    }
                 },
 
                 switchClass(cls) { this.selectedClass = cls; this.selectedMapel = ''; },
                 getCountPerClass(cls) { return this.allResults.filter(r => r.student && r.student.kelas === cls).length; },
-                formatDate(iso) { return new Date(iso).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); },
-                getExamData(examId) { return this.bankSoalCache[examId]; },
                 
+                getExamData(examId) { return this.bankSoalCache[examId]; },
                 getQuestionText(examId, idx) { const e = this.getExamData(examId); return e && e.soal[idx] ? e.soal[idx].text : '?'; },
                 getQuestionType(examId, idx) { const e = this.getExamData(examId); return e && e.soal[idx] ? e.soal[idx].type : ''; },
                 getQuestionPoint(examId, idx) { const e = this.getExamData(examId); return e && e.soal[idx] ? parseInt(e.soal[idx].poin) : 0; },
@@ -306,6 +343,7 @@
                     return false;
                 },
                 needsManualCorrection(res) {
+                    if (res.isRemedialDone) return false; // Jika sudah remidi, tidak perlu koreksi lagi
                     const exam = this.getExamData(res.examId);
                     if(!exam) return false;
                     const hasManual = exam.soal.some(q => this.manualTypes.includes(q.type));
@@ -314,7 +352,12 @@
                     return exam.soal.some((q, idx) => this.manualTypes.includes(q.type) && res.manualScores[idx] === undefined);
                 },
 
+                // UPDATE: LOGIKA NILAI AKHIR (Jika Remidi -> KKTP)
                 calculateScore(result) {
+                    if (result.isRemedialDone) {
+                        return this.getKKM(result.mapel);
+                    }
+
                     const exam = this.getExamData(result.examId);
                     if (!exam) return 0;
                     let score = 0;
@@ -328,8 +371,8 @@
                 getScoreClass(score, mapel) {
                     const kkm = this.getKKM(mapel);
                     const base = "px-2 py-1 rounded text-xs font-bold text-center inline-block ";
-                    if (score >= kkm) return base + "bg-green-100 text-green-700"; // Lulus
-                    return base + "bg-red-100 text-red-700"; // Remidi
+                    if (score >= kkm) return base + "bg-green-100 text-green-700";
+                    return base + "bg-red-100 text-red-700";
                 },
 
                 startCorrection(res) {
@@ -364,7 +407,7 @@
                     
                     let header = ["No", "Nama Siswa", "NIS"];
                     for(let i=1; i<=jumlahSoal; i++) header.push(`Q${i}`);
-                    header.push("Total Nilai", "Status");
+                    header.push("Total Nilai", "Status", "Keterangan");
 
                     let rows = [];
                     this.sortedResults.forEach((res, idx) => {
@@ -386,10 +429,17 @@
                         }
                         const score = this.calculateScore(res);
                         const kkm = this.getKKM(res.mapel);
-                        const isPass = score >= kkm;
+                        // Status Excel
+                        let statusText = 'LOLOS';
+                        if (res.isRemedialDone) statusText = 'TUNTAS REMIDI';
+                        else if (score < kkm) statusText = 'REMIDI';
                         
                         row.push({ v: score, s: { font: { bold: true } } });
-                        row.push({ v: isPass ? 'LOLOS' : 'REMIDI', s: { font: { bold: true, color: { rgb: isPass ? "008000" : "FF0000" } } } });
+                        row.push({ v: statusText, s: { font: { bold: true } } });
+                        
+                        if (res.isRemedialDone) row.push("Nilai disesuaikan ke KKTP");
+                        else row.push("-");
+
                         rows.push(row);
                     });
 
