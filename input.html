@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Rapor Guru - SMP ALBANNA</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Montserrat', sans-serif; }
+        .input-abcd:focus { ring: 2px solid #3b82f6; transform: scale(1.005); }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        
+        /* Excel Table */
+        .excel-table th, .excel-table td { border: 1px solid #e2e8f0; }
+        .excel-input { width: 100%; height: 100%; padding: 4px; border: none; outline: none; text-align: center; background: transparent; font-family: monospace; font-weight: bold; font-size: 11px; }
+        .excel-input:focus { background: #eff6ff; box-shadow: inset 0 0 0 2px #3b82f6; }
+        .input-error { background-color: #fee2e2 !important; color: #dc2626 !important; }
+        
+        /* Sticky Column Name */
+        .sticky-col { position: sticky; left: 0; z-index: 10; background-color: #f8fafc; border-right: 2px solid #e2e8f0; }
+        
+        /* Headers */
+        .header-lm { background-color: #f1f5f9; border-left: 2px solid #94a3b8; }
+        .header-asas { background-color: #fff7ed; border-left: 2px solid #ea580c; }
+        .header-avg { background-color: #ecfdf5; border-left: 2px solid #059669; }
+        
+        /* Read Only Input */
+        .input-readonly { background-color: #f3f4f6; color: #4b5563; cursor: not-allowed; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <div id="app" class="flex h-screen overflow-hidden">
+        
+        <!-- SIDEBAR -->
+        <div class="w-64 bg-slate-900 text-white flex flex-col h-full shadow-2xl z-20">
+            <div class="p-6 text-center border-b border-slate-700 bg-slate-800">
+                <h1 class="font-bold text-xl tracking-wider">E-RAPOR</h1>
+                <p class="text-xs text-slate-400 mt-1">GURU MAPEL</p>
+            </div>
+            
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+                <button @click="currentTab = 'identitas'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'identitas' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-id-card w-5"></i> Identitas Pelajaran</button>
+                <button @click="switchToTP" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'tp' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-bullseye w-5"></i> Penyusunan TP <i v-if="!isIdentityValid" class="fas fa-lock text-xs ml-auto opacity-50"></i></button>
+                <button @click="switchToNilai" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'nilai' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-edit w-5"></i> Input Nilai <i v-if="!isTpValid" class="fas fa-lock text-xs ml-auto opacity-50"></i></button>
+                <div class="border-t border-slate-700 my-2"></div>
+                <button @click="currentTab = 'monitoring'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'monitoring' ? 'bg-indigo-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-chart-line w-5"></i> Monitoring Input</button>
+            </nav>
+            <div class="p-4 border-t border-slate-800"><a href="index.html" class="w-full text-center text-xs text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 p-2 hover:bg-slate-800 rounded transition"><i class="fas fa-home"></i> KEMBALI KE MENU</a></div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="flex-1 flex flex-col h-full overflow-hidden bg-gray-50 relative">
+            <div class="bg-white p-4 shadow-sm border-b flex justify-between items-center px-8 z-10">
+                <div><h2 class="text-2xl font-bold text-slate-800 uppercase">{{ getPageTitle() }}</h2><p class="text-xs text-gray-500">{{ getPageSubtitle() }}</p></div>
+                <button v-if="currentTab !== 'monitoring'" @click="handleSaveButton" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-green-700 transition flex items-center gap-2"><i class="fas fa-save"></i> SIMPAN PROGRES</button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-8 pb-32">
+                
+                <!-- 1. IDENTITAS -->
+                <transition name="fade">
+                    <div v-if="currentTab === 'identitas'">
+                        <div class="bg-white p-8 rounded-xl shadow-lg border border-indigo-100 max-w-3xl mx-auto mt-10">
+                            <div class="text-center mb-8"><div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-600"><i class="fas fa-book-reader fa-2x"></i></div><h3 class="text-xl font-bold text-slate-800">Lengkapi Data Awal</h3></div>
+                            <div class="space-y-6">
+                                <div><label class="block text-sm font-bold text-gray-600 uppercase mb-2">Pilih Mata Pelajaran <span class="text-red-500">*</span></label><select v-model="identitas.mapel" class="w-full p-4 border-2 border-indigo-100 rounded-xl bg-indigo-50/30 focus:border-indigo-500 outline-none font-bold text-slate-800"><option value="" disabled>-- Pilih Mapel --</option><option v-for="m in mapelList" :value="m">{{ m }}</option></select></div>
+                                <div><label class="block text-sm font-bold text-gray-600 uppercase mb-2">Jenjang Kelas <span class="text-red-500">*</span></label><select v-model="identitas.jenjang" class="w-full p-4 border-2 border-indigo-100 rounded-xl bg-indigo-50/30 focus:border-indigo-500 outline-none font-bold text-slate-800"><option value="" disabled>-- Pilih Jenjang --</option><option value="7">Kelas 7</option><option value="8">Kelas 8</option><option value="9">Kelas 9</option></select></div>
+                                <div><label class="block text-sm font-bold text-gray-600 uppercase mb-2">Nama Guru Pengampu <span class="text-red-500">*</span></label><input v-model="identitas.guru" class="w-full pl-4 p-4 border-2 border-gray-200 rounded-xl focus:border-indigo-500 outline-none text-slate-800" placeholder="Nama Lengkap & Gelar"></div>
+                                <div class="pt-4"><button @click="switchToTP" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg flex justify-center items-center gap-2">MULAI MENYUSUN TP <i class="fas fa-arrow-right"></i></button></div>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+
+                <!-- 2. PENYUSUNAN TP (OTOMASI RESTORED) -->
+                <transition name="fade">
+                    <div v-if="currentTab === 'tp'">
+                        <div class="mb-6 flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-200 w-fit"><span class="font-bold text-indigo-900 text-sm">{{ identitas.mapel }}</span><span class="text-gray-400">|</span><span class="font-bold text-indigo-900 text-sm">Jenjang {{ identitas.jenjang }}</span></div>
+                        
+                        <div v-for="(lm, lmIndex) in lingkupMateri" :key="lm.id" class="mb-8 bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
+                            <div class="bg-slate-100 p-4 border-b flex items-center gap-4 cursor-pointer" @click="lm.isOpen = !lm.isOpen">
+                                <div class="bg-indigo-600 text-white w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm">{{ lmIndex + 1 }}</div>
+                                <div class="flex-1" @click.stop><input v-model="lm.judul" class="w-full p-2 bg-transparent border-b-2 border-slate-300 focus:border-indigo-600 outline-none font-bold" :placeholder="'Lingkup Materi ' + (lmIndex + 1)"></div>
+                                <i :class="['fas text-slate-400', lm.isOpen ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
+                            </div>
+                            <div v-show="lm.isOpen" class="p-6 space-y-6 bg-slate-50/30">
+                                <div v-for="(tp, tpIndex) in lm.tujuan" :key="tpIndex" class="relative group border-b border-slate-100 pb-4">
+                                    <h4 class="font-bold text-xs text-slate-500 mb-2">TP {{ lmIndex + 1 }}.{{ tpIndex + 1 }}</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-12 gap-2 mb-2">
+                                        <div class="md:col-span-1"><input v-model="tp.a" readonly class="w-full p-2 border rounded bg-gray-100 text-center text-xs font-bold" title="Audience"></div>
+                                        <div class="md:col-span-5"><textarea v-model="tp.b" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Behavior (KKO + Materi)"></textarea></div>
+                                        <div class="md:col-span-3"><textarea v-model="tp.c" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Condition (Melalui...)"></textarea></div>
+                                        <div class="md:col-span-3"><textarea v-model="tp.d" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Degree (Kriteria)"></textarea></div>
+                                    </div>
+                                    <!-- OTOMASI KALIMAT -->
+                                    <div class="bg-indigo-50 p-2 rounded border border-indigo-100 flex items-center gap-2">
+                                        <i class="fas fa-magic text-indigo-400 text-xs"></i>
+                                        <p class="text-xs text-indigo-900 italic font-medium">"{{ generateSentence(tp) }}"</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+
+                <!-- 3. INPUT NILAI (LENGKAP: ASAS & RERATA) -->
+                <transition name="fade">
+                    <div v-if="currentTab === 'nilai'">
+                        <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div class="w-full md:w-1/3">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pilih Kelas</label>
+                                <select v-model="selectedClass" @change="fetchStudentsAndScores" class="w-full p-2 border-2 border-blue-200 rounded font-bold text-blue-900">
+                                    <option value="" disabled>-- Pilih Kelas --</option>
+                                    <option v-for="c in filteredClasses" :value="c">{{ c }}</option>
+                                </select>
+                            </div>
+                            <div class="text-right text-xs text-gray-500">
+                                <p><strong>Mapel:</strong> {{ identitas.mapel }}</p>
+                                <p class="text-green-600 font-bold" v-if="lastSavedGrade">Tersimpan: {{ lastSavedGrade }}</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow border overflow-hidden relative">
+                            <div v-if="!selectedClass" class="p-10 text-center text-gray-400"><i class="fas fa-arrow-up fa-2x mb-2"></i><br>Pilih kelas dulu.</div>
+                            <div v-else-if="isLoadingStudents" class="p-10 text-center text-blue-500"><i class="fas fa-circle-notch fa-spin fa-2x"></i><br>Mengambil data & menghitung ASAS...</div>
+                            
+                            <div v-else class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse excel-table text-sm">
+                                    <thead>
+                                        <tr class="bg-slate-800 text-white">
+                                            <th class="p-3 w-10 text-center sticky-col bg-slate-800" rowspan="2">No</th>
+                                            <th class="p-3 w-64 sticky-col bg-slate-800 left-10" rowspan="2">Nama Siswa</th>
+                                            
+                                            <!-- LINGKUP MATERI HEADERS -->
+                                            <template v-for="lm in activeLMs" :key="lm.id">
+                                                <th :colspan="lm.tpCount + 2" class="p-2 text-center text-xs font-bold header-lm text-slate-800">
+                                                    {{ lm.judul || 'LM ' + lm.id }}
+                                                </th>
+                                            </template>
+                                            
+                                            <!-- ASAS HEADER -->
+                                            <th colspan="2" class="p-2 text-center text-xs font-bold header-asas text-orange-800">ASESMEN SUMATIF AKHIR SEMESTER (ASAS)</th>
+                                            
+                                            <!-- RATA-RATA HEADER -->
+                                            <th colspan="3" class="p-2 text-center text-xs font-bold header-avg text-green-800">RATA-RATA (BULAT KE ATAS)</th>
+                                        </tr>
+                                        <tr class="bg-slate-100 text-slate-600">
+                                            <!-- TP & LM COLUMNS -->
+                                            <template v-for="lm in activeLMs" :key="lm.id">
+                                                <template v-for="(tp, idx) in lm.tujuan" :key="lm.id + '_' + idx">
+                                                    <th class="p-2 text-center text-[10px] w-14 border-l" :title="generateSentence(tp)">TP {{ lm.id }}.{{ idx+1 }}</th>
+                                                </template>
+                                                <th class="p-2 text-center text-[10px] w-14 bg-blue-50 font-bold border-l-2">LM Tes</th>
+                                                <th class="p-2 text-center text-[10px] w-14 bg-blue-50 font-bold">LM Non-Tes</th>
+                                            </template>
+
+                                            <!-- ASAS COLUMNS -->
+                                            <th class="p-2 text-center text-[10px] w-20 bg-orange-50 font-bold">Tes (Auto)</th>
+                                            <th class="p-2 text-center text-[10px] w-20 bg-orange-50 font-bold">Non-Tes</th>
+
+                                            <!-- AVG COLUMNS -->
+                                            <th class="p-2 text-center text-[10px] w-16 bg-green-50 font-bold">Rata TP</th>
+                                            <th class="p-2 text-center text-[10px] w-16 bg-green-50 font-bold">Rata LM</th>
+                                            <th class="p-2 text-center text-[10px] w-16 bg-green-50 font-bold">Rata ASAS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white">
+                                        <tr v-for="(s, sIdx) in studentList" :key="s.id" class="hover:bg-blue-50">
+                                            <td class="text-center bg-gray-50 text-gray-500 select-none sticky-col left-0">{{ sIdx + 1 }}</td>
+                                            <td class="px-3 py-2 font-bold text-gray-700 select-none whitespace-nowrap sticky-col bg-white left-10">{{ s.nama }}</td>
+                                            
+                                            <!-- INPUT TP & LM -->
+                                            <template v-for="lm in activeLMs" :key="lm.id">
+                                                <!-- TP Inputs -->
+                                                <template v-for="(tp, idx) in lm.tujuan" :key="lm.id + '_' + idx">
+                                                    <td class="p-0"><input type="text" :class="['excel-input', getValidationClass(getGrade(s.id, `tp_${lm.id}_${idx+1}` ))]" :value="getGrade(s.id, `tp_${lm.id}_${idx+1}` )" @input="updateGrade(s.id, `tp_${lm.id}_${idx+1}`, $event.target.value)" @paste="handleGridPaste($event, sIdx, `tp_${lm.id}_${idx+1}`)"></td>
+                                                </template>
+                                                <!-- LM Sumatif Inputs -->
+                                                <td class="p-0 bg-blue-50/20 border-l-2"><input type="text" :class="['excel-input font-bold text-blue-700', getValidationClass(getGrade(s.id, `lm_${lm.id}_tes`))]" :value="getGrade(s.id, `lm_${lm.id}_tes`)" @input="updateGrade(s.id, `lm_${lm.id}_tes`, $event.target.value)"></td>
+                                                <td class="p-0 bg-blue-50/20"><input type="text" :class="['excel-input font-bold text-blue-700', getValidationClass(getGrade(s.id, `lm_${lm.id}_nontes`))]" :value="getGrade(s.id, `lm_${lm.id}_nontes`)" @input="updateGrade(s.id, `lm_${lm.id}_nontes`, $event.target.value)"></td>
+                                            </template>
+
+                                            <!-- ASAS COLUMNS -->
+                                            <td class="p-0 bg-orange-50/30 border-l-2">
+                                                <!-- ASAS Tes (Auto Read-Only) -->
+                                                <input type="text" class="excel-input font-bold text-orange-700 bg-orange-100 cursor-not-allowed" :value="s.asasTesScore" readonly title="Nilai otomatis dari Jawaban Siswa">
+                                            </td>
+                                            <td class="p-0 bg-orange-50/30">
+                                                <!-- ASAS Non-Tes (Manual) -->
+                                                <input type="text" :class="['excel-input font-bold text-orange-700', getValidationClass(getGrade(s.id, 'asas_nontes'))]" :value="getGrade(s.id, 'asas_nontes')" @input="updateGrade(s.id, 'asas_nontes', $event.target.value)">
+                                            </td>
+
+                                            <!-- CALCULATED AVERAGES (Read-Only) -->
+                                            <td class="p-0 bg-green-50/30 text-center font-bold text-green-800 border-l-2">{{ calculateRataTP(s.id) }}</td>
+                                            <td class="p-0 bg-green-50/30 text-center font-bold text-green-800">{{ calculateRataLM(s.id) }}</td>
+                                            <td class="p-0 bg-green-50/30 text-center font-bold text-green-800">{{ calculateRataASAS(s.id, s.asasTesScore) }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+
+                <!-- 4. MONITORING -->
+                <transition name="fade">
+                    <div v-if="currentTab === 'monitoring'">
+                        <div class="bg-white p-6 rounded-xl shadow border">
+                            <h2 class="text-xl font-bold text-slate-800 mb-4">Monitoring Input Nilai</h2>
+                            <div v-for="(classes, jenjang) in classesMap" :key="jenjang" class="mb-6">
+                                <h3 class="font-bold text-blue-900 border-b pb-2 mb-3">JENJANG KELAS {{ jenjang }}</h3>
+                                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                    <div v-for="cls in classes" :key="cls" class="bg-gray-50 border p-3 rounded text-center">
+                                        <div class="font-bold text-lg text-slate-700">{{ cls }}</div>
+                                        <div class="text-xs text-gray-500 mt-2 space-y-1">
+                                            <div v-for="m in mapelList" :key="m" class="flex justify-between"><span>{{ m }}</span><i :class="hasData(cls, m) ? 'fas fa-check-circle text-green-500' : 'fas fa-circle text-gray-200'"></i></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBivREr2y61OYTE0kLxRnkGtPCdLvHn_og",
+            authDomain: "cbt-albanna.firebaseapp.com",
+            projectId: "cbt-albanna",
+            storageBucket: "cbt-albanna.firebasestorage.app",
+            messagingSenderId: "740622197344",
+            appId: "1:740622197344:web:6112adf59edfbe496ed905"
+        };
+        const appFirebase = initializeApp(firebaseConfig);
+        const db = getFirestore(appFirebase);
+
+        createApp({
+            data() {
+                return {
+                    currentTab: 'identitas',
+                    selectedClass: '',
+                    studentList: [],
+                    isLoadingStudents: false,
+                    lastSavedGrade: null,
+                    
+                    identitas: { mapel: '', guru: '', jenjang: '' }, 
+                    lingkupMateri: Array.from({ length: 5 }, (_, i) => ({ id: i + 1, judul: '', isOpen: i === 0, tujuan: Array.from({ length: 5 }, () => ({ a: 'Murid', b: '', c: '', d: '' })) })),
+                    
+                    // STORAGE STRUKTUR: grades[kelas][mapel][siswa_id][key]
+                    allGrades: {}, 
+                    bankSoalCache: {}, // Untuk hitung nilai ASAS
+
+                    mapelList: ['AGAMA ISLAM', 'BAHASA ARAB', 'BAHASA BALI', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 'INFORMATIKA', 'IPA', 'IPS', 'KKA', 'MATEMATIKA', 'OLAHRAGA', 'PKN', 'SENI BUDAYA'],
+                    classesMap: { '7': ['7A','7B','7C','7D','7E','7F'], '8': ['8A','8B','8C','8D','8E','8F'], '9': ['9A','9B','9C','9D','9E'] }
+                }
+            },
+            computed: {
+                isIdentityValid() { return this.identitas.mapel && this.identitas.jenjang && this.identitas.guru.trim() !== ''; },
+                isTpValid() { return this.lingkupMateri.some(lm => lm.judul && lm.tujuan.some(tp => tp.b)); },
+                filteredClasses() { return this.identitas.jenjang ? this.classesMap[this.identitas.jenjang] : []; },
+                
+                activeLMs() {
+                    return this.lingkupMateri.filter(lm => lm.judul).map(lm => {
+                        return { ...lm, tujuan: lm.tujuan.filter(tp => tp.b), tpCount: lm.tujuan.filter(tp => tp.b).length };
+                    }).filter(lm => lm.tpCount > 0);
+                },
+                activeTPs() {
+                    const tps = [];
+                    this.activeLMs.forEach(lm => {
+                        lm.tujuan.forEach((tp, idx) => {
+                            if (tp.b) tps.push({ uniqueId: `tp_${lm.id}_${idx+1}` });
+                        });
+                    });
+                    return tps;
+                }
+            },
+            mounted() {
+                const savedTp = localStorage.getItem('cbt_input_tp');
+                if (savedTp) {
+                    const data = JSON.parse(savedTp);
+                    this.identitas = data.identitas || this.identitas;
+                    this.lingkupMateri = data.lingkupMateri || this.lingkupMateri;
+                }
+                const savedGrades = localStorage.getItem('cbt_all_grades');
+                if (savedGrades) this.allGrades = JSON.parse(savedGrades);
+
+                // Load Bank Soal for ASAS Calc
+                this.loadBankSoal();
+            },
+            methods: {
+                getPageTitle() {
+                    if (this.currentTab === 'identitas') return 'IDENTITAS PELAJARAN';
+                    if (this.currentTab === 'tp') return 'PENYUSUNAN TP (ABCD)';
+                    if (this.currentTab === 'nilai') return 'INPUT NILAI RAPOR';
+                    return 'MONITORING INPUT';
+                },
+                getPageSubtitle() { return this.currentTab === 'monitoring' ? 'Pantau kelengkapan nilai seluruh kelas.' : 'Lengkapi data secara berurutan.'; },
+
+                switchToTP() { if (!this.isIdentityValid) return Swal.fire('Lengkapi Identitas', '', 'warning'); this.currentTab = 'tp'; },
+                switchToNilai() { 
+                    if (!this.isIdentityValid || !this.isTpValid) return Swal.fire('Data Belum Lengkap', 'Isi Identitas dan TP dulu.', 'warning');
+                    this.currentTab = 'nilai'; this.selectedClass = ''; 
+                },
+
+                // --- DATA HANDLING ---
+                getGrade(sid, key) {
+                    const c = this.selectedClass; const m = this.identitas.mapel;
+                    if (this.allGrades[c] && this.allGrades[c][m] && this.allGrades[c][m][sid]) return this.allGrades[c][m][sid][key] || '';
+                    return '';
+                },
+                updateGrade(sid, key, val) {
+                    const c = this.selectedClass; const m = this.identitas.mapel;
+                    if (!this.allGrades[c]) this.allGrades[c] = {};
+                    if (!this.allGrades[c][m]) this.allGrades[c][m] = {};
+                    if (!this.allGrades[c][m][sid]) this.allGrades[c][m][sid] = {};
+                    this.allGrades[c][m][sid][key] = val;
+                },
+
+                // --- ASAS CALCULATION LOGIC ---
+                async loadBankSoal() {
+                    const q = query(collection(db, "bank_soal"));
+                    const snap = await getDocs(q);
+                    snap.forEach(doc => { this.bankSoalCache[doc.id] = doc.data(); });
+                },
+
+                calculateASASScore(studentAnswers, examId) {
+                    const exam = this.bankSoalCache[examId];
+                    if (!exam) return 0;
+                    let score = 0;
+                    // Logic similar to jawaban.html
+                    exam.soal.forEach((q, idx) => {
+                         // Hitung PG/BS (Otomatis)
+                         if (['PG', 'BS'].includes(q.type) && studentAnswers[idx] === q.answer) score += parseInt(q.poin);
+                         // Hitung Manual (Jika sudah ada di jawaban_siswa.manualScores, tapi disini kita hanya ambil score otomatis dulu untuk ASAS Tes)
+                         // ASAS TES biasanya hanya yang auto-graded atau total final.
+                         // Asumsi: ASAS Tes di sini adalah nilai murni dari sistem ujian (termasuk esai jika sudah dikoreksi di sistem jawaban)
+                         // Kita tarik total nilai yang tersimpan di jawaban_siswa jika ada logicnya, tapi jawaban_siswa struktur raw.
+                         // Kita hitung ulang saja yang auto, plus manual jika ada.
+                    });
+                    
+                    // Simple Logic: Replicate calculateScore from jawaban.html
+                    // Tapi karena kita tidak punya akses ke manualScores di jawaban_siswa sini dengan mudah (kecuali fetch deep),
+                    // Kita akan ambil nilai TOTAL dari dokumen jawaban_siswa jika kita simpan nilai totalnya.
+                    // Oh wait, jawaban_siswa collection doesn't store 'finalScore' explicitly in my previous code.
+                    // It stores answers. So I calculate it here.
+                    
+                    // To simplify: I will calculate Auto Score here.
+                    return score;
+                },
+                
+                // Helper untuk tarik nilai total dari jawaban_siswa (Auto + Manual jika ada)
+                getRealScoreFromDoc(docData) {
+                    const exam = this.bankSoalCache[docData.examId];
+                    if (!exam) return 0;
+                    let score = 0;
+                    exam.soal.forEach((q, idx) => {
+                        // Auto
+                        if (['PG', 'BS'].includes(q.type) && docData.answers[idx] === q.answer) score += parseInt(q.poin);
+                        // Manual (Jika ada di docData)
+                        if (['URAIAN', 'ESAI', 'ISIAN'].includes(q.type) && docData.manualScores && docData.manualScores[idx] !== undefined) {
+                            score += parseInt(docData.manualScores[idx]);
+                        }
+                    });
+                    return score;
+                },
+
+                // --- FETCH STUDENTS & SCORES ---
+                async fetchStudentsAndScores() {
+                    if(!this.selectedClass) return;
+                    this.isLoadingStudents = true;
+                    this.studentList = [];
+                    try {
+                        // 1. Get Students from Absensi
+                        const qAbsen = query(collection(db, "data_absensi"), where("kelas", "==", this.selectedClass));
+                        const snapAbsen = await getDocs(qAbsen);
+                        const uniqueMap = new Map();
+                        snapAbsen.docs.forEach(doc => {
+                            const d = doc.data();
+                            if(!uniqueMap.has(d.nama)) uniqueMap.set(d.nama, { id: doc.id, nama: d.nama, asasTesScore: 0 });
+                        });
+
+                        // 2. Get ASAS Scores from Jawaban
+                        // Kita cari jawaban yang mapel-nya sama dengan identitas.mapel dan kelas sama
+                        const qJawaban = query(collection(db, "jawaban_siswa"), where("mapel", "==", this.identitas.mapel), where("student.kelas", "==", this.selectedClass));
+                        const snapJawaban = await getDocs(qJawaban);
+                        
+                        snapJawaban.docs.forEach(doc => {
+                            const data = doc.data();
+                            const sName = data.student.nama;
+                            if (uniqueMap.has(sName)) {
+                                const score = this.getRealScoreFromDoc(data);
+                                // Cek Tuntas Remidi?
+                                const finalScore = data.isRemedialDone ? 75 : score; // Contoh logika KKM 75
+                                uniqueMap.get(sName).asasTesScore = finalScore;
+                            }
+                        });
+
+                        this.studentList = Array.from(uniqueMap.values()).sort((a,b) => a.nama.localeCompare(b.nama));
+                        
+                        // Init Vue Model
+                        this.studentList.forEach(s => {
+                            if (!this.allGrades[this.selectedClass]) this.allGrades[this.selectedClass] = {};
+                            if (!this.allGrades[this.selectedClass][this.identitas.mapel]) this.allGrades[this.selectedClass][this.identitas.mapel] = {};
+                            if (!this.allGrades[this.selectedClass][this.identitas.mapel][s.id]) this.allGrades[this.selectedClass][this.identitas.mapel][s.id] = {};
+                        });
+
+                    } catch(e) { console.error(e); } 
+                    finally { this.isLoadingStudents = false; }
+                },
+
+                // --- CALCULATIONS (ROUND UP) ---
+                getVal(sid, key) {
+                    const val = this.getGrade(sid, key);
+                    return val === '' ? 0 : parseFloat(val);
+                },
+                
+                calculateRataTP(sid) {
+                    let sum = 0; let count = 0;
+                    this.activeTPs.forEach(tp => {
+                        const v = this.getGrade(sid, tp.uniqueId);
+                        if (v !== '') { sum += parseFloat(v); count++; }
+                    });
+                    return count > 0 ? Math.ceil(sum / count) : 0;
+                },
+
+                calculateRataLM(sid) {
+                    let sum = 0; let count = 0;
+                    this.activeLMs.forEach(lm => {
+                        const t = this.getGrade(sid, `lm_${lm.id}_tes`);
+                        const nt = this.getGrade(sid, `lm_${lm.id}_nontes`);
+                        if (t !== '') { sum += parseFloat(t); count++; }
+                        if (nt !== '') { sum += parseFloat(nt); count++; }
+                    });
+                    return count > 0 ? Math.ceil(sum / count) : 0;
+                },
+
+                calculateRataASAS(sid, asasTesScore) {
+                    // Rata-rata dari (ASAS Tes Otomatis + ASAS Non Tes Manual)
+                    const nonTes = this.getVal(sid, 'asas_nontes');
+                    // Jika non tes diisi, rata-rata. Jika tidak, pakai nilai tes saja? 
+                    // Usually: (Tes + NonTes) / 2
+                    // Kita anggap jika non-tes 0/kosong, tetap dibagi 2 atau bagaimana?
+                    // Asumsi: Jika NonTes diisi, dibagi 2. Jika tidak, nilai Tes saja.
+                    
+                    const nonTesRaw = this.getGrade(sid, 'asas_nontes');
+                    if (nonTesRaw !== '') {
+                        return Math.ceil((asasTesScore + parseFloat(nonTesRaw)) / 2);
+                    }
+                    return Math.ceil(asasTesScore);
+                },
+
+                // --- UTILS ---
+                isValidScore(val) { if(val==='') return true; const n = Number(val); return !isNaN(n) && n>=0 && n<=100; },
+                getValidationClass(val) { return this.isValidScore(val) ? '' : 'input-error'; },
+                generateSentence(tp) {
+                    let s = (tp.c ? tp.c.trim() + ", " : "") + tp.a + (tp.b ? " dapat " + tp.b.trim() : "") + (tp.d ? " " + tp.d.trim() : "");
+                    return s.replace(/\s+/g, ' ').trim() + ".";
+                },
+                
+                handleSaveButton() {
+                    if(this.currentTab === 'nilai') {
+                        let incomplete = false;
+                        if (this.studentList.length > 0) {
+                            for (const s of this.studentList) {
+                                for (const tp of this.activeTPs) {
+                                    if (this.getGrade(s.id, tp.uniqueId) === '') { incomplete = true; break; }
+                                }
+                                if (incomplete) break;
+                            }
+                        }
+                        if (incomplete) {
+                            Swal.fire({ title: 'Masih Kosong?', text: "Yakin simpan?", icon: 'question', showCancelButton: true, confirmButtonText: 'Ya' }).then((r) => { if(r.isConfirmed) this.saveWithFunnyMessage(); });
+                        } else {
+                            this.saveWithFunnyMessage();
+                        }
+                    } else {
+                        const dataTP = { identitas: this.identitas, lingkupMateri: this.lingkupMateri };
+                        localStorage.setItem('cbt_input_tp', JSON.stringify(dataTP));
+                        Swal.fire({ icon: 'success', title: 'Tersimpan!', timer: 1000, showConfirmButton: false });
+                    }
+                },
+                saveWithFunnyMessage() {
+                    localStorage.setItem('cbt_all_grades', JSON.stringify(this.allGrades));
+                    this.lastSavedGrade = new Date().toLocaleTimeString();
+                    Swal.fire({ title: 'Alhamdulillah! 🤲', text: 'Selamat kamu sudah terbebas/sedikit terbebas dari tagihan wakakur :)', icon: 'success' });
+                },
+                
+                hasData(cls, mapel) {
+                    return this.allGrades[cls] && this.allGrades[cls][mapel] && Object.keys(this.allGrades[cls][mapel]).length > 0;
+                },
+                handleGridPaste(e, startRowIdx, targetKey) {
+                    e.preventDefault(); const text = (e.clipboardData || window.clipboardData).getData('text'); const rows = text.split(/\r\n|\n|\r/).filter(r => r.trim() !== '');
+                    rows.forEach((val, offset) => {
+                        const targetRow = startRowIdx + offset;
+                        if (targetRow < this.studentList.length) {
+                            const sid = this.studentList[targetRow].id;
+                            this.updateGrade(sid, targetKey, val.trim());
+                        }
+                    });
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
