@@ -31,9 +31,7 @@
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <a href="index.html" class="text-xs bg-blue-800 hover:bg-blue-700 px-3 py-2 rounded font-bold transition">
-                        <i class="fas fa-home"></i> MENU
-                    </a>
+                    <!-- Tombol Menu Dihapus -->
                     <button v-if="isLoggedIn" @click="logout" class="text-xs bg-red-600 hover:bg-red-700 px-3 py-2 rounded font-bold transition shadow">
                         KELUAR <i class="fas fa-sign-out-alt ml-1"></i>
                     </button>
@@ -105,13 +103,13 @@
                 </button>
             </div>
 
-            <!-- TAB 1: STATUS NILAI (DENGAN KKTP DINAMIS) -->
+            <!-- TAB 1: STATUS NILAI -->
             <div v-if="activeTab === 'rapor'" class="bg-white rounded-xl shadow-sm overflow-hidden border">
                 <table class="w-full text-left">
                     <thead class="bg-gray-50 border-b text-gray-500 text-xs uppercase">
                         <tr>
                             <th class="p-4">Mata Pelajaran</th>
-                            <th class="p-4 text-center w-24">KKTP</th> <!-- KOLOM BARU -->
+                            <th class="p-4 text-center w-24">KKTP</th>
                             <th class="p-4 text-center w-24">Nilai Akhir</th>
                             <th class="p-4 text-center w-32">Status</th>
                         </tr>
@@ -130,7 +128,7 @@
                                 {{ getStudentScore(mapel) !== null ? getStudentScore(mapel) : '-' }}
                             </td>
 
-                            <!-- STATUS (DINAMIS BERDASARKAN KKTP MAPEL) -->
+                            <!-- STATUS -->
                             <td class="p-4 text-center">
                                 <div v-if="getStudentScore(mapel) === null" class="text-xs text-gray-400 italic">
                                     Belum Ada Data
@@ -212,12 +210,7 @@
                     isLoading: false, isLoadingList: false, isLoggedIn: false,
                     activeTab: 'rapor', isAdminMode: false, form: { nama: '', kelas: '' },
                     studentList: [], studentResults: [], bankSoalCache: {}, scheduleList: [], newSchedule: { mapel: '', hari: '', waktu: '' },
-                    
-                    // MAPEL LENGKAP
-                    masterMapel: [
-                        'AGAMA ISLAM', 'BAHASA ARAB', 'BAHASA BALI', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 
-                        'INFORMATIKA', 'IPA', 'IPS', 'KKA', 'MATEMATIKA', 'OLAHRAGA', 'PKN', 'SENI BUDAYA'
-                    ]
+                    masterMapel: ['AGAMA ISLAM', 'BAHASA ARAB', 'BAHASA BALI', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 'INFORMATIKA', 'IPA', 'IPS', 'KKA', 'MATEMATIKA', 'OLAHRAGA', 'PKN', 'SENI BUDAYA']
                 }
             },
             mounted() {
@@ -226,16 +219,12 @@
                 this.loadBankSoal();
             },
             methods: {
-                // --- KKM / KKTP LOGIC ---
                 getKKM(mapel) {
                     if(!mapel) return 75;
                     const m = mapel.toUpperCase();
-                    // 70: MATEMATIKA, IPA, BAHASA BALI
                     if (['MATEMATIKA', 'IPA', 'BAHASA BALI'].includes(m)) return 70;
-                    // 75: SISANYA
-                    return 75;
+                    return 75; 
                 },
-
                 async loadBankSoal() {
                     const q = query(collection(db, "bank_soal"));
                     const snap = await getDocs(q);
@@ -257,12 +246,10 @@
                         const q = query(collection(db, "jawaban_siswa"), where("student.kelas", "==", this.form.kelas));
                         const snap = await getDocs(q);
                         this.studentResults = snap.docs.map(doc => doc.data()).filter(d => d.student.nama.trim().toUpperCase() === this.form.nama.trim().toUpperCase());
-                        if(this.studentResults.length === 0) { /* Alert optional */ }
                         this.isLoggedIn = true;
                     } catch(e) { alert("Error: " + e.message); } finally { this.isLoading = false; }
                 },
                 logout() { this.isLoggedIn = false; this.studentResults = []; this.form = { nama: '', kelas: '' }; this.isAdminMode = false; },
-                
                 getStudentScore(mapelName) {
                     const result = this.studentResults.find(r => r.mapel === mapelName);
                     if (!result) return null; 
