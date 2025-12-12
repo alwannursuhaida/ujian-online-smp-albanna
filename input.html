@@ -3,262 +3,515 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal CBT - SMP ALBANNA</title>
+    <title>E-Rapor Guru - SMP ALBANNA</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Montserrat', sans-serif; }
-        .btn-card { transition: all 0.3s ease; display: block; text-decoration: none; cursor: pointer; }
-        .btn-card:hover { transform: translateY(-5px); }
-        .menu-grid { position: relative; z-index: 20; }
+        .input-abcd:focus { ring: 2px solid #3b82f6; transform: scale(1.005); }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        
+        /* Excel Table */
+        .excel-table th, .excel-table td { border: 1px solid #e2e8f0; }
+        .excel-input { width: 100%; height: 100%; padding: 4px; border: none; outline: none; text-align: center; background: transparent; font-family: monospace; font-weight: bold; font-size: 11px; }
+        .excel-input:focus { background: #eff6ff; box-shadow: inset 0 0 0 2px #3b82f6; }
+        .input-error { background-color: #fee2e2 !important; color: #dc2626 !important; }
+        
+        /* Sticky Column Name */
+        .sticky-col { position: sticky; left: 0; z-index: 10; background-color: #f8fafc; border-right: 2px solid #e2e8f0; }
+        
+        /* Headers */
+        .header-lm { background-color: #f1f5f9; border-left: 2px solid #94a3b8; }
+        .header-asas { background-color: #fff7ed; border-left: 2px solid #ea580c; }
+        .header-avg { background-color: #ecfdf5; border-left: 2px solid #059669; }
+        .header-rapor { background-color: #eff6ff; border-left: 2px solid #2563eb; color: #1e40af; }
+        
+        /* Read Only Input */
+        .input-readonly { background-color: #f3f4f6; color: #4b5563; cursor: not-allowed; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
 
-    <div id="app" class="min-h-screen flex flex-col">
+    <div id="app" class="flex h-screen overflow-hidden">
+        
+        <!-- SIDEBAR -->
+        <div class="w-64 bg-slate-900 text-white flex flex-col h-full shadow-2xl z-20">
+            <div class="p-6 text-center border-b border-slate-700 bg-slate-800">
+                <h1 class="font-bold text-xl tracking-wider">E-RAPOR</h1>
+                <p class="text-xs text-slate-400 mt-1">GURU MAPEL</p>
+            </div>
+            
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+                <button @click="currentTab = 'identitas'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'identitas' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-id-card w-5"></i> Identitas Pelajaran</button>
+                <button @click="switchToTP" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'tp' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-bullseye w-5"></i> Penyusunan TP <i v-if="!isIdentityValid" class="fas fa-lock text-xs ml-auto opacity-50"></i></button>
+                <button @click="switchToNilai" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'nilai' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-edit w-5"></i> Input Nilai <i v-if="!isTpValid" class="fas fa-lock text-xs ml-auto opacity-50"></i></button>
+                <div class="border-t border-slate-700 my-2"></div>
+                <button @click="currentTab = 'monitoring'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'monitoring' ? 'bg-indigo-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-chart-line w-5"></i> Monitoring Input</button>
+            </nav>
+            <div class="p-4 border-t border-slate-800"><a href="index.html" class="w-full text-center text-xs text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 p-2 hover:bg-slate-800 rounded transition"><i class="fas fa-home"></i> KEMBALI KE MENU</a></div>
+        </div>
 
-        <!-- 1. HALAMAN LOGIN -->
-        <div v-if="!currentUser" class="flex-1 flex flex-col items-center justify-center p-4">
-            <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border-t-8 border-blue-900">
-                <div class="text-center mb-8">
-                    <div class="bg-blue-100 text-blue-900 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-chalkboard-teacher fa-3x"></i>
-                    </div>
-                    <h1 class="text-2xl font-bold text-blue-900">PORTAL GURU</h1>
-                    <p class="text-sm text-gray-500">SMP ALBANNA CBT SYSTEM</p>
-                </div>
+        <!-- MAIN CONTENT -->
+        <div class="flex-1 flex flex-col h-full overflow-hidden bg-gray-50 relative">
+            <div class="bg-white p-4 shadow-sm border-b flex justify-between items-center px-8 z-10">
+                <div><h2 class="text-2xl font-bold text-slate-800 uppercase">{{ getPageTitle() }}</h2><p class="text-xs text-gray-500">{{ getPageSubtitle() }}</p></div>
+                <button v-if="currentTab !== 'monitoring'" @click="handleSaveButton" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-green-700 transition flex items-center gap-2"><i class="fas fa-save"></i> SIMPAN PROGRES</button>
+            </div>
 
-                <form @submit.prevent="handleLogin" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Username</label>
-                        <div class="relative">
-                            <i class="fas fa-user absolute left-3 top-3 text-gray-400"></i>
-                            <input v-model="loginForm.username" type="text" class="w-full pl-10 p-2 border rounded focus:ring-2 focus:ring-blue-900 outline-none" placeholder="Contoh: guru01">
+            <div class="flex-1 overflow-y-auto p-8 pb-32">
+                
+                <!-- 1. IDENTITAS -->
+                <transition name="fade">
+                    <div v-if="currentTab === 'identitas'">
+                        <div class="bg-white p-8 rounded-xl shadow-lg border border-indigo-100 max-w-3xl mx-auto mt-10">
+                            <div class="text-center mb-8"><div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-600"><i class="fas fa-book-reader fa-2x"></i></div><h3 class="text-xl font-bold text-slate-800">Lengkapi Data Awal</h3></div>
+                            <div class="space-y-6">
+                                <div><label class="block text-sm font-bold text-gray-600 uppercase mb-2">Pilih Mata Pelajaran <span class="text-red-500">*</span></label><select v-model="identitas.mapel" class="w-full p-4 border-2 border-indigo-100 rounded-xl bg-indigo-50/30 focus:border-indigo-500 outline-none font-bold text-slate-800"><option value="" disabled>-- Pilih Mapel --</option><option v-for="m in mapelList" :value="m">{{ m }}</option></select></div>
+                                <div><label class="block text-sm font-bold text-gray-600 uppercase mb-2">Jenjang Kelas <span class="text-red-500">*</span></label><select v-model="identitas.jenjang" class="w-full p-4 border-2 border-indigo-100 rounded-xl bg-indigo-50/30 focus:border-indigo-500 outline-none font-bold text-slate-800"><option value="" disabled>-- Pilih Jenjang --</option><option value="7">Kelas 7</option><option value="8">Kelas 8</option><option value="9">Kelas 9</option></select></div>
+                                <div><label class="block text-sm font-bold text-gray-600 uppercase mb-2">Nama Guru Pengampu <span class="text-red-500">*</span></label><input v-model="identitas.guru" class="w-full pl-4 p-4 border-2 border-gray-200 rounded-xl focus:border-indigo-500 outline-none text-slate-800" placeholder="Nama Lengkap & Gelar"></div>
+                                <div class="pt-4"><button @click="switchToTP" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg flex justify-center items-center gap-2">MULAI MENYUSUN TP <i class="fas fa-arrow-right"></i></button></div>
+                            </div>
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
-                        <div class="relative">
-                            <i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i>
-                            <input v-model="loginForm.password" type="password" class="w-full pl-10 p-2 border rounded focus:ring-2 focus:ring-blue-900 outline-none" placeholder="Password">
+                </transition>
+
+                <!-- 2. PENYUSUNAN TP -->
+                <transition name="fade">
+                    <div v-if="currentTab === 'tp'">
+                        <div class="mb-6 flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-200 w-fit"><span class="font-bold text-indigo-900 text-sm">{{ identitas.mapel }}</span><span class="text-gray-400">|</span><span class="font-bold text-indigo-900 text-sm">Jenjang {{ identitas.jenjang }}</span></div>
+                        
+                        <div v-for="(lm, lmIndex) in lingkupMateri" :key="lm.id" class="mb-8 bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
+                            <div class="bg-slate-100 p-4 border-b flex items-center gap-4 cursor-pointer" @click="lm.isOpen = !lm.isOpen">
+                                <div class="bg-indigo-600 text-white w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm">{{ lmIndex + 1 }}</div>
+                                <div class="flex-1" @click.stop><input v-model="lm.judul" class="w-full p-2 bg-transparent border-b-2 border-slate-300 focus:border-indigo-600 outline-none font-bold" :placeholder="'Lingkup Materi ' + (lmIndex + 1)"></div>
+                                <i :class="['fas text-slate-400', lm.isOpen ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
+                            </div>
+                            <div v-show="lm.isOpen" class="p-6 space-y-6 bg-slate-50/30">
+                                <div v-for="(tp, tpIndex) in lm.tujuan" :key="tpIndex" class="relative group border-b border-slate-100 pb-4">
+                                    <h4 class="font-bold text-xs text-slate-500 mb-2">TP {{ lmIndex + 1 }}.{{ tpIndex + 1 }}</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-12 gap-2 mb-2">
+                                        <div class="md:col-span-1"><input v-model="tp.a" readonly class="w-full p-2 border rounded bg-gray-100 text-center text-xs font-bold" title="Audience"></div>
+                                        <div class="md:col-span-5"><textarea v-model="tp.b" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Behavior (KKO + Materi)"></textarea></div>
+                                        <div class="md:col-span-3"><textarea v-model="tp.c" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Condition (Melalui...)"></textarea></div>
+                                        <div class="md:col-span-3"><textarea v-model="tp.d" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Degree (Kriteria)"></textarea></div>
+                                    </div>
+                                    <!-- OTOMASI KALIMAT -->
+                                    <div class="bg-indigo-50 p-2 rounded border border-indigo-100 flex items-center gap-2">
+                                        <i class="fas fa-magic text-indigo-400 text-xs"></i>
+                                        <p class="text-xs text-indigo-900 italic font-medium">"{{ generateSentence(tp) }}"</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg font-bold hover:bg-blue-800 shadow-lg transition flex items-center justify-center gap-2">
-                        MASUK <i class="fas fa-sign-in-alt"></i>
-                    </button>
-                </form>
+                </transition>
 
-                <div class="mt-6 text-xs text-center text-gray-400 border-t pt-4">
-                    <p>Gunakan akun yang telah didaftarkan oleh Admin IT.</p>
-                </div>
+                <!-- 3. INPUT NILAI (UPDATED: EXCLUDE 0 FROM AVG) -->
+                <transition name="fade">
+                    <div v-if="currentTab === 'nilai'">
+                        <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div class="w-full md:w-1/3">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pilih Kelas</label>
+                                <select v-model="selectedClass" @change="fetchStudentsAndScores" class="w-full p-2 border-2 border-blue-200 rounded font-bold text-blue-900">
+                                    <option value="" disabled>-- Pilih Kelas --</option>
+                                    <option v-for="c in filteredClasses" :value="c">{{ c }}</option>
+                                </select>
+                            </div>
+                            <div class="text-right text-xs text-gray-500">
+                                <p><strong>Mapel:</strong> {{ identitas.mapel }}</p>
+                                <p class="text-green-600 font-bold" v-if="lastSavedGrade">Tersimpan: {{ lastSavedGrade }}</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow border overflow-hidden relative">
+                            <div v-if="!selectedClass" class="p-10 text-center text-gray-400"><i class="fas fa-arrow-up fa-2x mb-2"></i><br>Pilih kelas dulu.</div>
+                            <div v-else-if="isLoadingStudents" class="p-10 text-center text-blue-500"><i class="fas fa-circle-notch fa-spin fa-2x"></i><br>Mengambil data & menghitung ASAS...</div>
+                            
+                            <div v-else class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse excel-table text-sm">
+                                    <thead>
+                                        <tr class="bg-slate-800 text-white">
+                                            <th class="p-3 w-10 text-center sticky-col bg-slate-800" rowspan="2">No</th>
+                                            <th class="p-3 w-64 sticky-col bg-slate-800 left-10" rowspan="2">Nama Siswa</th>
+                                            
+                                            <!-- LINGKUP MATERI HEADERS -->
+                                            <template v-for="lm in activeLMs" :key="lm.id">
+                                                <th :colspan="lm.tpCount + 2" class="p-2 text-center text-xs font-bold header-lm text-slate-800">
+                                                    {{ lm.judul || 'LM ' + lm.id }}
+                                                </th>
+                                            </template>
+                                            
+                                            <!-- ASAS HEADER -->
+                                            <th colspan="2" class="p-2 text-center text-xs font-bold header-asas text-orange-800">ASAS</th>
+                                            
+                                            <!-- RATA-RATA HEADER (SIMPLIFIED) -->
+                                            <th colspan="3" class="p-2 text-center text-xs font-bold header-avg text-green-800">RATA-RATA</th>
+                                            
+                                            <!-- NILAI AKHIR RAPOR HEADER -->
+                                            <th rowspan="2" class="p-2 text-center text-xs font-bold header-rapor">Nilai Akhir (Rapor)</th>
+                                        </tr>
+                                        <tr class="bg-slate-100 text-slate-600">
+                                            <!-- TP & LM COLUMNS -->
+                                            <template v-for="lm in activeLMs" :key="lm.id">
+                                                <template v-for="(tp, idx) in lm.tujuan" :key="lm.id + '_' + idx">
+                                                    <th class="p-2 text-center text-[10px] w-14 border-l" :title="generateSentence(tp)">TP {{ lm.id }}.{{ idx+1 }}</th>
+                                                </template>
+                                                <th class="p-2 text-center text-[10px] w-14 bg-blue-50 font-bold border-l-2">LM Tes</th>
+                                                <th class="p-2 text-center text-[10px] w-14 bg-blue-50 font-bold">LM Non-Tes</th>
+                                            </template>
+
+                                            <!-- ASAS COLUMNS -->
+                                            <th class="p-2 text-center text-[10px] w-20 bg-orange-50 font-bold">Tes (Auto)</th>
+                                            <th class="p-2 text-center text-[10px] w-20 bg-orange-50 font-bold">Non-Tes</th>
+
+                                            <!-- AVG COLUMNS -->
+                                            <th class="p-2 text-center text-[10px] w-16 bg-green-50 font-bold">Rata TP</th>
+                                            <th class="p-2 text-center text-[10px] w-16 bg-green-50 font-bold">Rata LM</th>
+                                            <th class="p-2 text-center text-[10px] w-16 bg-green-50 font-bold">Rata ASAS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white">
+                                        <tr v-for="(s, sIdx) in studentList" :key="s.id" class="hover:bg-blue-50">
+                                            <td class="text-center bg-gray-50 text-gray-500 select-none sticky-col left-0">{{ sIdx + 1 }}</td>
+                                            <td class="px-3 py-2 font-bold text-gray-700 select-none whitespace-nowrap sticky-col bg-white left-10">{{ s.nama }}</td>
+                                            
+                                            <!-- INPUT TP & LM -->
+                                            <template v-for="lm in activeLMs" :key="lm.id">
+                                                <!-- TP Inputs -->
+                                                <template v-for="(tp, idx) in lm.tujuan" :key="lm.id + '_' + idx">
+                                                    <td class="p-0"><input type="text" :class="['excel-input', getValidationClass(getGrade(s.id, `tp_${lm.id}_${idx+1}` ))]" :value="getGrade(s.id, `tp_${lm.id}_${idx+1}` )" @input="updateGrade(s.id, `tp_${lm.id}_${idx+1}`, $event.target.value)" @paste="handleGridPaste($event, sIdx, `tp_${lm.id}_${idx+1}`)"></td>
+                                                </template>
+                                                <!-- LM Sumatif Inputs -->
+                                                <td class="p-0 bg-blue-50/20 border-l-2"><input type="text" :class="['excel-input font-bold text-blue-700', getValidationClass(getGrade(s.id, `lm_${lm.id}_tes`))]" :value="getGrade(s.id, `lm_${lm.id}_tes`)" @input="updateGrade(s.id, `lm_${lm.id}_tes`, $event.target.value)"></td>
+                                                <td class="p-0 bg-blue-50/20"><input type="text" :class="['excel-input font-bold text-blue-700', getValidationClass(getGrade(s.id, `lm_${lm.id}_nontes`))]" :value="getGrade(s.id, `lm_${lm.id}_nontes`)" @input="updateGrade(s.id, `lm_${lm.id}_nontes`, $event.target.value)"></td>
+                                            </template>
+
+                                            <!-- ASAS COLUMNS -->
+                                            <td class="p-0 bg-orange-50/30 border-l-2">
+                                                <input type="text" class="excel-input font-bold text-orange-700 bg-orange-100 cursor-not-allowed" :value="s.asasTesScore" readonly title="Nilai otomatis dari Jawaban Siswa">
+                                            </td>
+                                            <td class="p-0 bg-orange-50/30">
+                                                <input type="text" :class="['excel-input font-bold text-orange-700', getValidationClass(getGrade(s.id, 'asas_nontes'))]" :value="getGrade(s.id, 'asas_nontes')" @input="updateGrade(s.id, 'asas_nontes', $event.target.value)">
+                                            </td>
+
+                                            <!-- CALCULATED AVERAGES (SKIP 0) -->
+                                            <td class="p-0 bg-green-50/30 text-center font-bold text-green-800 border-l-2">{{ calculateRataTP(s.id) }}</td>
+                                            <td class="p-0 bg-green-50/30 text-center font-bold text-green-800">{{ calculateRataLM(s.id) }}</td>
+                                            <td class="p-0 bg-green-50/30 text-center font-bold text-green-800">{{ calculateRataASAS(s.id, s.asasTesScore) }}</td>
+
+                                            <!-- NILAI AKHIR RAPOR (SKIP 0) -->
+                                            <td class="p-0 bg-blue-100 text-center font-extrabold text-blue-900 border-l-2">
+                                                {{ calculateNilaiRapor(s.id, s.asasTesScore) }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+
+                <!-- 4. MONITORING -->
+                <transition name="fade">
+                    <div v-if="currentTab === 'monitoring'">
+                        <div class="bg-white p-6 rounded-xl shadow border">
+                            <h2 class="text-xl font-bold text-slate-800 mb-4">Monitoring Input Nilai</h2>
+                            <div v-for="(classes, jenjang) in classesMap" :key="jenjang" class="mb-6">
+                                <h3 class="font-bold text-blue-900 border-b pb-2 mb-3">JENJANG KELAS {{ jenjang }}</h3>
+                                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                    <div v-for="cls in classes" :key="cls" class="bg-gray-50 border p-3 rounded text-center">
+                                        <div class="font-bold text-lg text-slate-700">{{ cls }}</div>
+                                        <div class="text-xs text-gray-500 mt-2 space-y-1">
+                                            <div v-for="m in mapelList" :key="m" class="flex justify-between"><span>{{ m }}</span><i :class="hasData(cls, m) ? 'fas fa-check-circle text-green-500' : 'fas fa-circle text-gray-200'"></i></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+
             </div>
         </div>
-
-        <!-- 2. DASHBOARD MENU UTAMA -->
-        <div v-else class="flex flex-col min-h-screen">
-            
-            <!-- Navbar -->
-            <nav class="bg-blue-900 text-white p-4 shadow-lg sticky top-0 z-50">
-                <div class="max-w-6xl mx-auto flex justify-between items-center">
-                    <div class="flex items-center gap-3">
-                        <div class="bg-white text-blue-900 p-2 rounded-lg">
-                            <i class="fas fa-graduation-cap fa-lg"></i>
-                        </div>
-                        <div>
-                            <h1 class="font-bold text-xl leading-none">CBT SYSTEM</h1>
-                            <p class="text-xs text-blue-200">Halo, {{ currentUser.name }}</p>
-                        </div>
-                    </div>
-                    <button @click="logout" class="text-sm bg-red-600 hover:bg-red-700 px-4 py-2 rounded transition font-bold flex items-center gap-2 shadow">
-                        <i class="fas fa-sign-out-alt"></i> LOGOUT
-                    </button>
-                </div>
-            </nav>
-
-            <!-- Main Content -->
-            <main class="flex-1 max-w-6xl mx-auto w-full p-6 relative z-10">
-                
-                <div class="text-center mb-10 mt-6">
-                    <h2 class="text-3xl font-bold text-gray-800">Dashboard Aplikasi</h2>
-                    <p class="text-gray-600 mt-2">Pilih menu di bawah ini untuk memulai pekerjaan Anda.</p>
-                </div>
-
-                <!-- GRID MENU -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 menu-grid">
-                    
-                    <!-- 1. PERENCANAAN PEMBELAJARAN -->
-                    <a href="perencanaan.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-cyan-500 hover:shadow-xl group flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-cyan-100 text-cyan-600 p-3 rounded-lg group-hover:bg-cyan-600 group-hover:text-white transition">
-                                <i class="fas fa-pen-nib fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">ADMINISTRASI</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-cyan-600">Perencanaan Ajar</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Generator RPP/Modul Ajar yang Mindful, Meaningful, & Joyful.</p>
-                    </a>
-
-                    <!-- 2. INPUT NILAI E-RAPOR (BARU) -->
-                    <a href="input.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-indigo-500 hover:shadow-xl group flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-indigo-100 text-indigo-600 p-3 rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition">
-                                <i class="fas fa-edit fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">E-RAPOR</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-indigo-600">Input Nilai E-Rapor</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Penyusunan TP (Metode ABCD) dan Input Nilai Rapor Siswa.</p>
-                    </a>
-
-                    <!-- 3. KISI-KISI -->
-                    <a href="guru.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-purple-500 hover:shadow-xl group relative flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-purple-100 text-purple-600 p-3 rounded-lg group-hover:bg-purple-600 group-hover:text-white transition">
-                                <i class="fas fa-list-alt fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">ADMINISTRASI</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-purple-600">Generator Kisi-Kisi</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Buat dokumen kisi-kisi soal ujian standar secara otomatis (PDF).</p>
-                    </a>
-
-                    <!-- 4. SOAL GENERATOR -->
-                    <a href="soal.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-blue-500 hover:shadow-xl group flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-blue-100 text-blue-600 p-3 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition">
-                                <i class="fas fa-file-signature fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">BANK SOAL</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600">Input Soal (Upload)</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Input butir soal, kunci jawaban, dan upload ke server ujian online.</p>
-                    </a>
-
-                    <!-- 5. HASIL UJIAN -->
-                    <a href="jawaban.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-orange-500 hover:shadow-xl group flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-orange-100 text-orange-600 p-3 rounded-lg group-hover:bg-orange-600 group-hover:text-white transition">
-                                <i class="fas fa-chart-pie fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">LAPORAN</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-orange-600">Rekap Nilai & Analisis</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Lihat hasil ujian siswa, analisis butir soal, dan unduh Excel.</p>
-                    </a>
-
-                    <!-- 6. ABSENSI & SUSULAN -->
-                    <a href="absen_ujian.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-indigo-500 hover:shadow-xl group flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-indigo-100 text-indigo-600 p-3 rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition">
-                                <i class="fas fa-calendar-check fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">ADMINISTRASI</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-indigo-600">Absensi & Susulan</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Input kehadiran harian dan kelola jadwal siswa ujian susulan.</p>
-                    </a>
-
-                    <!-- 7. ADMINISTRASI (BERITA ACARA) -->
-                    <a href="administrasi.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-teal-500 hover:shadow-xl group flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-teal-100 text-teal-600 p-3 rounded-lg group-hover:bg-teal-600 group-hover:text-white transition">
-                                <i class="fas fa-file-contract fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">ADMINISTRASI</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-teal-600">Berita Acara Ujian</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Buat dokumen Berita Acara Pelaksanaan Ujian secara digital.</p>
-                    </a>
-
-                    <!-- 8. ADMIN PANEL (IT) -->
-                    <a href="admin.html" class="btn-card bg-slate-800 p-6 rounded-xl shadow-md border-l-8 border-slate-600 hover:shadow-xl group flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-slate-700 text-white p-3 rounded-lg group-hover:bg-slate-600 transition">
-                                <i class="fas fa-server fa-2x"></i>
-                            </div>
-                            <span class="bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded">RESTRICTED</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-white mb-2">Admin Panel</h3>
-                        <p class="text-sm text-slate-400 mt-auto">Monitoring server, buka blokir siswa, dan manajemen database.</p>
-                    </a>
-
-                    <!-- 9. PORTAL REMIDI (SISWA) -->
-                    <a href="remidi.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-pink-500 hover:shadow-xl group flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-pink-100 text-pink-600 p-3 rounded-lg group-hover:bg-pink-600 group-hover:text-white transition">
-                                <i class="fas fa-clipboard-check fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">SISWA</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-pink-600">Cek Kelulusan & Remidi</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Cek status kelulusan mapel dan jadwal ujian remidi.</p>
-                    </a>
-                    
-                    <!-- 10. UJIAN SISWA (LINK) -->
-                    <a href="siswa.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-green-500 hover:shadow-xl group flex flex-col opacity-80 hover:opacity-100">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-green-100 text-green-600 p-3 rounded-lg group-hover:bg-green-600 group-hover:text-white transition">
-                                <i class="fas fa-laptop-code fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">CLIENT</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-green-600">Halaman Ujian Siswa</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Tampilan layar ujian untuk peserta didik (Client Side).</p>
-                    </a>
-
-                </div>
-            </main>
-
-            <footer class="bg-gray-800 text-gray-400 text-center p-4 text-xs mt-10">
-                <p>&copy; 2025 SMP ALBANNA - Computer Based Test System. All rights reserved.</p>
-            </footer>
-        </div>
-
     </div>
 
-    <script>
-        const { createApp } = Vue;
+    <script type="module">
+        import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // 1. GENERATE AKUN (guru01 - guru30)
-        const generatedUsers = [];
-        for (let i = 1; i <= 30; i++) {
-            const num = i < 10 ? '0' + i : i;
-            generatedUsers.push({ username: `guru${num}`, password: 'albanna', name: `Guru Mapel ${num}` });
-        }
-        generatedUsers.push({ username: 'admin', password: 'admin123', name: 'Administrator IT' });
+        const firebaseConfig = {
+            apiKey: "AIzaSyBivREr2y61OYTE0kLxRnkGtPCdLvHn_og",
+            authDomain: "cbt-albanna.firebaseapp.com",
+            projectId: "cbt-albanna",
+            storageBucket: "cbt-albanna.firebasestorage.app",
+            messagingSenderId: "740622197344",
+            appId: "1:740622197344:web:6112adf59edfbe496ed905"
+        };
+        const appFirebase = initializeApp(firebaseConfig);
+        const db = getFirestore(appFirebase);
 
         createApp({
             data() {
                 return {
-                    currentUser: null,
-                    loginForm: { username: '', password: '' }
+                    currentTab: 'identitas',
+                    selectedClass: '',
+                    studentList: [],
+                    isLoadingStudents: false,
+                    lastSavedGrade: null,
+                    
+                    identitas: { mapel: '', guru: '', jenjang: '' }, 
+                    lingkupMateri: Array.from({ length: 5 }, (_, i) => ({ id: i + 1, judul: '', isOpen: i === 0, tujuan: Array.from({ length: 5 }, () => ({ a: 'Murid', b: '', c: '', d: '' })) })),
+                    
+                    // STORAGE STRUKTUR: grades[kelas][mapel][siswa_id][key]
+                    allGrades: {}, 
+                    savedProgress: {}, 
+                    bankSoalCache: {}, 
+
+                    mapelList: ['AGAMA ISLAM', 'BAHASA ARAB', 'BAHASA BALI', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 'INFORMATIKA', 'IPA', 'IPS', 'KKA', 'MATEMATIKA', 'OLAHRAGA', 'PKN', 'SENI BUDAYA'],
+                    classesMap: { '7': ['7A','7B','7C','7D','7E','7F'], '8': ['8A','8B','8C','8D','8E','8F'], '9': ['9A','9B','9C','9D','9E'] }
+                }
+            },
+            computed: {
+                isIdentityValid() { return this.identitas.mapel && this.identitas.jenjang && this.identitas.guru.trim() !== ''; },
+                isTpValid() { return this.lingkupMateri.some(lm => lm.judul && lm.tujuan.some(tp => tp.b)); },
+                filteredClasses() { return this.identitas.jenjang ? this.classesMap[this.identitas.jenjang] : []; },
+                
+                activeLMs() {
+                    return this.lingkupMateri.filter(lm => lm.judul).map(lm => {
+                        return { ...lm, tujuan: lm.tujuan.filter(tp => tp.b), tpCount: lm.tujuan.filter(tp => tp.b).length };
+                    }).filter(lm => lm.tpCount > 0);
+                },
+                activeTPs() {
+                    const tps = [];
+                    this.activeLMs.forEach(lm => {
+                        lm.tujuan.forEach((tp, idx) => {
+                            if (tp.b) tps.push({ uniqueId: `tp_${lm.id}_${idx+1}` });
+                        });
+                    });
+                    return tps;
                 }
             },
             mounted() {
-                const storedUser = sessionStorage.getItem('cbt_user_session');
-                if (storedUser) {
-                    this.currentUser = JSON.parse(storedUser);
+                const savedTp = localStorage.getItem('cbt_input_tp');
+                if (savedTp) {
+                    const data = JSON.parse(savedTp);
+                    this.identitas = data.identitas || this.identitas;
+                    this.lingkupMateri = data.lingkupMateri || this.lingkupMateri;
                 }
+                const savedGrades = localStorage.getItem('cbt_all_grades');
+                if (savedGrades) this.allGrades = JSON.parse(savedGrades);
+                const savedProg = localStorage.getItem('cbt_saved_progress');
+                if (savedProg) this.savedProgress = JSON.parse(savedProg);
+
+                this.loadBankSoal();
             },
             methods: {
-                handleLogin() {
-                    const { username, password } = this.loginForm;
-                    const user = generatedUsers.find(u => u.username === username && u.password === password);
-                    if (user) {
-                        this.currentUser = user;
-                        sessionStorage.setItem('cbt_user_session', JSON.stringify(user));
-                        this.loginForm = { username: '', password: '' };
+                getPageTitle() {
+                    if (this.currentTab === 'identitas') return 'IDENTITAS PELAJARAN';
+                    if (this.currentTab === 'tp') return 'PENYUSUNAN TP (ABCD)';
+                    if (this.currentTab === 'nilai') return 'INPUT NILAI RAPOR';
+                    return 'MONITORING INPUT';
+                },
+                getPageSubtitle() { return this.currentTab === 'monitoring' ? 'Pantau kelengkapan nilai seluruh kelas.' : 'Lengkapi data secara berurutan.'; },
+
+                switchToTP() { if (!this.isIdentityValid) return Swal.fire('Lengkapi Identitas', '', 'warning'); this.currentTab = 'tp'; },
+                switchToNilai() { 
+                    if (!this.isIdentityValid || !this.isTpValid) return Swal.fire('Data Belum Lengkap', 'Isi Identitas dan TP dulu.', 'warning');
+                    this.currentTab = 'nilai'; this.selectedClass = ''; 
+                },
+
+                // --- DATA HANDLING ---
+                getGrade(sid, key) {
+                    const c = this.selectedClass; const m = this.identitas.mapel;
+                    if (this.allGrades[c] && this.allGrades[c][m] && this.allGrades[c][m][sid]) {
+                        return this.allGrades[c][m][sid][key] || '';
+                    }
+                    return '';
+                },
+                updateGrade(sid, key, val) {
+                    const c = this.selectedClass; const m = this.identitas.mapel;
+                    if (!this.allGrades[c]) this.allGrades[c] = {};
+                    if (!this.allGrades[c][m]) this.allGrades[c][m] = {};
+                    if (!this.allGrades[c][m][sid]) this.allGrades[c][m][sid] = {};
+                    this.allGrades[c][m][sid][key] = val;
+                },
+
+                // --- ASAS CALCULATION LOGIC ---
+                async loadBankSoal() {
+                    const q = query(collection(db, "bank_soal"));
+                    const snap = await getDocs(q);
+                    snap.forEach(doc => { this.bankSoalCache[doc.id] = doc.data(); });
+                },
+                
+                getRealScoreFromDoc(docData) {
+                    const exam = this.bankSoalCache[docData.examId];
+                    if (!exam) return 0;
+                    let score = 0;
+                    exam.soal.forEach((q, idx) => {
+                        if (['PG', 'BS'].includes(q.type) && docData.answers[idx] === q.answer) score += parseInt(q.poin);
+                        if (['URAIAN', 'ESAI', 'ISIAN'].includes(q.type) && docData.manualScores && docData.manualScores[idx] !== undefined) {
+                            score += parseInt(docData.manualScores[idx]);
+                        }
+                    });
+                    return score;
+                },
+
+                // --- FETCH STUDENTS & SCORES ---
+                async fetchStudentsAndScores() {
+                    if(!this.selectedClass) return;
+                    this.isLoadingStudents = true;
+                    this.studentList = [];
+                    try {
+                        const qAbsen = query(collection(db, "data_absensi"), where("kelas", "==", this.selectedClass));
+                        const snapAbsen = await getDocs(qAbsen);
+                        const uniqueMap = new Map();
+                        snapAbsen.docs.forEach(doc => {
+                            const d = doc.data();
+                            if(!uniqueMap.has(d.nama)) uniqueMap.set(d.nama, { id: doc.id, nama: d.nama, asasTesScore: 0 });
+                        });
+
+                        const qJawaban = query(collection(db, "jawaban_siswa"), where("mapel", "==", this.identitas.mapel), where("student.kelas", "==", this.selectedClass));
+                        const snapJawaban = await getDocs(qJawaban);
+                        
+                        snapJawaban.docs.forEach(doc => {
+                            const data = doc.data();
+                            const sName = data.student.nama;
+                            if (uniqueMap.has(sName)) {
+                                const score = this.getRealScoreFromDoc(data);
+                                const finalScore = data.isRemedialDone ? 75 : score; 
+                                uniqueMap.get(sName).asasTesScore = finalScore;
+                            }
+                        });
+
+                        this.studentList = Array.from(uniqueMap.values()).sort((a,b) => a.nama.localeCompare(b.nama));
+                        
+                        this.studentList.forEach(s => {
+                            if (!this.allGrades[this.selectedClass]) this.allGrades[this.selectedClass] = {};
+                            if (!this.allGrades[this.selectedClass][this.identitas.mapel]) this.allGrades[this.selectedClass][this.identitas.mapel] = {};
+                            if (!this.allGrades[this.selectedClass][this.identitas.mapel][s.id]) this.allGrades[this.selectedClass][this.identitas.mapel][s.id] = {};
+                        });
+
+                    } catch(e) { console.error(e); } 
+                    finally { this.isLoadingStudents = false; }
+                },
+
+                // --- SMART CALCULATIONS (IGNORE 0/EMPTY) ---
+                getVal(sid, key) {
+                    const val = this.getGrade(sid, key);
+                    return val === '' ? 0 : parseFloat(val);
+                },
+                
+                calculateRataTP(sid) {
+                    let sum = 0; let count = 0;
+                    this.activeTPs.forEach(tp => {
+                        const v = this.getGrade(sid, tp.uniqueId);
+                        if (v !== '' && parseFloat(v) > 0) { sum += parseFloat(v); count++; }
+                    });
+                    return count > 0 ? Math.ceil(sum / count) : 0;
+                },
+
+                calculateRataLM(sid) {
+                    let sum = 0; let count = 0;
+                    this.activeLMs.forEach(lm => {
+                        const t = this.getGrade(sid, `lm_${lm.id}_tes`);
+                        const nt = this.getGrade(sid, `lm_${lm.id}_nontes`);
+                        if (t !== '' && parseFloat(t) > 0) { sum += parseFloat(t); count++; }
+                        if (nt !== '' && parseFloat(nt) > 0) { sum += parseFloat(nt); count++; }
+                    });
+                    return count > 0 ? Math.ceil(sum / count) : 0;
+                },
+
+                calculateRataASAS(sid, asasTesScore) {
+                    let sum = 0; let count = 0;
+                    
+                    // ASAS TES (Auto)
+                    if (asasTesScore > 0) { sum += parseFloat(asasTesScore); count++; }
+
+                    // ASAS Non-Tes (Manual)
+                    const nonTesRaw = this.getGrade(sid, 'asas_nontes');
+                    if (nonTesRaw !== '' && parseFloat(nonTesRaw) > 0) { sum += parseFloat(nonTesRaw); count++; }
+                    
+                    return count > 0 ? Math.ceil(sum / count) : 0;
+                },
+
+                // --- NEW: NILAI AKHIR RAPOR (AVG OF AVG - SKIP 0) ---
+                calculateNilaiRapor(sid, asasTesScore) {
+                    const rTP = this.calculateRataTP(sid);
+                    const rLM = this.calculateRataLM(sid);
+                    const rASAS = this.calculateRataASAS(sid, asasTesScore);
+
+                    let sum = 0; let count = 0;
+                    if (rTP > 0) { sum += rTP; count++; }
+                    if (rLM > 0) { sum += rLM; count++; }
+                    if (rASAS > 0) { sum += rASAS; count++; }
+
+                    return count > 0 ? Math.ceil(sum / count) : 0;
+                },
+
+                // --- UTILS ---
+                isValidScore(val) { if(val==='') return true; const n = Number(val); return !isNaN(n) && n>=0 && n<=100; },
+                getValidationClass(val) { return this.isValidScore(val) ? '' : 'input-error'; },
+                generateSentence(tp) {
+                    let s = (tp.c ? tp.c.trim() + ", " : "") + tp.a + (tp.b ? " dapat " + tp.b.trim() : "") + (tp.d ? " " + tp.d.trim() : "");
+                    return s.replace(/\s+/g, ' ').trim() + ".";
+                },
+                toggleSection(i) { this.lingkupMateri[i].isOpen = !this.lingkupMateri[i].isOpen; },
+                
+                handleSaveButton() {
+                    if(this.currentTab === 'nilai') {
+                        let incomplete = false;
+                        if (this.studentList.length > 0) {
+                            for (const s of this.studentList) {
+                                // Simple check: TP empty
+                                for (const tp of this.activeTPs) {
+                                    if (this.getGrade(s.id, tp.uniqueId) === '') { incomplete = true; break; }
+                                }
+                                if (incomplete) break;
+                            }
+                        }
+                        if (incomplete) {
+                            Swal.fire({ title: 'Masih Kosong?', text: "Yakin simpan?", icon: 'question', showCancelButton: true, confirmButtonText: 'Ya' }).then((r) => { if(r.isConfirmed) this.saveWithFunnyMessage(); });
+                        } else {
+                            this.saveWithFunnyMessage();
+                        }
                     } else {
-                        alert("Username atau Password salah!");
+                        const dataTP = { identitas: this.identitas, lingkupMateri: this.lingkupMateri };
+                        localStorage.setItem('cbt_input_tp', JSON.stringify(dataTP));
+                        Swal.fire({ icon: 'success', title: 'Tersimpan!', timer: 1000, showConfirmButton: false });
                     }
                 },
-                logout() {
-                    if(confirm("Yakin ingin keluar dari akun ini?")) {
-                        this.currentUser = null;
-                        sessionStorage.removeItem('cbt_user_session');
+                saveWithFunnyMessage() {
+                    localStorage.setItem('cbt_all_grades', JSON.stringify(this.allGrades));
+                    this.lastSavedGrade = new Date().toLocaleTimeString();
+                    
+                    // Mark as Saved for Monitoring
+                    if (this.selectedClass && this.identitas.mapel) {
+                        this.savedProgress[`${this.selectedClass}_${this.identitas.mapel}`] = true;
+                        localStorage.setItem('cbt_saved_progress', JSON.stringify(this.savedProgress));
                     }
+
+                    Swal.fire({ title: 'Alhamdulillah! 🤲', text: 'Selamat kamu sudah terbebas/sedikit terbebas dari tagihan wakakur :)', icon: 'success' });
+                },
+                
+                hasData(cls, mapel) {
+                    return this.savedProgress[`${cls}_${mapel}`] === true;
+                },
+                handleGridPaste(e, startRowIdx, targetKey) {
+                    e.preventDefault(); const text = (e.clipboardData || window.clipboardData).getData('text'); const rows = text.split(/\r\n|\n|\r/).filter(r => r.trim() !== '');
+                    rows.forEach((val, offset) => {
+                        const targetRow = startRowIdx + offset;
+                        if (targetRow < this.studentList.length) {
+                            const sid = this.studentList[targetRow].id;
+                            this.updateGrade(sid, targetKey, val.trim());
+                        }
+                    });
                 }
             }
         }).mount('#app');
