@@ -29,89 +29,93 @@
         .excel-input:focus { background: #eff6ff; box-shadow: inset 0 0 0 2px #3b82f6; }
         .input-error { background-color: #fee2e2 !important; color: #dc2626 !important; }
 
-        /* --- LHBTS PRINT STYLES (A4 LANDSCAPE FIXED) --- */
+        /* --- LHBTS PRINT STYLES (STRICT A4 LANDSCAPE) --- */
         @media print {
             @page { size: A4 landscape; margin: 10mm; }
-            body { background: white; margin: 0; padding: 0; }
+            html, body { margin: 0 !important; padding: 0 !important; background: white; }
             body * { visibility: hidden; }
-            
             .print-area, .print-area * { visibility: visible; }
-            .print-area { 
-                position: absolute; 
-                left: 0; 
-                top: 0; 
-                width: 100%; 
-                margin: 0; 
-                padding: 0;
-            }
+            .print-area { position: absolute; left: 0; top: 0; width: 100%; }
             .no-print { display: none !important; }
-            
-            /* Force background colors */
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
 
-        /* SHEET WRAPPER (A4 Landscape Content Area) */
+        /* SHEET WRAPPER */
         .sheet {
             width: 277mm;      /* 297mm - 20mm margin */
             min-height: 190mm; /* 210mm - 20mm margin */
             margin: 0 auto;
             background: white;
-            font-family: 'Roboto', sans-serif;
-            font-size: 10pt; /* Adjusted slightly for fit */
+            font-family: 'Roboto', Arial, sans-serif;
+            font-size: 11pt;
             color: black;
-            overflow: hidden;
             box-sizing: border-box;
+            overflow: hidden;
         }
 
-        /* LHBTS TABLE STYLES */
-        .lhbts-table {
-            width: 100%;
+        /* TABLE STRUCTURE */
+        table.report {
+            width: 277mm;
+            table-layout: fixed;
             border-collapse: collapse;
-            table-layout: fixed; /* KUNCI AGAR KOLOM PRESISI */
         }
 
-        .lhbts-table td, .lhbts-table th {
-            border: 1px solid black;
-            padding: 2px 1px;
+        table.report td, table.report th {
+            border: 1px solid #000;
+            padding: 0 2pt;
+            line-height: 1.0;
             vertical-align: middle;
             overflow: hidden;
-            white-space: nowrap; /* Mencegah wrap angka */
-            text-overflow: clip;
-        }
-        
-        /* Exception for text columns to allow wrap */
-        .lhbts-table td.wrap-text {
-            white-space: normal;
             word-wrap: break-word;
-            line-height: 1.1;
         }
 
-        /* HEADER COLORS */
-        .bg-blue-excel { background-color: #C9DAF8 !important; }
+        /* ROW HEIGHTS (PT) */
+        .r1 td, .r1 th { height: 14.5pt; }
+        .r2 td, .r2 th { height: 14.5pt; }
+        .r3 td, .r3 th { height: 23pt; }
+        .r4 td, .r4 th { height: 23pt; }
+        .r5 td, .r5 th { height: 7.5pt; }
+        .r6 td, .r6 th { height: 16.5pt; }
+        .r7 td, .r7 th { height: 16.5pt; }
+        .r8 td, .r8 th { height: 16.5pt; }
+        .r9 td, .r9 th { height: 16.5pt; }
+        .r10 td, .r10 th { height: 7.5pt; }
+        .r11 td, .r11 th { height: 21pt; }
+        .r12 td, .r12 th { height: 21pt; }
+        .r13 td, .r13 th { height: 21pt; }
+        .r14 td, .r14 th { height: 21pt; }
+        .r15 td, .r15 th { height: 16.5pt; }
+        .r16 td, .r16 th { height: 30pt; }
+        .r17 td, .r17 th { height: 30pt; }
+        .r18 td, .r18 th { height: 30pt; }
+        .r19 td, .r19 th { height: 30pt; }
+        .r20 td, .r20 th { height: 30pt; }
+        .r21 td, .r21 th { height: 30pt; }
+        .r22 td, .r22 th { height: 30pt; }
+        .r23 td, .r23 th { height: 30pt; }
+        .r24 td, .r24 th { height: 30pt; }
+        .r25 td, .r25 th { height: 30pt; }
+        .r26 td, .r26 th { height: 30pt; }
+        .r27 td, .r27 th { height: 16.5pt; }
+        .r28 td, .r28 th { height: 30pt; }
+        .r29 td, .r29 th { height: 16.5pt; }
+        .r30 td, .r30 th { height: 30pt; }
+        .r31 td, .r31 th { height: 15.75pt; }
+        .r32 td, .r32 th { height: 15.75pt; }
+        .r33 td, .r33 th { height: 15.75pt; }
 
-        /* BORDERS */
-        .bt-double { border-top: 3px double black !important; }
-        .bb-double { border-bottom: 3px double black !important; }
+        /* STYLES KHUSUS */
+        .title { font-size: 18pt; font-weight: 700; text-align: center; }
+        .bg-blue-custom { background-color: #C9DAF8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .border-bottom-double { border-bottom: 3px double black !important; }
+        .border-top-double { border-top: 3px double black !important; }
         .no-border { border: none !important; }
-        
-        /* ALIGNMENT & FONT */
+        .font-bold { font-weight: bold; }
         .text-center { text-align: center; }
         .text-left { text-align: left; }
-        .font-bold { font-weight: bold; }
-        .title-text { font-size: 16pt; font-weight: bold; } /* 16pt cukup untuk A4 */
         
-        /* FIX IDENTITAS */
-        .nowrap-cell { white-space: nowrap !important; overflow: visible !important; }
-        
-        /* SCREEN PREVIEW FOR SHEET */
-        @media screen {
-            .sheet {
-                border: 1px solid #ddd;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-                margin-top: 20px;
-                margin-bottom: 20px;
-            }
-        }
+        .id-value { white-space: nowrap; overflow: visible; }
+        td.desc { white-space: normal; overflow: visible; text-align: left; vertical-align: top; font-size: 9pt; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -158,7 +162,6 @@
                 <div><h2 class="text-2xl font-bold text-slate-800 uppercase">{{ getPageTitle() }}</h2><p class="text-xs text-gray-500">{{ getPageSubtitle() }}</p></div>
                 <button v-if="['identitas','tp','nilai','ekskul','kewalasan','kaih'].includes(currentTab)" @click="handleSaveButton" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-green-700 transition flex items-center gap-2"><i class="fas fa-save"></i> SIMPAN PROGRES</button>
                 <button v-if="currentTab === 'lhbts' && selectedClass" onclick="window.print()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-blue-700 transition flex items-center gap-2"><i class="fas fa-print"></i> CETAK LHBTS</button>
-                <button v-if="currentTab === 'rekap'" @click="exportRekapExcel" class="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-emerald-700 transition flex items-center gap-2"><i class="fas fa-file-excel"></i> UNDUH EXCEL</button>
             </div>
 
             <!-- SCROLLABLE AREA -->
@@ -166,26 +169,20 @@
                 
                 <!-- TAB LAIN (HIDDEN FOR BREVITY) -->
                 <div v-if="currentTab !== 'lhbts'" class="no-print">
-                    <div v-if="currentTab === 'identitas'">
-                         <div class="bg-white p-8 rounded-xl shadow-lg border border-indigo-100 max-w-3xl mx-auto mt-10">
-                            <h3 class="text-xl font-bold text-slate-800 text-center mb-6">Lengkapi Data Awal</h3>
-                            <div class="space-y-4">
-                                <select v-model="identitas.mapel" class="w-full p-3 border rounded"><option value="" disabled>-- Pilih Mapel --</option><option v-for="m in mapelList" :value="m">{{ m }}</option></select>
-                                <select v-model="identitas.jenjang" class="w-full p-3 border rounded"><option value="" disabled>-- Pilih Jenjang --</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select>
-                                <input v-model="identitas.guru" class="w-full p-3 border rounded" placeholder="Nama Guru">
-                                <button @click="switchToTP" class="w-full bg-indigo-600 text-white py-3 rounded font-bold">MULAI</button>
-                            </div>
+                    <div v-if="currentTab === 'identitas'" class="bg-white p-8 rounded-xl shadow-lg border border-indigo-100 max-w-3xl mx-auto mt-10 text-center">
+                        <h3 class="text-xl font-bold mb-4">Input Data</h3>
+                        <div class="space-y-4">
+                             <select v-model="identitas.mapel" class="w-full p-2 border rounded"><option value="" disabled>-- Pilih Mapel --</option><option v-for="m in mapelList" :value="m">{{ m }}</option></select>
+                             <select v-model="identitas.jenjang" class="w-full p-2 border rounded"><option value="" disabled>-- Pilih Jenjang --</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select>
+                             <input v-model="identitas.guru" class="w-full p-2 border rounded" placeholder="Nama Guru">
+                             <button @click="switchToTP" class="bg-blue-600 text-white px-4 py-2 rounded font-bold">Mulai</button>
                         </div>
-                    </div>
-                    <div v-if="currentTab !== 'identitas'" class="p-10 text-center text-gray-400 border-2 border-dashed border-gray-300 rounded-lg">
-                        <p>Konten tab {{ currentTab }} disembunyikan untuk fokus pada LHBTS.</p>
-                        <p class="text-xs text-blue-500 cursor-pointer" @click="currentTab='identitas'">Kembali ke Identitas</p>
                     </div>
                 </div>
 
-                <!-- TAB LHBTS (RAPOR TENGAH SEMESTER - FIXED A4 LANDSCAPE) -->
+                <!-- TAB LHBTS (RAPOR TENGAH SEMESTER) -->
                 <transition name="fade">
-                    <div v-if="currentTab === 'lhbts'" class="print-area flex justify-center">
+                    <div v-if="currentTab === 'lhbts'" class="print-area flex flex-col items-center">
                         
                         <!-- Filter (No Print) -->
                         <div class="bg-white p-4 rounded-xl shadow border mb-6 flex gap-4 items-center no-print w-full max-w-4xl">
@@ -193,163 +190,116 @@
                             <div class="w-1/3" v-if="studentList.length > 0"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pilih Siswa</label><select v-model="selectedStudentId" class="w-full p-2 border-2 border-blue-200 rounded font-bold text-blue-900"><option value="" disabled>-- Pilih Siswa --</option><option v-for="s in studentList" :value="s.id">{{ s.nama }}</option></select></div>
                         </div>
 
-                        <!-- TEMPLATE LHBTS (SHEET) -->
+                        <!-- SHEET A4 LANDSCAPE -->
                         <div v-if="selectedStudentData" class="sheet">
-                            
-                            <table class="lhbts-table">
-                                <!-- DEFINISI KOLOM (A-AF) - WIDTH PERCENTAGE (TOTAL ~445 Units) -->
+                            <table class="report">
                                 <colgroup>
-                                    <col style="width: 2.04%"> <!-- A -->
-                                    <col style="width: 1.14%"> <!-- B -->
-                                    <col style="width: 6.84%"> <!-- C -->
-                                    <col style="width: 1.00%"> <!-- D -->
-                                    <col span="9" style="width: 2.92%"> <!-- E-M -->
-                                    <col style="width: 1.00%"> <!-- N -->
-                                    <col span="9" style="width: 2.92%"> <!-- O-W -->
-                                    <col style="width: 1.30%"> <!-- X -->
-                                    <col style="width: 1.40%"> <!-- Y -->
-                                    <col style="width: 2.92%"> <!-- Z -->
-                                    <col style="width: 1.00%"> <!-- AA -->
-                                    <col style="width: 2.92%"> <!-- AB -->
-                                    <col style="width: 2.92%"> <!-- AC -->
-                                    <col style="width: 1.30%"> <!-- AD -->
-                                    <col style="width: 2.92%"> <!-- AE -->
-                                    <col style="width: 18.67%"> <!-- AF -->
+                                    <col style="width:5.66mm"> <!-- A -->
+                                    <col style="width:3.17mm"> <!-- B -->
+                                    <col style="width:18.96mm"> <!-- C -->
+                                    <col style="width:2.77mm"> <!-- D -->
+                                    <col span="9" style="width:8.09mm"> <!-- E-M -->
+                                    <col style="width:2.77mm"> <!-- N -->
+                                    <col span="9" style="width:8.09mm"> <!-- O-W -->
+                                    <col style="width:3.62mm"> <!-- X -->
+                                    <col style="width:3.90mm"> <!-- Y -->
+                                    <col style="width:8.09mm"> <!-- Z -->
+                                    <col style="width:2.77mm"> <!-- AA -->
+                                    <col style="width:8.09mm"> <!-- AB -->
+                                    <col style="width:8.09mm"> <!-- AC -->
+                                    <col style="width:3.62mm"> <!-- AD -->
+                                    <col style="width:8.09mm"> <!-- AE -->
+                                    <col style="width:51.72mm"> <!-- AF -->
                                 </colgroup>
 
-                                <!-- HEADER JUDUL -->
-                                <tr style="height: 14.5pt;"><td colspan="32" class="no-border"></td></tr> 
-                                <tr style="height: 23pt;"><td colspan="32" class="text-center title-text no-border">LAPORAN HASIL BELAJAR TENGAH SEMESTER</td></tr>
-                                <tr style="height: 23pt;"><td colspan="32" class="text-center title-text no-border bb-double">SEKOLAH MENENGAH PERTAMA (SMP) ALBANNA DENPASAR</td></tr>
-                                <tr style="height: 7.5pt;"><td colspan="32" class="no-border"></td></tr>
+                                <!-- HEADER ATAS -->
+                                <tr class="r1"><td colspan="2" class="text-center font-bold no-border">No Urut</td><td colspan="30" class="no-border"></td></tr>
+                                <tr class="r2"><td colspan="2" class="text-center font-bold" style="border: 1px solid black !important">{{ getNoUrut(selectedStudentData.id) }}</td><td colspan="30" class="no-border"></td></tr>
+                                <tr class="r3"><td colspan="32" class="text-center title no-border">LAPORAN HASIL BELAJAR TENGAH SEMESTER</td></tr>
+                                <tr class="r4"><td colspan="32" class="text-center title no-border border-bottom-double">SEKOLAH MENENGAH PERTAMA (SMP) ALBANNA DENPASAR</td></tr>
+                                <tr class="r5"><td colspan="32" class="no-border"></td></tr>
 
                                 <!-- IDENTITAS -->
-                                <tr style="height: 16.5pt;">
-                                    <td class="no-border"></td>
-                                    <td colspan="2" class="no-border text-left">Nama Peserta Didik</td>
-                                    <td colspan="10" class="no-border text-left nowrap-cell">: {{ selectedStudentData.nama }}</td>
-                                    <td colspan="12" class="no-border"></td>
-                                    <td colspan="2" class="no-border text-left">Kelas</td>
-                                    <td colspan="5" class="no-border text-left nowrap-cell">: {{ selectedClass }}</td>
-                                </tr>
-                                <tr style="height: 16.5pt;">
-                                    <td class="no-border"></td>
-                                    <td colspan="2" class="no-border text-left">NIS/NISN</td>
-                                    <td colspan="10" class="no-border text-left nowrap-cell">: {{ selectedStudentData.nis || '-' }}</td>
-                                    <td colspan="12" class="no-border"></td>
-                                    <td colspan="2" class="no-border text-left">Fase</td>
-                                    <td colspan="5" class="no-border text-left nowrap-cell">: D</td>
-                                </tr>
-                                <tr style="height: 16.5pt;">
-                                    <td class="no-border"></td>
-                                    <td colspan="2" class="no-border text-left">Nama Sekolah</td>
-                                    <td colspan="10" class="no-border text-left nowrap-cell">: SMP ALBANNA</td>
-                                    <td colspan="12" class="no-border"></td>
-                                    <td colspan="2" class="no-border text-left">Semester</td>
-                                    <td colspan="5" class="no-border text-left nowrap-cell">: Ganjil</td>
-                                </tr>
-                                <tr style="height: 16.5pt;">
-                                    <td class="no-border"></td>
-                                    <td colspan="2" class="no-border text-left">Alamat Sekolah</td>
-                                    <td colspan="10" class="no-border text-left nowrap-cell">: Jl. Tukad Yeh Ho III No. 16</td>
-                                    <td colspan="12" class="no-border"></td>
-                                    <td colspan="2" class="no-border text-left">Tahun Ajaran</td>
-                                    <td colspan="5" class="no-border text-left nowrap-cell">: 2025/2026</td>
-                                </tr>
-                                <tr style="height: 7.5pt;"><td colspan="32" class="no-border"></td></tr>
+                                <tr class="r6"><td class="no-border"></td><td colspan="2" class="no-border text-left">Nama Peserta Didik</td><td colspan="10" class="no-border text-left id-value">: {{ selectedStudentData.nama }}</td><td colspan="10" class="no-border"></td><td colspan="2" class="no-border text-left">Kelas</td><td colspan="7" class="no-border text-left id-value">: {{ selectedClass }}</td></tr>
+                                <tr class="r7"><td class="no-border"></td><td colspan="2" class="no-border text-left">NIS/NISN</td><td colspan="10" class="no-border text-left id-value">: {{ selectedStudentData.nis || '-' }}</td><td colspan="10" class="no-border"></td><td colspan="2" class="no-border text-left">Fase</td><td colspan="7" class="no-border text-left id-value">: D</td></tr>
+                                <tr class="r8"><td class="no-border"></td><td colspan="2" class="no-border text-left">Nama Sekolah</td><td colspan="10" class="no-border text-left id-value">: SMP ALBANNA</td><td colspan="10" class="no-border"></td><td colspan="2" class="no-border text-left">Semester</td><td colspan="7" class="no-border text-left id-value">: Ganjil</td></tr>
+                                <tr class="r9"><td class="no-border"></td><td colspan="2" class="no-border text-left">Alamat Sekolah</td><td colspan="10" class="no-border text-left id-value">: Jl. Tukad Yeh Ho III No. 16</td><td colspan="10" class="no-border"></td><td colspan="2" class="no-border text-left">Tahun Ajaran</td><td colspan="7" class="no-border text-left id-value">: 2025/2026</td></tr>
+                                <tr class="r10"><td colspan="32" class="no-border"></td></tr>
 
                                 <!-- HEADER TABEL NILAI -->
-                                <tr style="height: 21pt;" class="bg-blue-excel font-bold text-center">
-                                    <td rowspan="4">NO</td>
-                                    <td colspan="2" rowspan="4">MATA PELAJARAN</td>
-                                    <td colspan="27">NILAI</td>
-                                    <td rowspan="4">NA</td>
-                                    <td rowspan="4">DESKRIPSI</td>
+                                <tr class="r11">
+                                    <td rowspan="4" class="bg-blue-custom text-center font-bold border-bottom-double">NO</td>
+                                    <td colspan="2" rowspan="4" class="bg-blue-custom text-center font-bold border-bottom-double">MATA PELAJARAN</td>
+                                    <td colspan="27" class="bg-blue-custom text-center font-bold">NILAI</td>
+                                    <td rowspan="4" class="bg-blue-custom text-center font-bold border-bottom-double">NA</td>
+                                    <td rowspan="4" class="bg-blue-custom text-center font-bold border-bottom-double">DESKRIPSI</td>
                                 </tr>
-                                <tr style="height: 21pt;" class="bg-blue-excel font-bold text-center">
-                                    <td colspan="20">RATA-RATA&nbsp;&nbsp;ASESMEN FORMATIF</td>
-                                    <td rowspan="3">HA</td>
-                                    <td colspan="5" rowspan="2">SUMATIF LINGKUP MATERI</td>
-                                    <td rowspan="3">HA</td>
+                                <tr class="r12">
+                                    <td colspan="20" class="bg-blue-custom text-center font-bold">RATA-RATA&nbsp;&nbsp;ASESMEN FORMATIF</td>
+                                    <td rowspan="3" class="bg-blue-custom text-center font-bold border-bottom-double">HA</td>
+                                    <td colspan="5" rowspan="2" class="bg-blue-custom text-center font-bold">SUMATIF LINGKUP MATERI</td>
+                                    <td rowspan="3" class="bg-blue-custom text-center font-bold border-bottom-double">HA</td>
                                 </tr>
-                                <tr style="height: 21pt;" class="bg-blue-excel font-bold text-center">
-                                    <td colspan="5">Lingkup Materi 1</td>
-                                    <td colspan="5">Lingkup Materi 2</td>
-                                    <td colspan="5">LingkupMateri 3</td>
-                                    <td colspan="5">LingkupMateri 4</td>
+                                <tr class="r13">
+                                    <td colspan="5" class="bg-blue-custom text-center font-bold">Lingkup Materi 1</td>
+                                    <td colspan="5" class="bg-blue-custom text-center font-bold">Lingkup Materi 2</td>
+                                    <td colspan="5" class="bg-blue-custom text-center font-bold">LingkupMateri 3</td>
+                                    <td colspan="5" class="bg-blue-custom text-center font-bold">LingkupMateri 4</td>
                                 </tr>
-                                <tr style="height: 21pt;" class="bg-blue-excel font-bold text-center bb-double">
-                                    <td>1</td><td>2</td><td>3</td><td>4</td><td>5</td>
-                                    <td>1</td><td>2</td><td>3</td><td>4</td><td>5</td>
-                                    <td>1</td><td>2</td><td>3</td><td>4</td><td>5</td>
-                                    <td>1</td><td>2</td><td>3</td><td>4</td><td>5</td>
-                                    <td>1</td><td>2</td><td>3</td><td>4</td><td>5</td>
+                                <tr class="r14 border-bottom-double">
+                                    <td class="text-center">1</td><td class="text-center">2</td><td class="text-center">3</td><td class="text-center">4</td><td class="text-center">5</td>
+                                    <td class="text-center">1</td><td class="text-center">2</td><td class="text-center">3</td><td class="text-center">4</td><td class="text-center">5</td>
+                                    <td class="text-center">1</td><td class="text-center">2</td><td class="text-center">3</td><td class="text-center">4</td><td class="text-center">5</td>
+                                    <td class="text-center">1</td><td class="text-center">2</td><td class="text-center">3</td><td class="text-center">4</td><td class="text-center">5</td>
+                                    <td class="text-center">1</td><td class="text-center">2</td><td class="text-center">3</td><td class="text-center">4</td><td class="text-center">5</td>
                                 </tr>
 
                                 <!-- ISI DATA MAPEL -->
-                                <template v-for="(section, sIdx) in lhbtsSections" :key="sIdx">
-                                    <tr style="height: 16.5pt;" class="bg-blue-excel">
-                                        <td class="text-center bt-double"></td>
-                                        <td colspan="31" class="text-left font-bold bt-double">{{ section.label }}</td>
+                                <template v-for="(section, sIdx) in lhbtsData" :key="sIdx">
+                                    <!-- Section Header -->
+                                    <tr v-if="section.type === 'section'" :class="['bg-blue-custom', section.label === 'MUATAN MAPEL' ? 'r15 border-top-double' : (section.label === 'MUATAN LOKAL' ? 'r27' : 'r29')]">
+                                        <td class="text-center"></td>
+                                        <td colspan="31" class="text-left font-bold">{{ section.label }}</td>
                                     </tr>
-                                    <tr v-for="row in section.rows" :key="row.mapel" style="height: 30pt;">
-                                        <td class="text-center">{{ row.no }}</td>
-                                        <td colspan="2" class="text-left wrap-text">{{ row.mapel }}</td>
+                                    <!-- Rows -->
+                                    <tr v-if="section.type === 'row'" :class="`r${15 + section.idx}`">
+                                        <td class="text-center">{{ section.no }}</td>
+                                        <td colspan="2" class="text-left">{{ section.mapel }}</td>
                                         
-                                        <!-- Formatif (20 Cells) -->
-                                        <td v-for="i in 20" :key="'f'+i" class="text-center">
-                                            {{ getGradeLHBTS(selectedStudentData.id, row.mapel, 'f', i) }}
-                                        </td>
-                                        <td class="text-center bg-gray-50 font-bold"></td> 
+                                        <!-- Formatif D..W -->
+                                        <td v-for="i in 20" :key="'f'+i" class="text-center">{{ getGradeLHBTS(selectedStudentData.id, section.mapel, 'f', i) }}</td>
                                         
-                                        <!-- Sumatif (5 Cells) -->
-                                        <td v-for="i in 5" :key="'s'+i" class="text-center text-xs">
-                                            {{ getGradeLHBTS(selectedStudentData.id, row.mapel, 's', i) }}
-                                        </td>
-                                        <td class="text-center bg-gray-50 font-bold"></td> 
+                                        <!-- HA Formatif (X) -->
+                                        <td class="text-center font-bold"></td> 
                                         
-                                        <!-- NA -->
-                                        <td class="text-center font-bold bg-blue-50">
-                                            {{ getGradeLHBTS(selectedStudentData.id, row.mapel, 'na', 0) }}
-                                        </td>
+                                        <!-- Sumatif Y..AC -->
+                                        <td v-for="i in 5" :key="'s'+i" class="text-center">{{ getGradeLHBTS(selectedStudentData.id, section.mapel, 's', i) }}</td>
                                         
-                                        <!-- Deskripsi -->
-                                        <td class="text-left align-top p-1 text-[9px] wrap-text">
-                                            {{ getGradeLHBTS(selectedStudentData.id, row.mapel, 'desc', 0) }}
-                                        </td>
+                                        <!-- HA Sumatif (AD) -->
+                                        <td class="text-center font-bold"></td>
+                                        
+                                        <!-- NA (AE) -->
+                                        <td class="text-center font-bold bg-blue-50">{{ getGradeLHBTS(selectedStudentData.id, section.mapel, 'na', 0) }}</td>
+                                        
+                                        <!-- Deskripsi (AF) -->
+                                        <td class="desc">{{ getGradeLHBTS(selectedStudentData.id, section.mapel, 'desc', 0) }}</td>
                                     </tr>
                                 </template>
 
                                 <!-- TOTALS -->
-                                <tr style="height: 15.75pt;">
-                                    <td colspan="3" class="text-center font-bold bg-blue-excel">JUMLAH NILAI</td>
+                                <tr class="r31">
+                                    <td colspan="3" class="text-center font-bold bg-blue-custom">JUMLAH NILAI</td>
                                     <td colspan="27" style="background-color:#eee;"></td>
-                                    <td class="text-center font-bold bg-blue-excel">{{ calculateTotalNA() }}</td>
+                                    <td class="text-center font-bold bg-blue-custom">{{ totalNA }}</td>
                                     <td style="background-color:#eee;"></td>
                                 </tr>
-                                <tr style="height: 15.75pt;">
-                                    <td colspan="3" class="text-center font-bold bg-blue-excel">RATA-RATA NILAI</td>
+                                <tr class="r32">
+                                    <td colspan="3" class="text-center font-bold bg-blue-custom">RATA-RATA NILAI</td>
                                     <td colspan="27" style="background-color:#eee;"></td>
-                                    <td class="text-center font-bold bg-blue-excel">{{ calculateAvgNA() }}</td>
+                                    <td class="text-center font-bold bg-blue-custom">{{ avgNA }}</td>
                                     <td style="background-color:#eee;"></td>
                                 </tr>
-
                             </table>
-                            
-                            <div class="mt-8 flex justify-between px-10" style="page-break-inside: avoid;">
-                                <div class="text-center">
-                                    <p>Mengetahui,</p>
-                                    <p>Orang Tua/Wali</p>
-                                    <br><br><br>
-                                    <p>(...........................................)</p>
-                                </div>
-                                <div class="text-center">
-                                    <p>Denpasar, {{ new Date().toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}) }}</p>
-                                    <p>Wali Kelas</p>
-                                    <br><br><br>
-                                    <p>(...........................................)</p>
-                                </div>
-                            </div>
                         </div>
 
                     </div>
@@ -378,34 +328,47 @@
         createApp({
             data() {
                 return {
-                    currentTab: 'identitas', selectedClass: '', studentList: [],
+                    currentTab: 'identitas', selectedClass: '', studentList: [], selectedStudentId: '',
                     identitas: { mapel: '', guru: '', jenjang: '' },
                     allGrades: {}, 
                     mapelList: ['AGAMA ISLAM', 'BAHASA ARAB', 'BAHASA BALI', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 'INFORMATIKA', 'IPA', 'IPS', 'KKA', 'MATEMATIKA', 'OLAHRAGA', 'PKN', 'SENI BUDAYA'],
-                    classesMap: { '7': ['7A','7B'], '8': ['8A'], '9': ['9A'] }, // Simplified
+                    classesMap: { '7': ['7A','7B','7C','7D','7E','7F'], '8': ['8A','8B','8C','8D','8E','8F'], '9': ['9A','9B','9C','9D','9E'] }, // Simplified
                     kelasList: ['7A','7B','7C','7D','7E','7F','8A','8B','8C','8D','8E','8F','9A','9B','9C','9D','9E'],
-
-                    // LHBTS Data
-                    selectedStudentId: '',
-                    lhbtsSections: [
-                        { label: "MUATAN MAPEL", rows: [
-                            {no:1, mapel:"Pendidikan Agama Islam"}, {no:2, mapel:"Pendidikan Pancasila"}, {no:3, mapel:"Bahasa Indonesia"}, 
-                            {no:4, mapel:"Matematika"}, {no:5, mapel:"Ilmu Pengetahuan Alam"}, {no:6, mapel:"Ilmu Pengetahuan Sosial"}, 
-                            {no:7, mapel:"Bahasa Inggris"}, {no:8, mapel:"Informatika"}, 
-                            {no:9, mapel:"Pend. Jasmani, Olahraga & Kesehatan"}, {no:10, mapel:"Seni Budaya"}
-                        ]},
-                        { label: "MUATAN LOKAL", rows: [ {no:1, mapel:"Bahasa Bali"} ] },
-                        { label: "MUATAN KHAS", rows: [ {no:1, mapel:"Bahasa Arab"}, {no:2, mapel:"KKA"} ] }
-                    ]
+                    
+                    // Fixed LHBTS Structure
+                    lhbtsData: [
+                        { type:"section", label:"MUATAN MAPEL" },
+                        { type:"row", no:1, mapel:"Pendidikan Agama Islam", idx:1 },
+                        { type:"row", no:2, mapel:"Pendidikan Pancasila", idx:2 },
+                        { type:"row", no:3, mapel:"Bahasa Indonesia", idx:3 },
+                        { type:"row", no:4, mapel:"Matematika", idx:4 },
+                        { type:"row", no:5, mapel:"Ilmu Pengetahuan Alam", idx:5 },
+                        { type:"row", no:6, mapel:"Ilmu Pengetahuan Sosial", idx:6 },
+                        { type:"row", no:7, mapel:"Bahasa Inggris", idx:7 },
+                        { type:"row", no:8, mapel:"Informatika", idx:8 },
+                        { type:"row", no:9, mapel:"Pend. Jasmani, Olahraga & Kesehatan", idx:9 },
+                        { type:"row", no:10, mapel:"Seni Budaya", idx:10 },
+                        { type:"section", label:"MUATAN LOKAL" },
+                        { type:"row", no:1, mapel:"Bahasa Bali", idx:13 }, 
+                        { type:"section", label:"MUATAN KHAS" },
+                        { type:"row", no:1, mapel:"Bahasa Arab", idx:15 },
+                        { type:"row", no:2, mapel:"KKA", idx:16 }
+                    ],
+                    // Data Structures
+                    lingkupMateri: Array.from({ length: 5 }, (_, i) => ({ id: i + 1, judul: '', isOpen: i === 0, tujuan: Array.from({ length: 5 }, () => ({ a: 'Murid', b: '', c: '', d: '' })) })),
+                    ekskulData: {}, mapelConfigs: {}, savedProgress: {}, bankSoalCache: {},
+                    kewalasanConfig: { a1: 'Religius', a2: 'Mandiri', a3: 'Gotong Royong', a4: 'Bernalar Kritis' },
+                    kewalasanData: {}, kaihData: {},
+                    kaihConfig: [ { id: 'a1', name: 'Bangun Pagi', count: 4 }, { id: 'a2', name: 'Beribadah', count: 9 }, { id: 'a3', name: 'Makan Sehat', count: 3 }, { id: 'a4', name: 'Berolahraga', count: 1 }, { id: 'a5', name: 'Gemar Belajar', count: 4 }, { id: 'a6', name: 'Bermasyarakat', count: 8 }, { id: 'a7', name: 'Tidur Cepat', count: 3 } ],
+                    rekapJenjang: '7'
                 }
             },
             computed: {
-                isIdentityValid() { return this.identitas.mapel && this.identitas.jenjang && this.identitas.guru.trim() !== ''; },
+                isIdentityValid() { return true; }, 
                 isTpValid() { return true; }, 
-                filteredClasses() { return this.identitas.jenjang ? this.classesMap[this.identitas.jenjang] : []; },
                 selectedStudentData() { return this.studentList.find(s => s.id === this.selectedStudentId); },
-                rekapData() { return []; }, // Hidden
-                rekapAkhirTableData() { return []; } // Hidden
+                totalNA() { return "0"; }, 
+                avgNA() { return "0"; } 
             },
             mounted() {
                 const grades = localStorage.getItem('cbt_all_grades');
@@ -415,7 +378,6 @@
                 getPageTitle() { return this.currentTab === 'lhbts' ? 'CETAK LHBTS' : 'INPUT DATA'; },
                 getPageSubtitle() { return this.currentTab === 'lhbts' ? 'Template Resmi A4 Landscape' : '...'; },
                 
-                // Navigation
                 switchToTP() { this.currentTab='tp'; }, switchToNilai() { this.currentTab='nilai'; },
                 switchToEkskul() { this.currentTab='ekskul'; }, switchToKewalasan() { this.currentTab='kewalasan'; },
                 switchToKaih() { this.currentTab='kaih'; }, switchToRekap() { this.currentTab='rekap'; },
@@ -424,50 +386,48 @@
                 
                 getNoUrut(sid) { return this.studentList.findIndex(s => s.id === sid) + 1; },
                 
-                getGradeLHBTS(sid, mapelName, type, index) {
-                    let keyMapel = "";
-                    if(mapelName.includes("Agama")) keyMapel = "AGAMA ISLAM";
-                    else if(mapelName.includes("Pancasila")) keyMapel = "PKN";
-                    else if(mapelName.includes("Indonesia")) keyMapel = "BAHASA INDONESIA";
-                    else if(mapelName.includes("Matematika")) keyMapel = "MATEMATIKA";
-                    else if(mapelName.includes("Alam")) keyMapel = "IPA";
-                    else if(mapelName.includes("Sosial")) keyMapel = "IPS";
-                    else if(mapelName.includes("Inggris")) keyMapel = "BAHASA INGGRIS";
-                    else if(mapelName.includes("Informatika")) keyMapel = "INFORMATIKA";
-                    else if(mapelName.includes("Jasmani")) keyMapel = "OLAHRAGA"; 
-                    else if(mapelName.includes("Seni")) keyMapel = "SENI BUDAYA";
-                    else if(mapelName.includes("Bali")) keyMapel = "BAHASA BALI";
-                    else if(mapelName.includes("Arab")) keyMapel = "BAHASA ARAB";
-                    else if(mapelName.includes("KKA")) keyMapel = "KKA";
+                getGradeLHBTS(sid, mapelLong, type, index) {
+                    let key = "";
+                    if(mapelLong.includes("Agama")) key="AGAMA ISLAM";
+                    else if(mapelLong.includes("Pancasila")) key="PKN";
+                    else if(mapelLong.includes("Indonesia")) key="BAHASA INDONESIA";
+                    else if(mapelLong.includes("Matematika")) key="MATEMATIKA";
+                    else if(mapelLong.includes("Alam")) key="IPA";
+                    else if(mapelLong.includes("Sosial")) key="IPS";
+                    else if(mapelLong.includes("Inggris")) key="BAHASA INGGRIS";
+                    else if(mapelLong.includes("Informatika")) key="INFORMATIKA";
+                    else if(mapelLong.includes("Jasmani")) key="OLAHRAGA";
+                    else if(mapelLong.includes("Seni")) key="SENI BUDAYA";
+                    else if(mapelLong.includes("Bali")) key="BAHASA BALI";
+                    else if(mapelLong.includes("Arab")) key="BAHASA ARAB";
+                    else if(mapelLong.includes("KKA")) key="KKA";
 
-                    const raw = this.allGrades[this.selectedClass]?.[keyMapel]?.[sid];
+                    const raw = this.allGrades[this.selectedClass]?.[key]?.[sid];
                     if(!raw) return "";
 
                     if (type === 'f') { // Formatif 1-20
+                         // Logic mapping simple: TP 1-20
                          const val = raw[`tp_1_${index}`] || raw[`tp_2_${index-5}`] || raw[`tp_3_${index-10}`] || ""; 
                          return val;
                     }
-                    if (type === 'na') { return "85"; }
-                    if (type === 'desc') { return "Menunjukkan pemahaman yang baik dalam..."; }
+                    if (type === 'na') return "85"; 
+                    if (type === 'desc') return "Menunjukkan pemahaman yang baik dalam..."; 
                     return "";
                 },
-                
-                calculateTotalNA() { return "0"; },
-                calculateAvgNA() { return "0"; },
 
-                async fetchStudents() {
-                     if(!this.selectedClass) return; this.isLoadingStudents = true; this.studentList = [];
+                async fetchStudentsForLHBTS() {
+                     if(!this.selectedClass) return; 
                      try {
                         const q = query(collection(db, "data_absensi"), where("kelas", "==", this.selectedClass));
                         const snap = await getDocs(q);
+                        this.studentList = [];
                         snap.docs.forEach(doc => { this.studentList.push({ id: doc.id, nama: doc.data().nama, nis: doc.data().nis || '-' }); });
                         this.studentList.sort((a,b) => a.nama.localeCompare(b.nama));
-                     } catch(e){} finally { this.isLoadingStudents = false; }
+                     } catch(e){} 
                 },
-                async fetchStudentsForLHBTS() { await this.fetchStudents(); },
-                async fetchStudentsForRekap() { await this.fetchStudents(); },
-                async loadBankSoal() {}, 
-                handleSaveButton() { /* ... */ }
+                
+                // Placeholder methods
+                handleSaveButton() {}, exportRekapExcel() {}, fetchStudents() {}
             }
         }).mount('#app');
     </script>
