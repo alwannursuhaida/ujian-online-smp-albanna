@@ -34,6 +34,10 @@
         .header-avg { background-color: #ecfdf5; border-left: 2px solid #059669; }
         .header-rapor { background-color: #eff6ff; border-left: 2px solid #2563eb; color: #1e40af; }
         
+        .header-ekskul-1 { background-color: #fff7ed; border-left: 2px solid #ea580c; color: #9a3412; }
+        .header-ekskul-2 { background-color: #f0fdf4; border-left: 2px solid #16a34a; color: #166534; }
+        .header-ekskul-3 { background-color: #eff6ff; border-left: 2px solid #2563eb; color: #1e40af; }
+
         .input-readonly { background-color: #f3f4f6; color: #4b5563; cursor: not-allowed; }
     </style>
 </head>
@@ -64,8 +68,8 @@
                 <div class="border-t border-slate-700 my-2"></div>
                 <button @click="currentTab = 'monitoring'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'monitoring' ? 'bg-indigo-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-chart-line w-5"></i> Monitoring Input</button>
                 <button @click="switchToRekap" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'rekap' ? 'bg-emerald-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-trophy w-5"></i> Rekapitulasi Nilai</button>
-                
-                <!-- MENU BARU: REKAP AKHIR -->
+
+                <!-- MENU REKAP AKHIR RAPOR -->
                 <button @click="switchToRekapAkhir" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'rekap_akhir' ? 'bg-purple-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']">
                     <i class="fas fa-file-invoice w-5"></i> Rekap Akhir Rapor
                 </button>
@@ -112,7 +116,7 @@
                                 <div v-for="(tp, tpIndex) in lm.tujuan" :key="tpIndex" class="relative group border-b border-slate-100 pb-4">
                                     <h4 class="font-bold text-xs text-slate-500 mb-2">TP {{ lmIndex + 1 }}.{{ tpIndex + 1 }}</h4>
                                     <div class="grid grid-cols-1 md:grid-cols-12 gap-2 mb-2">
-                                        <div class="md:col-span-1"><input v-model="tp.a" readonly class="w-full p-2 border rounded bg-gray-100 text-center text-xs font-bold" title="Audience"></div>
+                                        <div class="md:col-span-1"><input v-model="tp.a" readonly class="w-full p-2 border rounded bg-gray-100 text-center text-xs font-bold"></div>
                                         <div class="md:col-span-5"><textarea v-model="tp.b" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Behavior (KKO + Materi)"></textarea></div>
                                         <div class="md:col-span-3"><textarea v-model="tp.c" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Condition (Melalui...)"></textarea></div>
                                         <div class="md:col-span-3"><textarea v-model="tp.d" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Degree (Kriteria)"></textarea></div>
@@ -226,7 +230,7 @@
                     </div>
                 </transition>
                 
-                <!-- 6. REKAPITULASI -->
+                <!-- 6. REKAPITULASI DETAIL (FULL MATRIX PER MAPEL) -->
                 <transition name="fade">
                     <div v-if="currentTab === 'rekap'">
                         <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -279,7 +283,7 @@
                     </div>
                 </transition>
 
-                <!-- 7. REKAP AKHIR RAPOR (BARU) -->
+                <!-- 7. REKAP AKHIR RAPOR (TABEL VIEW - UPDATED) -->
                 <transition name="fade">
                     <div v-if="currentTab === 'rekap_akhir'">
                         <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -287,20 +291,42 @@
                                 <div class="w-1/2"><label class="block text-xs font-bold text-purple-500 uppercase mb-1">Jenjang</label><select v-model="rekapJenjang" class="w-full p-2 border rounded font-bold text-purple-900"><option value="7">Kelas 7</option><option value="8">Kelas 8</option><option value="9">Kelas 9</option></select></div>
                                 <div class="w-1/2"><label class="block text-xs font-bold text-purple-500 uppercase mb-1">Kelas</label><select v-model="selectedClass" @change="fetchStudentsForRekap" class="w-full p-2 border-2 border-purple-200 rounded font-bold text-purple-900"><option value="" disabled>-- Pilih --</option><option v-for="c in classesMap[rekapJenjang]" :value="c">{{ c }}</option></select></div>
                             </div>
+                            <div class="text-right text-xs text-gray-500">Preview Rapor Lengkap</div>
                         </div>
 
                         <div class="bg-white rounded-xl shadow border overflow-hidden relative">
                              <div v-if="!selectedClass" class="p-10 text-center text-gray-400">Pilih kelas untuk melihat Rapor Akhir.</div>
-                             <div v-else class="p-6">
-                                 <h3 class="font-bold text-purple-900 text-lg mb-4">Daftar Siswa Kelas {{ selectedClass }}</h3>
-                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                     <div v-for="s in studentList" :key="s.id" class="bg-purple-50 border border-purple-100 p-4 rounded-lg hover:shadow-md transition">
-                                         <div class="flex justify-between items-center mb-2">
-                                             <div class="font-bold text-purple-800">{{ s.nama }}</div>
-                                             <button @click="openRaporModal(s)" class="bg-purple-600 text-white text-xs px-3 py-1 rounded font-bold hover:bg-purple-700">LIHAT RAPOR</button>
-                                         </div>
-                                     </div>
-                                 </div>
+                             <div v-else class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse excel-table text-xs">
+                                    <thead class="bg-purple-800 text-white">
+                                        <tr>
+                                            <th class="p-3 w-10 text-center sticky-col bg-purple-800" rowspan="2">No</th>
+                                            <th class="p-3 w-48 sticky-col-2 bg-purple-800" rowspan="2">Nama Siswa</th>
+                                            <template v-for="m in mapelList" :key="m">
+                                                <th colspan="3" class="p-2 text-center border-l-4 border-purple-500 bg-purple-900">{{ m }}</th>
+                                            </template>
+                                        </tr>
+                                        <tr class="bg-purple-700 text-purple-100">
+                                            <template v-for="m in mapelList" :key="m + '_desc'">
+                                                <th class="p-2 text-center w-12 font-bold bg-purple-600 border-l">NILAI</th>
+                                                <th class="p-2 text-center min-w-[350px]">Deskripsi 1 (Kuat)</th>
+                                                <th class="p-2 text-center min-w-[350px]">Deskripsi 2 (Lemah)</th>
+                                            </template>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white">
+                                        <!-- Computed rekapAkhirTableData will handle logic -->
+                                        <tr v-for="(row, idx) in rekapAkhirTableData" :key="row.id" class="hover:bg-purple-50">
+                                            <td class="text-center font-bold sticky-col bg-white">{{ idx + 1 }}</td>
+                                            <td class="px-3 py-2 font-bold text-gray-700 whitespace-nowrap sticky-col-2 bg-white left-10">{{ row.nama }}</td>
+                                            <template v-for="m in mapelList" :key="m">
+                                                <td class="text-center font-extrabold text-lg text-purple-800 bg-purple-50 border-l">{{ row.data[m].nilai || '-' }}</td>
+                                                <td class="p-2 border text-[11px] text-green-700 align-top whitespace-normal leading-relaxed">{{ row.data[m].desc1 }}</td>
+                                                <td class="p-2 border text-[11px] text-orange-700 align-top whitespace-normal leading-relaxed">{{ row.data[m].desc2 }}</td>
+                                            </template>
+                                        </tr>
+                                    </tbody>
+                                </table>
                              </div>
                         </div>
                     </div>
@@ -308,46 +334,6 @@
 
             </div>
         </div>
-
-        <!-- MODAL RAPOR SISWA -->
-        <div v-if="viewRaporModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-            <div class="bg-white w-full max-w-5xl h-[90vh] rounded-xl shadow-2xl flex flex-col overflow-hidden animate-fade-in">
-                <div class="p-5 border-b bg-purple-50 flex justify-between items-center">
-                    <div>
-                        <h3 class="font-bold text-xl text-purple-900">RAPOR HASIL BELAJAR</h3>
-                        <p class="text-sm text-purple-600 font-bold">{{ viewRaporModal.nama }} ({{ selectedClass }})</p>
-                    </div>
-                    <button @click="viewRaporModal = null" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-2x"></i></button>
-                </div>
-                <div class="flex-1 overflow-y-auto p-8">
-                    <table class="w-full text-left border border-collapse text-sm">
-                        <thead>
-                            <tr class="bg-purple-800 text-white">
-                                <th class="p-3 border w-10 text-center">No</th>
-                                <th class="p-3 border w-48">Mata Pelajaran</th>
-                                <th class="p-3 border w-24 text-center">Nilai Akhir</th>
-                                <th class="p-3 border">Capaian Kompetensi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(item, idx) in generateReportData(viewRaporModal.id)" :key="idx" class="hover:bg-purple-50">
-                                <td class="p-3 border text-center">{{ idx + 1 }}</td>
-                                <td class="p-3 border font-bold text-gray-700">{{ item.mapel }}</td>
-                                <td class="p-3 border text-center font-bold text-lg" :class="item.nilai < 75 ? 'text-red-600' : 'text-green-600'">{{ item.nilai || '-' }}</td>
-                                <td class="p-3 border text-xs leading-relaxed space-y-2">
-                                    <div v-if="item.desc1" class="text-green-700"><span class="font-bold">Ananda menunjukkan kemahiran dalam:</span> {{ item.desc1 }}</div>
-                                    <div v-if="item.desc2" class="text-orange-700"><span class="font-bold">Ananda perlu bimbingan dalam:</span> {{ item.desc2 }}</div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="p-4 bg-purple-50 border-t text-right">
-                    <button @click="viewRaporModal = null" class="bg-gray-500 text-white px-6 py-2 rounded font-bold hover:bg-gray-600">TUTUP</button>
-                </div>
-            </div>
-        </div>
-
     </div>
 
     <script type="module">
@@ -390,10 +376,9 @@
                 activeLMs() { return this.lingkupMateri.filter(lm => lm.judul).map(lm => ({ ...lm, tujuan: lm.tujuan.filter(tp => tp.b), tpCount: lm.tujuan.filter(tp => tp.b).length })).filter(lm => lm.tpCount > 0); },
                 activeTPs() { const tps=[]; this.activeLMs.forEach(lm=>{ lm.tujuan.forEach((tp,i)=>{ if(tp.b) tps.push({uniqueId:`tp_${lm.id}_${i+1}`}); }); }); return tps; },
                 
-                // REKAP DETAIL COMPUTED WITH RANK (Code reused from previous step, omitted for brevity but essential logic same)
+                // REKAP DETAIL COMPUTED WITH RANK
                 rekapData() {
-                    // ... (Logika sama persis dengan sebelumnya)
-                     if (!this.selectedClass || this.currentTab !== 'rekap') return [];
+                    if (!this.selectedClass || this.currentTab !== 'rekap') return [];
                     const rawList = this.studentList.map(s => {
                         const grades = {}; let total = 0; let countMapel = 0;
                         this.mapelList.forEach(m => {
@@ -431,10 +416,70 @@
                         const average = countMapel > 0 ? Math.round(total / countMapel) : 0;
                         return { id: s.id, nama: s.nama, grades, total, average };
                     });
+                    
                     const sortedByTotal = [...rawList].sort((a, b) => b.total - a.total);
                     const rankMap = {};
                     sortedByTotal.forEach((item, index) => { rankMap[item.id] = index + 1; });
                     return rawList.map(item => ({ ...item, rank: rankMap[item.id] })).sort((a, b) => a.nama.localeCompare(b.nama));
+                },
+
+                // NEW: REKAP AKHIR TABLE DATA
+                rekapAkhirTableData() {
+                     if (!this.selectedClass || this.currentTab !== 'rekap_akhir') return [];
+                     
+                     return this.studentList.map(s => {
+                         const dataPerMapel = {};
+                         
+                         this.mapelList.forEach(m => {
+                             const raw = this.allGrades[this.selectedClass]?.[m]?.[s.id];
+                             const config = this.mapelConfigs[m];
+                             
+                             if (raw && config) {
+                                 // Recalculate Final Score
+                                 let sumTP=0, cTP=0, sumLM=0, cLM=0, sumASAS=0, cASAS=0;
+                                 let asasTes = raw['asas_tes_auto'] ? parseFloat(raw['asas_tes_auto']) : 0;
+                                 let asasNon = raw['asas_nontes'] ? parseFloat(raw['asas_nontes']) : 0;
+                                 
+                                 // Max Min Logic
+                                 let maxScore = -1, minScore = 101;
+                                 let maxTPText = "", minTPText = "";
+
+                                 config.forEach(lm => {
+                                     if(lm.judul) {
+                                         lm.tujuan.forEach((tp, idx) => {
+                                             if(tp.b) {
+                                                 const key = `tp_${lm.id}_${idx+1}`;
+                                                 const val = raw[key] ? parseFloat(raw[key]) : 0;
+                                                 if(val > 0) { sumTP+=val; cTP++; if(val > maxScore){maxScore=val; maxTPText=this.generateContentString(tp);} if(val < minScore){minScore=val; minTPText=this.generateContentString(tp);} }
+                                             }
+                                         });
+                                         const t = raw[`lm_${lm.id}_tes`]; if(t){sumLM+=parseFloat(t);cLM++}
+                                         const nt = raw[`lm_${lm.id}_nontes`]; if(nt){sumLM+=parseFloat(nt);cLM++}
+                                     }
+                                 });
+
+                                 const rTP = cTP > 0 ? Math.ceil(sumTP/cTP) : 0;
+                                 const rLM = cLM > 0 ? Math.ceil(sumLM/cLM) : 0;
+                                 let rASAS = 0, cA=0;
+                                 if(asasTes>0){rASAS+=asasTes;cA++} if(asasNon>0){rASAS+=asasNon;cA++}
+                                 rASAS = cA>0?Math.ceil(rASAS/cA):0;
+                                 
+                                 let sumF=0, cF=0;
+                                 if(rTP>0){sumF+=rTP;cF++} if(rLM>0){sumF+=rLM;cF++} if(rASAS>0){sumF+=rASAS;cF++}
+                                 const final = cF>0?Math.ceil(sumF/cF):0;
+                                 
+                                 // Deskripsi
+                                 const desc1 = maxScore > -1 ? `Ananda menunjukkan kemahiran dalam ${maxTPText}` : "-";
+                                 const desc2 = (minScore < 101 && minScore < maxScore) ? `Ananda perlu bimbingan dalam ${minTPText}` : (minScore < 101 && minScore < 75 ? `Ananda perlu bimbingan dalam ${minTPText}` : "-");
+
+                                 dataPerMapel[m] = { nilai: final, desc1, desc2 };
+                             } else {
+                                 dataPerMapel[m] = { nilai: 0, desc1: "-", desc2: "-" };
+                             }
+                         });
+
+                         return { id: s.id, nama: s.nama, data: dataPerMapel };
+                     });
                 }
             },
             mounted() {
@@ -446,82 +491,12 @@
                 this.loadBankSoal();
             },
             methods: {
-                // --- GENERATE RAPOR CONTENT (NEW) ---
-                generateReportData(studentId) {
-                    const report = [];
-                    
-                    this.mapelList.forEach(m => {
-                        const raw = this.allGrades[this.selectedClass]?.[m]?.[studentId];
-                        const config = this.mapelConfigs[m]; // Config TP dari Mapel tersebut
-
-                        if (raw && config) {
-                            // Hitung Nilai Akhir (Copy logic from rekapData for simplicity/consistency)
-                            let sumTP=0, cTP=0, sumLM=0, cLM=0;
-                            let asasTes = raw['asas_tes_auto'] ? parseFloat(raw['asas_tes_auto']) : 0;
-                            let asasNon = raw['asas_nontes'] ? parseFloat(raw['asas_nontes']) : 0;
-                            
-                            // Find Max and Min TP Score
-                            let maxScore = -1; let minScore = 101;
-                            let maxTPText = ""; let minTPText = "";
-
-                            // Extract TP scores using config structure
-                            config.forEach(lm => {
-                                if(lm.judul) {
-                                    lm.tujuan.forEach((tp, idx) => {
-                                        if(tp.b) {
-                                            const key = `tp_${lm.id}_${idx+1}`;
-                                            const val = raw[key] ? parseFloat(raw[key]) : 0;
-                                            
-                                            // Avg Calc
-                                            if(val > 0) { sumTP+=val; cTP++; }
-
-                                            // Max/Min Logic
-                                            if (val > 0) {
-                                                if (val > maxScore) { maxScore = val; maxTPText = this.generateContentString(tp); }
-                                                if (val < minScore) { minScore = val; minTPText = this.generateContentString(tp); }
-                                            }
-                                        }
-                                    });
-                                    // LM Calc
-                                    const t = raw[`lm_${lm.id}_tes`]; if(t){sumLM+=parseFloat(t);cLM++}
-                                    const nt = raw[`lm_${lm.id}_nontes`]; if(nt){sumLM+=parseFloat(nt);cLM++}
-                                }
-                            });
-
-                            const rTP = cTP > 0 ? Math.ceil(sumTP/cTP) : 0;
-                            const rLM = cLM > 0 ? Math.ceil(sumLM/cLM) : 0;
-                            let rASAS = 0, cA=0;
-                            if(asasTes>0){rASAS+=asasTes;cA++} if(asasNon>0){rASAS+=asasNon;cA++}
-                            rASAS = cA>0?Math.ceil(rASAS/cA):0;
-                            
-                            let sumF=0, cF=0;
-                            if(rTP>0){sumF+=rTP;cF++} if(rLM>0){sumF+=rLM;cF++} if(rASAS>0){sumF+=rASAS;cF++}
-                            const final = cF>0?Math.ceil(sumF/cF):0;
-                            
-                            // Handle logic: jika Max == Min (semua nilai sama), tampilkan di Max saja atau keduanya?
-                            // Simple logic: If Max exists, show. If Min exists and distinct or low, show.
-                            // Requirement: "menampilkan TP dengan nilai tertinggi... dan terendah"
-                            
-                            // Construct String Content (B+C+D)
-                            const desc1 = maxScore > -1 ? `Ananda menunjukkan kemahiran dalam ${maxTPText}` : "-";
-                            const desc2 = (minScore < 101 && minScore < maxScore) ? `Ananda perlu bimbingan dalam ${minTPText}` : (minScore < 101 && minScore < 75 ? `Ananda perlu bimbingan dalam ${minTPText}` : "-");
-
-                            report.push({ mapel: m, nilai: final, desc1: desc1, desc2: desc2 });
-                        } else {
-                            report.push({ mapel: m, nilai: 0, desc1: "-", desc2: "-" });
-                        }
-                    });
-                    
-                    return report;
-                },
-                
+                // --- GENERATE RAPOR CONTENT STRING ---
                 generateContentString(tp) {
-                     // Isi kalimat B C dan D
                      let s = (tp.c ? tp.c.trim() + " " : "") + (tp.b ? tp.b.trim() + " " : "") + (tp.d ? tp.d.trim() : "");
                      return s.trim();
                 },
                 
-                // ... (Existing Methods: getMapelColSpan, getMapelColumns, getPageTitle, getPageSubtitle, switchTabs...)
                 getMapelColSpan(mapel) { return this.getMapelColumns(mapel).length + 4; },
                 getMapelColumns(mapel) { const c=this.mapelConfigs[mapel]; if(!c)return[]; const cs=[]; c.forEach(lm=>{if(lm.judul) lm.tujuan.forEach((tp,i)=>{if(tp.b)cs.push({id:`tp_${lm.id}_${i+1}`,label:`TP${lm.id}.${i+1}`,title:`${tp.b}`})})}); return cs; },
                 getPageTitle() { if (this.currentTab === 'rekap_akhir') return 'REKAP AKHIR RAPOR'; if (this.currentTab === 'identitas') return 'IDENTITAS PELAJARAN'; if (this.currentTab === 'tp') return 'PENYUSUNAN TP (ABCD)'; if (this.currentTab === 'nilai') return 'INPUT NILAI RAPOR'; if (this.currentTab === 'rekap') return 'REKAPITULASI NILAI'; if (this.currentTab === 'ekskul') return 'INPUT EKSTRAKURIKULER'; return 'MONITORING INPUT'; },
