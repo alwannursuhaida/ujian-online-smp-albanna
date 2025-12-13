@@ -64,15 +64,17 @@
                 <button @click="switchToEkskul" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'ekskul' ? 'bg-orange-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']">
                     <i class="fas fa-futbol w-5"></i> Input Ekstrakurikuler
                 </button>
+                <button @click="switchToKewalasan" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'kewalasan' ? 'bg-teal-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']">
+                    <i class="fas fa-user-graduate w-5"></i> Kewalasan (Karakter)
+                </button>
+                <button @click="switchToKaih" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'kaih' ? 'bg-cyan-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']">
+                    <i class="fas fa-star w-5"></i> Input 7 KAIH
+                </button>
                 
                 <div class="border-t border-slate-700 my-2"></div>
                 <button @click="currentTab = 'monitoring'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'monitoring' ? 'bg-indigo-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-chart-line w-5"></i> Monitoring Input</button>
                 <button @click="switchToRekap" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'rekap' ? 'bg-emerald-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-trophy w-5"></i> Rekapitulasi Nilai</button>
-
-                <!-- MENU REKAP AKHIR RAPOR -->
-                <button @click="switchToRekapAkhir" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'rekap_akhir' ? 'bg-purple-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']">
-                    <i class="fas fa-file-invoice w-5"></i> Rekap Akhir Rapor
-                </button>
+                <button @click="switchToRekapAkhir" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'rekap_akhir' ? 'bg-purple-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-file-invoice w-5"></i> Rekap Akhir Rapor</button>
             </nav>
             <div class="p-4 border-t border-slate-800"><a href="index.html" class="w-full text-center text-xs text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 p-2 hover:bg-slate-800 rounded transition"><i class="fas fa-home"></i> KEMBALI KE MENU</a></div>
         </div>
@@ -81,7 +83,7 @@
         <div class="flex-1 flex flex-col h-full overflow-hidden bg-gray-50 relative">
             <div class="bg-white p-4 shadow-sm border-b flex justify-between items-center px-8 z-10">
                 <div><h2 class="text-2xl font-bold text-slate-800 uppercase">{{ getPageTitle() }}</h2><p class="text-xs text-gray-500">{{ getPageSubtitle() }}</p></div>
-                <button v-if="['identitas','tp','nilai','ekskul'].includes(currentTab)" @click="handleSaveButton" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-green-700 transition flex items-center gap-2"><i class="fas fa-save"></i> SIMPAN PROGRES</button>
+                <button v-if="['identitas','tp','nilai','ekskul','kewalasan','kaih'].includes(currentTab)" @click="handleSaveButton" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-green-700 transition flex items-center gap-2"><i class="fas fa-save"></i> SIMPAN PROGRES</button>
                 <button v-if="currentTab === 'rekap'" @click="exportRekapExcel" class="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-emerald-700 transition flex items-center gap-2"><i class="fas fa-file-excel"></i> UNDUH EXCEL</button>
             </div>
 
@@ -181,7 +183,7 @@
                     </div>
                 </transition>
 
-                <!-- 4. INPUT EKSTRAKURIKULER -->
+                <!-- 4. INPUT EKSTRAKURIKULER (SAME) -->
                 <transition name="fade">
                     <div v-if="currentTab === 'ekskul'">
                         <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -215,7 +217,138 @@
                     </div>
                 </transition>
 
-                <!-- 5. MONITORING -->
+                <!-- 5. MENU KEWALASAN (SAME) -->
+                <transition name="fade">
+                    <div v-if="currentTab === 'kewalasan'">
+                        <div class="bg-white p-6 rounded-xl shadow border mb-6">
+                            <h3 class="font-bold text-teal-800 text-lg mb-4 flex items-center gap-2">
+                                <i class="fas fa-list-ol"></i> Konfigurasi Aspek Nilai Karakter
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                                <div><label class="text-[10px] font-bold text-gray-500 uppercase">Aspek 1</label><input v-model="kewalasanConfig.a1" class="w-full p-2 border rounded text-sm bg-teal-50" placeholder="Religius"></div>
+                                <div><label class="text-[10px] font-bold text-gray-500 uppercase">Aspek 2</label><input v-model="kewalasanConfig.a2" class="w-full p-2 border rounded text-sm bg-teal-50" placeholder="Mandiri"></div>
+                                <div><label class="text-[10px] font-bold text-gray-500 uppercase">Aspek 3</label><input v-model="kewalasanConfig.a3" class="w-full p-2 border rounded text-sm bg-teal-50" placeholder="Gotong Royong"></div>
+                                <div><label class="text-[10px] font-bold text-gray-500 uppercase">Aspek 4</label><input v-model="kewalasanConfig.a4" class="w-full p-2 border rounded text-sm bg-teal-50" placeholder="Bernalar Kritis"></div>
+                            </div>
+                            <div class="flex items-end gap-4 border-t pt-4">
+                                <div class="w-full md:w-1/3"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pilih Kelas</label><select v-model="selectedClass" @change="fetchStudents" class="w-full p-2 border-2 border-teal-200 rounded font-bold text-teal-900"><option value="" disabled>-- Pilih Kelas --</option><option v-for="c in filteredClasses" :value="c">{{ c }}</option></select></div>
+                                <div class="text-right flex-1 text-xs text-gray-400 italic">Nilai > 90 = Sangat Baik, <= 90 = Baik.</div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow border overflow-hidden relative">
+                            <div v-if="!selectedClass" class="p-10 text-center text-gray-400"><i class="fas fa-chalkboard-teacher fa-2x mb-2"></i><br>Pilih kelas perwalian Anda.</div>
+                            <div v-else class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse excel-table text-sm">
+                                    <thead>
+                                        <tr class="bg-teal-800 text-white">
+                                            <th class="p-3 w-10 text-center" rowspan="2">No</th>
+                                            <th class="p-3 w-64" rowspan="2">Nama Siswa</th>
+                                            <th colspan="3" class="p-2 text-center text-xs bg-yellow-600 font-bold border-l">Kehadiran</th>
+                                            <th colspan="4" class="p-2 text-center text-xs bg-teal-700 font-bold border-l">Rapor Karakter (Skor 0-100)</th>
+                                            <th class="p-3 w-96 text-center bg-gray-800" rowspan="2">Catatan Wali Kelas (Otomatis)</th>
+                                        </tr>
+                                        <tr class="text-teal-100 bg-teal-900">
+                                            <th class="p-1 text-center w-10 bg-yellow-700 border-l text-white">S</th><th class="p-1 text-center w-10 bg-yellow-700 text-white">I</th><th class="p-1 text-center w-10 bg-yellow-700 text-white">A</th>
+                                            <th class="p-1 text-center w-24 border-l font-normal text-[10px]">{{ kewalasanConfig.a1 || 'Aspek 1' }}</th>
+                                            <th class="p-1 text-center w-24 font-normal text-[10px]">{{ kewalasanConfig.a2 || 'Aspek 2' }}</th>
+                                            <th class="p-1 text-center w-24 font-normal text-[10px]">{{ kewalasanConfig.a3 || 'Aspek 3' }}</th>
+                                            <th class="p-1 text-center w-24 font-normal text-[10px]">{{ kewalasanConfig.a4 || 'Aspek 4' }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white">
+                                        <tr v-for="(s, sIdx) in studentList" :key="s.id" class="hover:bg-teal-50">
+                                            <td class="text-center bg-gray-50 text-gray-500 select-none">{{ sIdx + 1 }}</td>
+                                            <td class="px-3 py-2 font-bold text-gray-700 whitespace-nowrap">{{ s.nama }}</td>
+                                            <td class="p-0 border-l bg-yellow-50"><input type="number" class="excel-input text-yellow-800" v-model="getKewalasan(s.id).s" @input="updateKewalasan(s.id, 's', $event.target.value)" placeholder="0"></td>
+                                            <td class="p-0 bg-yellow-50"><input type="number" class="excel-input text-yellow-800" v-model="getKewalasan(s.id).i" @input="updateKewalasan(s.id, 'i', $event.target.value)" placeholder="0"></td>
+                                            <td class="p-0 bg-yellow-50"><input type="number" class="excel-input text-yellow-800" v-model="getKewalasan(s.id).a" @input="updateKewalasan(s.id, 'a', $event.target.value)" placeholder="0"></td>
+                                            <td class="p-0 border-l"><input type="number" class="excel-input" v-model="getKewalasan(s.id).c1" @input="updateKewalasan(s.id, 'c1', $event.target.value)"></td>
+                                            <td class="p-0"><input type="number" class="excel-input" v-model="getKewalasan(s.id).c2" @input="updateKewalasan(s.id, 'c2', $event.target.value)"></td>
+                                            <td class="p-0"><input type="number" class="excel-input" v-model="getKewalasan(s.id).c3" @input="updateKewalasan(s.id, 'c3', $event.target.value)"></td>
+                                            <td class="p-0"><input type="number" class="excel-input" v-model="getKewalasan(s.id).c4" @input="updateKewalasan(s.id, 'c4', $event.target.value)"></td>
+                                            <td class="p-2 border-l bg-gray-50 text-xs italic text-gray-600"><textarea readonly rows="2" class="w-full bg-transparent border-none outline-none resize-none" :value="generateWaliNotes(s.id, s.nama)"></textarea></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+
+                <!-- 6. MENU 7 KAIH (FINAL DETAIL) -->
+                <transition name="fade">
+                    <div v-if="currentTab === 'kaih'">
+                        <div class="bg-white p-6 rounded-xl shadow border mb-6">
+                            <h3 class="font-bold text-cyan-800 text-lg mb-4 flex items-center gap-2">
+                                <i class="fas fa-star"></i> Input 7 Kebiasaan Anak Indonesia Hebat (KAIH)
+                            </h3>
+                            <div class="flex items-end gap-4 border-t pt-4">
+                                <div class="w-full md:w-1/3">
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pilih Kelas</label>
+                                    <select v-model="selectedClass" @change="fetchStudents" class="w-full p-2 border-2 border-cyan-200 rounded font-bold text-cyan-900"><option value="" disabled>-- Pilih Kelas --</option><option v-for="c in filteredClasses" :value="c">{{ c }}</option></select>
+                                </div>
+                                <div class="text-right flex-1 text-xs text-gray-400 italic">Isi nilai (0-100) per indikator. Deskripsi otomatis.</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow border overflow-hidden relative">
+                            <div v-if="!selectedClass" class="p-10 text-center text-gray-400"><i class="fas fa-chalkboard-teacher fa-2x mb-2"></i><br>Pilih kelas perwalian Anda.</div>
+                            <div v-else class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse excel-table text-sm">
+                                    <thead>
+                                        <tr class="bg-cyan-800 text-white">
+                                            <th class="p-3 w-10 text-center sticky-col bg-cyan-800" rowspan="2">No</th>
+                                            <th class="p-3 w-64 sticky-col-2 bg-cyan-800" rowspan="2">Nama Siswa</th>
+                                            
+                                            <!-- Looping Aspek Utama -->
+                                            <template v-for="aspect in kaihConfig" :key="aspect.id">
+                                                <th :colspan="aspect.count" class="p-1 text-center font-bold text-[10px] border-l border-cyan-600 bg-cyan-900">
+                                                    {{ aspect.name }}
+                                                </th>
+                                            </template>
+                                            
+                                            <th class="p-3 w-96 text-center bg-gray-800 sticky-right" rowspan="2">Deskripsi 7 KAIH (Otomatis)</th>
+                                        </tr>
+                                        <tr class="bg-cyan-700 text-cyan-50">
+                                            <!-- Sub-header Indikator Numbers -->
+                                            <template v-for="aspect in kaihConfig" :key="aspect.id + '_sub'">
+                                                <th v-for="n in aspect.count" :key="aspect.id + '_' + n" class="p-1 text-center w-8 text-[9px] border-l border-cyan-600">
+                                                    Ind.{{ n }}
+                                                </th>
+                                            </template>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white">
+                                        <tr v-for="(s, sIdx) in studentList" :key="s.id" class="hover:bg-cyan-50">
+                                            <td class="text-center bg-gray-50 text-gray-500 select-none sticky-col left-0">{{ sIdx + 1 }}</td>
+                                            <td class="px-3 py-2 font-bold text-gray-700 whitespace-nowrap sticky-col-2 bg-white left-10">{{ s.nama }}</td>
+                                            
+                                            <!-- Input Loops -->
+                                            <template v-for="aspect in kaihConfig" :key="aspect.id">
+                                                <td v-for="n in aspect.count" :key="aspect.id + '_' + n" class="p-0 border-l border-gray-100">
+                                                    <input 
+                                                        type="number" 
+                                                        class="excel-input" 
+                                                        v-model="getKaih(s.id)[`${aspect.id}_${n}`]"
+                                                        @input="updateKaih(s.id, `${aspect.id}_${n}`, $event.target.value)"
+                                                        @paste="handleGridPaste($event, sIdx, `${aspect.id}_${n}`, false, true)"
+                                                        placeholder="0"
+                                                    >
+                                                </td>
+                                            </template>
+
+                                            <td class="p-2 border-l bg-gray-50 text-xs italic text-gray-600 sticky-right">
+                                                <textarea readonly rows="3" class="w-full bg-transparent border-none outline-none resize-none" :value="generateKaihNotes(s.id, s.nama)"></textarea>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+
+                <!-- 7. MONITORING & 8. REKAP & 9. REKAP AKHIR (SAME) -->
                 <transition name="fade">
                     <div v-if="currentTab === 'monitoring'">
                         <div class="bg-white p-6 rounded-xl shadow border">
@@ -223,14 +356,13 @@
                             <div v-for="(classes, jenjang) in classesMap" :key="jenjang" class="mb-6">
                                 <h3 class="font-bold text-blue-900 border-b pb-2 mb-3">JENJANG KELAS {{ jenjang }}</h3>
                                 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                                    <div v-for="cls in classes" :key="cls" class="bg-gray-50 border p-3 rounded text-center"><div class="font-bold text-lg text-slate-700">{{ cls }}</div><div class="text-xs text-gray-500 mt-2 space-y-1"><div v-for="m in mapelList" :key="m" class="flex justify-between"><span>{{ m }}</span><i :class="hasData(cls, m) ? 'fas fa-check-circle text-green-500' : 'fas fa-circle text-gray-200'"></i></div></div></div>
+                                    <div v-for="cls in classes" :key="cls" class="bg-gray-50 border p-3 rounded text-center"><div class="font-bold text-lg text-slate-700">{{ cls }}</div><div class="text-xs text-gray-500 mt-2 space-y-1"><div v-for="m in mapelList" :key="m" class="flex justify-between"><span>{{ m }}</span><i :class="hasData(cls, m) ? 'fas fa-check-circle text-green-500' : 'fas fa-circle text-gray-200'"></i></div><div class="border-t border-gray-200 my-2 pt-1 font-bold text-[10px] text-slate-400">WALI KELAS</div><div class="flex justify-between"><span>EKSKUL</span><i :class="hasData(cls, 'EKSKUL') ? 'fas fa-check-circle text-green-500' : 'fas fa-circle text-gray-200'"></i></div><div class="flex justify-between"><span>KEWALASAN</span><i :class="hasData(cls, 'KEWALASAN') ? 'fas fa-check-circle text-green-500' : 'fas fa-circle text-gray-200'"></i></div><div class="flex justify-between"><span>7 KAIH</span><i :class="hasData(cls, 'KAIH') ? 'fas fa-check-circle text-green-500' : 'fas fa-circle text-gray-200'"></i></div></div></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </transition>
                 
-                <!-- 6. REKAPITULASI DETAIL (FULL MATRIX PER MAPEL) -->
                 <transition name="fade">
                     <div v-if="currentTab === 'rekap'">
                         <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -240,95 +372,13 @@
                             </div>
                             <div class="text-right text-xs text-gray-500 italic">Data diambil dari Input Nilai masing-masing Guru.</div>
                         </div>
-
-                        <div class="bg-white rounded-xl shadow border overflow-hidden relative">
-                             <div v-if="!selectedClass" class="p-10 text-center text-gray-400">Pilih kelas untuk melihat rekapitulasi.</div>
-                             <div v-else class="overflow-x-auto">
-                                <table class="w-full text-left border-collapse excel-table text-xs">
-                                    <thead class="bg-emerald-800 text-white">
-                                        <tr>
-                                            <th class="p-3 w-10 text-center sticky-col bg-emerald-800" rowspan="2">No</th>
-                                            <th class="p-3 w-48 sticky-col-2 bg-emerald-800" rowspan="2">Nama Siswa</th>
-                                            <template v-for="m in mapelList" :key="m"><th :colspan="getMapelColSpan(m)" class="p-2 text-center border-l-4 border-emerald-400 bg-emerald-900">{{ m }}</th></template>
-                                            <th class="p-3 text-center bg-emerald-950 sticky-right w-16" rowspan="2">TOTAL SKOR</th>
-                                            <th class="p-3 text-center bg-emerald-950 sticky-right w-16" rowspan="2">RATA-RATA</th>
-                                            <th class="p-3 text-center bg-yellow-600 text-black sticky-right w-10 font-extrabold" rowspan="2">RANK</th>
-                                        </tr>
-                                        <tr class="bg-emerald-700 text-emerald-50">
-                                            <template v-for="m in mapelList" :key="m + '_sub'">
-                                                <template v-for="col in getMapelColumns(m)" :key="col.id"><th class="p-1 text-center w-8 border-l border-emerald-600" :title="col.title">{{ col.label }}</th></template>
-                                                <th class="p-1 text-center w-10 bg-emerald-600 font-bold border-l">R.TP</th><th class="p-1 text-center w-10 bg-emerald-600 font-bold">R.LM</th><th class="p-1 text-center w-10 bg-emerald-600 font-bold">R.ASAS</th><th class="p-1 text-center w-12 bg-yellow-400 text-black font-extrabold border-l-2">AKHIR</th>
-                                            </template>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white">
-                                        <tr v-for="(row, idx) in rekapData" :key="row.id" class="hover:bg-emerald-50">
-                                            <td class="text-center font-bold sticky-col bg-white">{{ idx + 1 }}</td>
-                                            <td class="px-3 py-2 font-bold text-gray-700 whitespace-nowrap sticky-col-2 bg-white left-10">{{ row.nama }}</td>
-                                            <template v-for="m in mapelList" :key="m">
-                                                <template v-for="col in getMapelColumns(m)" :key="col.id"><td class="text-center border-l text-gray-500">{{ row.grades[m]?.details?.[col.id] || '-' }}</td></template>
-                                                <td class="text-center font-bold text-emerald-700 bg-emerald-50 border-l">{{ row.grades[m]?.rTP || '-' }}</td>
-                                                <td class="text-center font-bold text-emerald-700 bg-emerald-50">{{ row.grades[m]?.rLM || '-' }}</td>
-                                                <td class="text-center font-bold text-emerald-700 bg-emerald-50">{{ row.grades[m]?.rASAS || '-' }}</td>
-                                                <td class="text-center font-extrabold text-blue-900 bg-blue-100 border-l-2 border-blue-200">{{ row.grades[m]?.final || '-' }}</td>
-                                            </template>
-                                            <td class="text-center font-extrabold text-white bg-emerald-900 sticky-right">{{ row.total }}</td>
-                                            <td class="text-center font-bold text-white bg-emerald-800 sticky-right">{{ row.average }}</td>
-                                            <td class="text-center font-extrabold text-black bg-yellow-400 sticky-right border-l-2 border-yellow-600">{{ row.rank }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                             </div>
-                        </div>
+                        <div class="bg-white rounded-xl shadow border overflow-hidden relative"><div v-if="!selectedClass" class="p-10 text-center text-gray-400">Pilih kelas untuk melihat rekapitulasi.</div><div v-else class="overflow-x-auto"><table class="w-full text-left border-collapse excel-table text-xs"><thead class="bg-emerald-800 text-white"><tr><th class="p-3 w-10 text-center sticky-col bg-emerald-800" rowspan="2">No</th><th class="p-3 w-48 sticky-col-2 bg-emerald-800" rowspan="2">Nama Siswa</th><template v-for="m in mapelList" :key="m"><th :colspan="getMapelColSpan(m)" class="p-2 text-center border-l-4 border-emerald-400 bg-emerald-900">{{ m }}</th></template><th class="p-3 text-center bg-emerald-950 sticky-right w-16" rowspan="2">TOTAL SKOR</th><th class="p-3 text-center bg-emerald-950 sticky-right w-16" rowspan="2">RATA-RATA</th><th class="p-3 text-center bg-yellow-600 text-black sticky-right w-10 font-extrabold" rowspan="2">RANK</th></tr><tr class="bg-emerald-700 text-emerald-50"><template v-for="m in mapelList" :key="m + '_sub'"><template v-for="col in getMapelColumns(m)" :key="col.id"><th class="p-1 text-center w-8 border-l border-emerald-600" :title="col.title">{{ col.label }}</th></template><th class="p-1 text-center w-10 bg-emerald-600 font-bold border-l">R.TP</th><th class="p-1 text-center w-10 bg-emerald-600 font-bold">R.LM</th><th class="p-1 text-center w-10 bg-emerald-600 font-bold">R.ASAS</th><th class="p-1 text-center w-12 bg-yellow-400 text-black font-extrabold border-l-2">AKHIR</th></template></tr></thead><tbody class="bg-white"><tr v-for="(row, idx) in rekapData" :key="row.id" class="hover:bg-emerald-50"><td class="text-center font-bold sticky-col bg-white">{{ idx + 1 }}</td><td class="px-3 py-2 font-bold text-gray-700 whitespace-nowrap sticky-col-2 bg-white left-10">{{ row.nama }}</td><template v-for="m in mapelList" :key="m"><template v-for="col in getMapelColumns(m)" :key="col.id"><td class="text-center border-l text-gray-500">{{ row.grades[m]?.details?.[col.id] || '-' }}</td></template><td class="text-center font-bold text-emerald-700 bg-emerald-50 border-l">{{ row.grades[m]?.rTP || '-' }}</td><td class="text-center font-bold text-emerald-700 bg-emerald-50">{{ row.grades[m]?.rLM || '-' }}</td><td class="text-center font-bold text-emerald-700 bg-emerald-50">{{ row.grades[m]?.rASAS || '-' }}</td><td class="text-center font-extrabold text-blue-900 bg-blue-100 border-l-2 border-blue-200">{{ row.grades[m]?.final || '-' }}</td></template><td class="text-center font-extrabold text-white bg-emerald-900 sticky-right">{{ row.total }}</td><td class="text-center font-bold text-white bg-emerald-800 sticky-right">{{ row.average }}</td><td class="text-center font-extrabold text-black bg-yellow-400 sticky-right border-l-2 border-yellow-600">{{ row.rank }}</td></tr></tbody></table></div></div>
                     </div>
                 </transition>
 
-                <!-- 7. REKAP AKHIR RAPOR (TABEL VIEW - UPDATED) -->
                 <transition name="fade">
                     <div v-if="currentTab === 'rekap_akhir'">
-                        <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-                            <div class="w-full md:w-1/3 flex gap-2">
-                                <div class="w-1/2"><label class="block text-xs font-bold text-purple-500 uppercase mb-1">Jenjang</label><select v-model="rekapJenjang" class="w-full p-2 border rounded font-bold text-purple-900"><option value="7">Kelas 7</option><option value="8">Kelas 8</option><option value="9">Kelas 9</option></select></div>
-                                <div class="w-1/2"><label class="block text-xs font-bold text-purple-500 uppercase mb-1">Kelas</label><select v-model="selectedClass" @change="fetchStudentsForRekap" class="w-full p-2 border-2 border-purple-200 rounded font-bold text-purple-900"><option value="" disabled>-- Pilih --</option><option v-for="c in classesMap[rekapJenjang]" :value="c">{{ c }}</option></select></div>
-                            </div>
-                            <div class="text-right text-xs text-gray-500">Preview Rapor Lengkap</div>
-                        </div>
-
-                        <div class="bg-white rounded-xl shadow border overflow-hidden relative">
-                             <div v-if="!selectedClass" class="p-10 text-center text-gray-400">Pilih kelas untuk melihat Rapor Akhir.</div>
-                             <div v-else class="overflow-x-auto">
-                                <table class="w-full text-left border-collapse excel-table text-xs">
-                                    <thead class="bg-purple-800 text-white">
-                                        <tr>
-                                            <th class="p-3 w-10 text-center sticky-col bg-purple-800" rowspan="2">No</th>
-                                            <th class="p-3 w-48 sticky-col-2 bg-purple-800" rowspan="2">Nama Siswa</th>
-                                            <template v-for="m in mapelList" :key="m">
-                                                <th colspan="3" class="p-2 text-center border-l-4 border-purple-500 bg-purple-900">{{ m }}</th>
-                                            </template>
-                                        </tr>
-                                        <tr class="bg-purple-700 text-purple-100">
-                                            <template v-for="m in mapelList" :key="m + '_desc'">
-                                                <th class="p-2 text-center w-12 font-bold bg-purple-600 border-l">NILAI</th>
-                                                <th class="p-2 text-center min-w-[350px]">Deskripsi 1 (Kuat)</th>
-                                                <th class="p-2 text-center min-w-[350px]">Deskripsi 2 (Lemah)</th>
-                                            </template>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white">
-                                        <!-- Computed rekapAkhirTableData will handle logic -->
-                                        <tr v-for="(row, idx) in rekapAkhirTableData" :key="row.id" class="hover:bg-purple-50">
-                                            <td class="text-center font-bold sticky-col bg-white">{{ idx + 1 }}</td>
-                                            <td class="px-3 py-2 font-bold text-gray-700 whitespace-nowrap sticky-col-2 bg-white left-10">{{ row.nama }}</td>
-                                            <template v-for="m in mapelList" :key="m">
-                                                <td class="text-center font-extrabold text-lg text-purple-800 bg-purple-50 border-l">{{ row.data[m].nilai || '-' }}</td>
-                                                <td class="p-2 border text-[11px] text-green-700 align-top whitespace-normal leading-relaxed">{{ row.data[m].desc1 }}</td>
-                                                <td class="p-2 border text-[11px] text-orange-700 align-top whitespace-normal leading-relaxed">{{ row.data[m].desc2 }}</td>
-                                            </template>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                             </div>
-                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4"><div class="w-full md:w-1/3 flex gap-2"><div class="w-1/2"><label class="block text-xs font-bold text-purple-500 uppercase mb-1">Jenjang</label><select v-model="rekapJenjang" class="w-full p-2 border rounded font-bold text-purple-900"><option value="7">Kelas 7</option><option value="8">Kelas 8</option><option value="9">Kelas 9</option></select></div><div class="w-1/2"><label class="block text-xs font-bold text-purple-500 uppercase mb-1">Kelas</label><select v-model="selectedClass" @change="fetchStudentsForRekap" class="w-full p-2 border-2 border-purple-200 rounded font-bold text-purple-900"><option value="" disabled>-- Pilih --</option><option v-for="c in classesMap[rekapJenjang]" :value="c">{{ c }}</option></select></div></div><div class="text-right text-xs text-gray-500">Preview Rapor Lengkap</div></div><div class="bg-white rounded-xl shadow border overflow-hidden relative"><div v-if="!selectedClass" class="p-10 text-center text-gray-400">Pilih kelas untuk melihat Rapor Akhir.</div><div v-else class="overflow-x-auto"><table class="w-full text-left border-collapse excel-table text-xs"><thead class="bg-purple-800 text-white"><tr><th class="p-3 w-10 text-center sticky-col bg-purple-800" rowspan="2">No</th><th class="p-3 w-48 sticky-col-2 bg-purple-800" rowspan="2">Nama Siswa</th><template v-for="m in mapelList" :key="m"><th colspan="3" class="p-2 text-center border-l-4 border-purple-500 bg-purple-900">{{ m }}</th></template></tr><tr class="bg-purple-700 text-purple-100"><template v-for="m in mapelList" :key="m + '_desc'"><th class="p-2 text-center w-12 font-bold bg-purple-600 border-l">NILAI</th><th class="p-2 text-center min-w-[350px]">Deskripsi 1 (Kuat)</th><th class="p-2 text-center min-w-[350px]">Deskripsi 2 (Lemah)</th></template></tr></thead><tbody class="bg-white"><tr v-for="(row, idx) in rekapAkhirTableData" :key="row.id" class="hover:bg-purple-50"><td class="text-center font-bold sticky-col bg-white">{{ idx + 1 }}</td><td class="px-3 py-2 font-bold text-gray-700 whitespace-nowrap sticky-col-2 bg-white left-10">{{ row.nama }}</td><template v-for="m in mapelList" :key="m"><td class="text-center font-extrabold text-lg text-purple-800 bg-purple-50 border-l">{{ row.data[m].nilai || '-' }}</td><td class="p-2 border text-[11px] text-green-700 align-top whitespace-normal leading-relaxed">{{ row.data[m].desc1 }}</td><td class="p-2 border text-[11px] text-orange-700 align-top whitespace-normal leading-relaxed">{{ row.data[m].desc2 }}</td></template></tr></tbody></table></div></div>
                     </div>
                 </transition>
 
@@ -361,8 +411,22 @@
                     
                     allGrades: {}, savedProgress: {}, bankSoalCache: {},
                     ekskulData: {}, mapelConfigs: {}, 
+                    kewalasanConfig: { a1: 'Religius', a2: 'Mandiri', a3: 'Gotong Royong', a4: 'Bernalar Kritis' },
+                    kewalasanData: {},
+                    kaihData: {}, 
+                    
+                    // CONFIG 7 KAIH (Columns)
+                    kaihConfig: [
+                        { id: 'a1', name: 'Bangun Pagi', count: 4 },
+                        { id: 'a2', name: 'Beribadah', count: 9 },
+                        { id: 'a3', name: 'Makan Sehat', count: 3 },
+                        { id: 'a4', name: 'Berolahraga', count: 1 },
+                        { id: 'a5', name: 'Gemar Belajar', count: 4 },
+                        { id: 'a6', name: 'Bermasyarakat', count: 8 },
+                        { id: 'a7', name: 'Tidur Cepat', count: 3 }
+                    ],
+                    
                     rekapJenjang: '7',
-                    viewRaporModal: null,
 
                     mapelList: ['AGAMA ISLAM', 'BAHASA ARAB', 'BAHASA BALI', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 'INFORMATIKA', 'IPA', 'IPS', 'KKA', 'MATEMATIKA', 'OLAHRAGA', 'PKN', 'SENI BUDAYA'],
                     classesMap: { '7': ['7A','7B','7C','7D','7E','7F'], '8': ['8A','8B','8C','8D','8E','8F'], '9': ['9A','9B','9C','9D','9E'] }
@@ -409,41 +473,31 @@
 
                                 grades[m] = { rTP, rLM, rASAS, final, details };
                                 if(final > 0) { total += final; countMapel++; }
-                            } else {
-                                grades[m] = { rTP:'-', rLM:'-', rASAS:'-', final:'-', details: {} };
-                            }
+                            } else { grades[m] = { rTP:'-', rLM:'-', rASAS:'-', final:'-', details: {} }; }
                         });
                         const average = countMapel > 0 ? Math.round(total / countMapel) : 0;
                         return { id: s.id, nama: s.nama, grades, total, average };
                     });
-                    
                     const sortedByTotal = [...rawList].sort((a, b) => b.total - a.total);
                     const rankMap = {};
                     sortedByTotal.forEach((item, index) => { rankMap[item.id] = index + 1; });
                     return rawList.map(item => ({ ...item, rank: rankMap[item.id] })).sort((a, b) => a.nama.localeCompare(b.nama));
                 },
 
-                // NEW: REKAP AKHIR TABLE DATA
+                // REKAP AKHIR TABLE DATA
                 rekapAkhirTableData() {
                      if (!this.selectedClass || this.currentTab !== 'rekap_akhir') return [];
-                     
                      return this.studentList.map(s => {
                          const dataPerMapel = {};
-                         
                          this.mapelList.forEach(m => {
                              const raw = this.allGrades[this.selectedClass]?.[m]?.[s.id];
                              const config = this.mapelConfigs[m];
-                             
                              if (raw && config) {
-                                 // Recalculate Final Score
                                  let sumTP=0, cTP=0, sumLM=0, cLM=0, sumASAS=0, cASAS=0;
                                  let asasTes = raw['asas_tes_auto'] ? parseFloat(raw['asas_tes_auto']) : 0;
                                  let asasNon = raw['asas_nontes'] ? parseFloat(raw['asas_nontes']) : 0;
-                                 
-                                 // Max Min Logic
                                  let maxScore = -1, minScore = 101;
                                  let maxTPText = "", minTPText = "";
-
                                  config.forEach(lm => {
                                      if(lm.judul) {
                                          lm.tujuan.forEach((tp, idx) => {
@@ -457,27 +511,19 @@
                                          const nt = raw[`lm_${lm.id}_nontes`]; if(nt){sumLM+=parseFloat(nt);cLM++}
                                      }
                                  });
-
                                  const rTP = cTP > 0 ? Math.ceil(sumTP/cTP) : 0;
                                  const rLM = cLM > 0 ? Math.ceil(sumLM/cLM) : 0;
                                  let rASAS = 0, cA=0;
                                  if(asasTes>0){rASAS+=asasTes;cA++} if(asasNon>0){rASAS+=asasNon;cA++}
                                  rASAS = cA>0?Math.ceil(rASAS/cA):0;
-                                 
                                  let sumF=0, cF=0;
                                  if(rTP>0){sumF+=rTP;cF++} if(rLM>0){sumF+=rLM;cF++} if(rASAS>0){sumF+=rASAS;cF++}
                                  const final = cF>0?Math.ceil(sumF/cF):0;
-                                 
-                                 // Deskripsi
                                  const desc1 = maxScore > -1 ? `Ananda menunjukkan kemahiran dalam ${maxTPText}` : "-";
                                  const desc2 = (minScore < 101 && minScore < maxScore) ? `Ananda perlu bimbingan dalam ${minTPText}` : (minScore < 101 && minScore < 75 ? `Ananda perlu bimbingan dalam ${minTPText}` : "-");
-
                                  dataPerMapel[m] = { nilai: final, desc1, desc2 };
-                             } else {
-                                 dataPerMapel[m] = { nilai: 0, desc1: "-", desc2: "-" };
-                             }
+                             } else { dataPerMapel[m] = { nilai: 0, desc1: "-", desc2: "-" }; }
                          });
-
                          return { id: s.id, nama: s.nama, data: dataPerMapel };
                      });
                 }
@@ -487,29 +533,109 @@
                 const savedGrades = localStorage.getItem('cbt_all_grades'); if (savedGrades) this.allGrades = JSON.parse(savedGrades);
                 const savedProg = localStorage.getItem('cbt_saved_progress'); if (savedProg) this.savedProgress = JSON.parse(savedProg);
                 const savedEkskul = localStorage.getItem('cbt_ekskul_data'); if (savedEkskul) this.ekskulData = JSON.parse(savedEkskul);
+                const savedWalas = localStorage.getItem('cbt_kewalasan_data'); if (savedWalas) { const d = JSON.parse(savedWalas); this.kewalasanConfig = d.config || this.kewalasanConfig; this.kewalasanData = d.data || {}; }
+                const savedKaih = localStorage.getItem('cbt_kaih_data'); if (savedKaih) this.kaihData = JSON.parse(savedKaih);
                 const savedMapelConfigs = localStorage.getItem('cbt_mapel_configs'); if (savedMapelConfigs) this.mapelConfigs = JSON.parse(savedMapelConfigs);
                 this.loadBankSoal();
             },
             methods: {
-                // --- GENERATE RAPOR CONTENT STRING ---
-                generateContentString(tp) {
-                     let s = (tp.c ? tp.c.trim() + " " : "") + (tp.b ? tp.b.trim() + " " : "") + (tp.d ? tp.d.trim() : "");
-                     return s.trim();
-                },
-                
+                generateContentString(tp) { let s = (tp.c ? tp.c.trim() + " " : "") + (tp.b ? tp.b.trim() + " " : "") + (tp.d ? tp.d.trim() : ""); return s.trim(); },
                 getMapelColSpan(mapel) { return this.getMapelColumns(mapel).length + 4; },
                 getMapelColumns(mapel) { const c=this.mapelConfigs[mapel]; if(!c)return[]; const cs=[]; c.forEach(lm=>{if(lm.judul) lm.tujuan.forEach((tp,i)=>{if(tp.b)cs.push({id:`tp_${lm.id}_${i+1}`,label:`TP${lm.id}.${i+1}`,title:`${tp.b}`})})}); return cs; },
-                getPageTitle() { if (this.currentTab === 'rekap_akhir') return 'REKAP AKHIR RAPOR'; if (this.currentTab === 'identitas') return 'IDENTITAS PELAJARAN'; if (this.currentTab === 'tp') return 'PENYUSUNAN TP (ABCD)'; if (this.currentTab === 'nilai') return 'INPUT NILAI RAPOR'; if (this.currentTab === 'rekap') return 'REKAPITULASI NILAI'; if (this.currentTab === 'ekskul') return 'INPUT EKSTRAKURIKULER'; return 'MONITORING INPUT'; },
-                getPageSubtitle() { if (this.currentTab === 'rekap_akhir') return 'Preview Nilai dan Deskripsi Rapor per Siswa.'; return this.currentTab === 'ekskul' ? 'Menu khusus Wali Kelas. Isi kegiatan siswa.' : 'Lengkapi data secara berurutan.'; },
+                getPageTitle() { 
+                    if (this.currentTab === 'rekap_akhir') return 'REKAP AKHIR RAPOR'; 
+                    if (this.currentTab === 'identitas') return 'IDENTITAS PELAJARAN'; 
+                    if (this.currentTab === 'tp') return 'PENYUSUNAN TP (ABCD)'; 
+                    if (this.currentTab === 'nilai') return 'INPUT NILAI RAPOR'; 
+                    if (this.currentTab === 'rekap') return 'REKAPITULASI NILAI'; 
+                    if (this.currentTab === 'ekskul') return 'INPUT EKSTRAKURIKULER'; 
+                    if (this.currentTab === 'kewalasan') return 'KEWALASAN (KARAKTER)';
+                    if (this.currentTab === 'kaih') return '7 KAIH';
+                    return 'MONITORING INPUT'; 
+                },
+                getPageSubtitle() { 
+                    if (this.currentTab === 'kaih') return 'Input nilai 7 Kebiasaan Anak Indonesia Hebat.';
+                    if (this.currentTab === 'kewalasan') return 'Input Absensi dan Perkembangan Karakter Siswa.';
+                    if (this.currentTab === 'rekap_akhir') return 'Preview Nilai dan Deskripsi Rapor per Siswa.'; return this.currentTab === 'ekskul' ? 'Menu khusus Wali Kelas. Isi kegiatan siswa.' : 'Lengkapi data secara berurutan.'; 
+                },
+
                 switchToTP() { if (!this.isIdentityValid) return Swal.fire('Lengkapi Identitas', '', 'warning'); this.currentTab = 'tp'; },
                 switchToNilai() { if (!this.isIdentityValid || !this.isTpValid) return Swal.fire('Data Belum Lengkap', 'Isi Identitas dan TP dulu.', 'warning'); this.currentTab = 'nilai'; this.selectedClass = ''; },
                 switchToEkskul() { if (!this.identitas.jenjang) return Swal.fire('Pilih Jenjang', '', 'warning'); this.currentTab = 'ekskul'; this.selectedClass = ''; },
+                switchToKewalasan() { if (!this.identitas.jenjang) return Swal.fire('Pilih Jenjang', '', 'warning'); this.currentTab = 'kewalasan'; this.selectedClass = ''; },
+                switchToKaih() { if (!this.identitas.jenjang) return Swal.fire('Pilih Jenjang', '', 'warning'); this.currentTab = 'kaih'; this.selectedClass = ''; },
                 switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                 switchToRekapAkhir() { this.currentTab = 'rekap_akhir'; this.selectedClass = ''; },
+
                 getGrade(sid, key) { const c = this.selectedClass; const m = this.identitas.mapel; if (this.allGrades[c] && this.allGrades[c][m] && this.allGrades[c][m][sid]) return this.allGrades[c][m][sid][key] || ''; return ''; },
                 updateGrade(sid, key, val) { const c = this.selectedClass; const m = this.identitas.mapel; if (!this.allGrades[c]) this.allGrades[c] = {}; if (!this.allGrades[c][m]) this.allGrades[c][m] = {}; if (!this.allGrades[c][m][sid]) this.allGrades[c][m][sid] = {}; this.allGrades[c][m][sid][key] = val; },
                 getEkskulData(sid) { const c = this.selectedClass; if (!this.ekskulData[c]) this.ekskulData[c] = {}; if (!this.ekskulData[c][sid]) this.ekskulData[c][sid] = { nama_ekskul: '', deskripsi: '' }; return this.ekskulData[c][sid]; },
                 updateEkskul(sid, f, v) { const c = this.selectedClass; if (!this.ekskulData[c]) this.ekskulData[c] = {}; if (!this.ekskulData[c][sid]) this.ekskulData[c][sid] = { nama_ekskul: '', deskripsi: '' }; this.ekskulData[c][sid][f] = v; },
+                getKewalasan(sid) { const c = this.selectedClass; if (!this.kewalasanData[c]) this.kewalasanData[c] = {}; if (!this.kewalasanData[c][sid]) this.kewalasanData[c][sid] = { s: '', i: '', a: '', c1: '', c2: '', c3: '', c4: '' }; return this.kewalasanData[c][sid]; },
+                updateKewalasan(sid, f, v) { const c = this.selectedClass; if (!this.kewalasanData[c]) this.kewalasanData[c] = {}; if (!this.kewalasanData[c][sid]) this.kewalasanData[c][sid] = {}; this.kewalasanData[c][sid][f] = v; },
+                
+                // KAIH LOGIC
+                getKaih(sid) { 
+                    const c = this.selectedClass; 
+                    if (!this.kaihData[c]) this.kaihData[c] = {}; 
+                    if (!this.kaihData[c][sid]) this.kaihData[c][sid] = {};
+                    return this.kaihData[c][sid]; 
+                },
+                updateKaih(sid, key, val) { 
+                    const c = this.selectedClass; 
+                    if (!this.kaihData[c]) this.kaihData[c] = {}; 
+                    if (!this.kaihData[c][sid]) this.kaihData[c][sid] = {}; 
+                    this.kaihData[c][sid][key] = val; 
+                },
+                
+                generateKaihNotes(sid, name) {
+                    const d = this.getKaih(sid);
+                    
+                    // Calc Avg per Aspect First
+                    const aspectScores = [];
+                    this.kaihConfig.forEach(aspect => {
+                        let sum = 0, count = 0;
+                        for(let i=1; i<=aspect.count; i++) {
+                            const val = parseFloat(d[`${aspect.id}_${i}`] || 0);
+                            if(val > 0) { sum+=val; count++; }
+                        }
+                        const avg = count > 0 ? sum/count : 0;
+                        if(avg > 0) aspectScores.push({ name: aspect.name, val: avg });
+                    });
+
+                    if (aspectScores.length === 0) return "-";
+                    
+                    const totalSum = aspectScores.reduce((a,b) => a+b.val, 0);
+                    const totalAvg = totalSum / aspectScores.length;
+
+                    const veryGood = aspectScores.filter(a => a.val > totalAvg).map(a => a.name);
+                    const good = aspectScores.filter(a => a.val <= totalAvg).map(a => a.name);
+
+                    let desc = `Ananda ${name}`;
+                    if (veryGood.length > 0) {
+                        desc += ` sangat baik dalam ${veryGood.join(', ')}`;
+                        if (good.length > 0) desc += `, dan baik dalam ${good.join(', ')}.`;
+                        else desc += ".";
+                    } else if (good.length > 0) {
+                        desc += ` baik dalam ${good.join(', ')}.`;
+                    }
+                    return desc;
+                },
+
+                generateWaliNotes(sid, name) {
+                    const d = this.getKewalasan(sid);
+                    const scores = [
+                        { key: 'a1', val: parseInt(d.c1 || 0), name: this.kewalasanConfig.a1 || 'Aspek 1' },
+                        { key: 'a2', val: parseInt(d.c2 || 0), name: this.kewalasanConfig.a2 || 'Aspek 2' },
+                        { key: 'a3', val: parseInt(d.c3 || 0), name: this.kewalasanConfig.a3 || 'Aspek 3' },
+                        { key: 'a4', val: parseInt(d.c4 || 0), name: this.kewalasanConfig.a4 || 'Aspek 4' }
+                    ];
+                    const best = scores.reduce((prev, current) => (prev.val > current.val) ? prev : current);
+                    if (best.val === 0) return "-";
+                    const predikat = best.val > 90 ? "Sangat Baik" : "Baik";
+                    return `Ananda ${name} ${predikat} dalam ${best.name}.`;
+                },
+
                 async loadBankSoal() { const q = query(collection(db, "bank_soal")); const snap = await getDocs(q); snap.forEach(doc => { this.bankSoalCache[doc.id] = doc.data(); }); },
                 getRealScoreFromDoc(docData) { const exam = this.bankSoalCache[docData.examId]; if (!exam) return 0; let score = 0; exam.soal.forEach((q, idx) => { if (['PG', 'BS'].includes(q.type) && docData.answers[idx] === q.answer) score += parseInt(q.poin); if (['URAIAN', 'ESAI', 'ISIAN'].includes(q.type) && docData.manualScores && docData.manualScores[idx] !== undefined) { score += parseInt(docData.manualScores[idx]); } }); return score; },
                 async fetchStudentsAndScores() {
@@ -531,22 +657,32 @@
                             if (!this.allGrades[this.selectedClass][this.identitas.mapel][s.id]) this.allGrades[this.selectedClass][this.identitas.mapel][s.id] = {};
                             if (!this.ekskulData[this.selectedClass]) this.ekskulData[this.selectedClass] = {};
                             if (!this.ekskulData[this.selectedClass][s.id]) this.ekskulData[this.selectedClass][s.id] = { nama_ekskul: '', deskripsi: '' };
+                            if (!this.kewalasanData[this.selectedClass]) this.kewalasanData[this.selectedClass] = {};
+                            if (!this.kewalasanData[this.selectedClass][s.id]) this.kewalasanData[this.selectedClass][s.id] = { s:'', i:'', a:'', c1:'', c2:'', c3:'', c4:'' };
+                            
+                            // Init Kaih
+                            if (!this.kaihData[this.selectedClass]) this.kaihData[this.selectedClass] = {};
+                            if (!this.kaihData[this.selectedClass][s.id]) this.kaihData[this.selectedClass][s.id] = {};
                         });
                     } catch(e) { console.error(e); } finally { this.isLoadingStudents = false; }
                 },
                 async fetchStudentsForRekap() { await this.fetchStudentsAndScores(); },
                 async fetchStudents() { await this.fetchStudentsAndScores(); },
-                openRaporModal(student) { this.viewRaporModal = student; },
+
+                // --- CALCS ---
                 calculateRataTP(sid) { let sum=0, c=0; this.activeTPs.forEach(tp => { const v=this.getGrade(sid, tp.uniqueId); if(v!=='' && parseFloat(v)>0){sum+=parseFloat(v); c++;} }); return c>0 ? Math.ceil(sum/c) : 0; },
                 calculateRataLM(sid) { let sum=0, c=0; this.activeLMs.forEach(lm => { const t=this.getGrade(sid, `lm_${lm.id}_tes`); const nt=this.getGrade(sid, `lm_${lm.id}_nontes`); if(t!=='' && parseFloat(t)>0){sum+=parseFloat(t); c++;} if(nt!=='' && parseFloat(nt)>0){sum+=parseFloat(nt); c++;} }); return c>0 ? Math.ceil(sum/c) : 0; },
                 calculateRataASAS(sid, asasTesScore) { let sum=0, c=0; if(asasTesScore > 0) { sum += parseFloat(asasTesScore); count++; } const nonTesRaw = this.getGrade(sid, 'asas_nontes'); if (nonTesRaw !== '' && parseFloat(nonTesRaw) > 0) { sum += parseFloat(nonTesRaw); count++; } return count > 0 ? Math.ceil(sum / count) : 0; },
                 calculateNilaiRapor(sid, asasTesScore) { const rTP = this.calculateRataTP(sid); const rLM = this.calculateRataLM(sid); const rASAS = this.calculateRataASAS(sid, asasTesScore); let sum = 0; let count = 0; if (rTP > 0) { sum += rTP; count++; } if (rLM > 0) { sum += rLM; count++; } if (rASAS > 0) { sum += rASAS; count++; } return count > 0 ? Math.ceil(sum / count) : 0; },
+
                 isValidScore(val) { if(val==='') return true; const n=Number(val); return !isNaN(n) && n>=0 && n<=100; },
                 getValidationClass(val) { return this.isValidScore(val) ? '' : 'input-error'; },
                 generateSentence(tp) { let s = (tp.c ? tp.c.trim() + ", " : "") + tp.a + (tp.b ? " dapat " + tp.b.trim() : "") + (tp.d ? " " + tp.d.trim() : ""); return s.replace(/\s+/g, ' ').trim() + "."; },
                 toggleSection(i) { this.lingkupMateri[i].isOpen = !this.lingkupMateri[i].isOpen; },
                 handleSaveButton() {
                     if (this.currentTab === 'ekskul') { localStorage.setItem('cbt_ekskul_data', JSON.stringify(this.ekskulData)); Swal.fire({ icon: 'success', title: 'Data Ekskul Tersimpan!', timer: 1000, showConfirmButton: false }); }
+                    else if (this.currentTab === 'kewalasan') { const dataWalas = { config: this.kewalasanConfig, data: this.kewalasanData }; localStorage.setItem('cbt_kewalasan_data', JSON.stringify(dataWalas)); Swal.fire({ icon: 'success', title: 'Data Kewalasan Tersimpan!', timer: 1000, showConfirmButton: false }); }
+                    else if (this.currentTab === 'kaih') { localStorage.setItem('cbt_kaih_data', JSON.stringify(this.kaihData)); Swal.fire({ icon: 'success', title: 'Data 7 KAIH Tersimpan!', timer: 1000, showConfirmButton: false }); }
                     else if(this.currentTab === 'nilai') {
                         if(this.studentList.length > 0) { this.studentList.forEach(s => { this.updateGrade(s.id, 'asas_tes_auto', s.asasTesScore); }); }
                         this.mapelConfigs[this.identitas.mapel] = JSON.parse(JSON.stringify(this.lingkupMateri)); 
@@ -557,9 +693,13 @@
                     } else { const dataTP = { identitas: this.identitas, lingkupMateri: this.lingkupMateri }; localStorage.setItem('cbt_input_tp', JSON.stringify(dataTP)); Swal.fire({ icon: 'success', title: 'Tersimpan!', timer: 1000, showConfirmButton: false }); }
                 },
                 hasData(cls, mapel) { return this.savedProgress[`${cls}_${mapel}`] === true; },
-                handleGridPaste(e, startRowIdx, targetKey, isEkskul=false) {
+                handleGridPaste(e, startRowIdx, targetKey, isEkskul=false, isKaih=false) {
                     e.preventDefault(); const text = (e.clipboardData || window.clipboardData).getData('text'); const rows = text.split(/\r\n|\n|\r/).filter(r => r.trim() !== '');
-                    rows.forEach((val, offset) => { const targetRow = startRowIdx + offset; if (targetRow < this.studentList.length) { const sid = this.studentList[targetRow].id; if(isEkskul) this.updateEkskul(sid, targetKey, val.trim()); else this.updateGrade(sid, targetKey, val.trim()); } });
+                    rows.forEach((val, offset) => { const targetRow = startRowIdx + offset; if (targetRow < this.studentList.length) { const sid = this.studentList[targetRow].id; 
+                        if(isEkskul) this.updateEkskul(sid, targetKey, val.trim()); 
+                        else if(isKaih) this.updateKaih(sid, targetKey, val.trim());
+                        else this.updateGrade(sid, targetKey, val.trim()); 
+                    } });
                 },
                 exportRekapExcel() {
                     if(this.rekapData.length === 0) return Swal.fire('Data Kosong', 'Pilih kelas terlebih dahulu.', 'warning');
