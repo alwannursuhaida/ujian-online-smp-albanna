@@ -34,6 +34,10 @@
         .header-avg { background-color: #ecfdf5; border-left: 2px solid #059669; }
         .header-rapor { background-color: #eff6ff; border-left: 2px solid #2563eb; color: #1e40af; }
         
+        .header-ekskul-1 { background-color: #fff7ed; border-left: 2px solid #ea580c; color: #9a3412; }
+        .header-ekskul-2 { background-color: #f0fdf4; border-left: 2px solid #16a34a; color: #166534; }
+        .header-ekskul-3 { background-color: #eff6ff; border-left: 2px solid #2563eb; color: #1e40af; }
+
         .input-readonly { background-color: #f3f4f6; color: #4b5563; cursor: not-allowed; }
     </style>
 </head>
@@ -107,10 +111,10 @@
                                 <div v-for="(tp, tpIndex) in lm.tujuan" :key="tpIndex" class="relative group border-b border-slate-100 pb-4">
                                     <h4 class="font-bold text-xs text-slate-500 mb-2">TP {{ lmIndex + 1 }}.{{ tpIndex + 1 }}</h4>
                                     <div class="grid grid-cols-1 md:grid-cols-12 gap-2 mb-2">
-                                        <div class="md:col-span-1"><input v-model="tp.a" readonly class="w-full p-2 border rounded bg-gray-100 text-center text-xs font-bold"></div>
-                                        <div class="md:col-span-5"><textarea v-model="tp.b" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Behavior"></textarea></div>
-                                        <div class="md:col-span-3"><textarea v-model="tp.c" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Condition"></textarea></div>
-                                        <div class="md:col-span-3"><textarea v-model="tp.d" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Degree"></textarea></div>
+                                        <div class="md:col-span-1"><input v-model="tp.a" readonly class="w-full p-2 border rounded bg-gray-100 text-center text-xs font-bold" title="Audience"></div>
+                                        <div class="md:col-span-5"><textarea v-model="tp.b" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Behavior (KKO + Materi)"></textarea></div>
+                                        <div class="md:col-span-3"><textarea v-model="tp.c" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Condition (Melalui...)"></textarea></div>
+                                        <div class="md:col-span-3"><textarea v-model="tp.d" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Degree (Kriteria)"></textarea></div>
                                     </div>
                                     <div class="bg-indigo-50 p-2 rounded border border-indigo-100 flex items-center gap-2"><i class="fas fa-magic text-indigo-400 text-xs"></i><p class="text-xs text-indigo-900 italic font-medium">"{{ generateSentence(tp) }}"</p></div>
                                 </div>
@@ -172,7 +176,7 @@
                     </div>
                 </transition>
 
-                <!-- 4. INPUT EKSTRAKURIKULER (RESTORED) -->
+                <!-- 4. INPUT EKSTRAKURIKULER (UPDATED: 3 KOLOM) -->
                 <transition name="fade">
                     <div v-if="currentTab === 'ekskul'">
                         <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -190,13 +194,40 @@
                             <div v-else-if="isLoadingStudents" class="p-10 text-center text-blue-500"><i class="fas fa-circle-notch fa-spin fa-2x"></i></div>
                             <div v-else class="overflow-x-auto">
                                 <table class="w-full text-left border-collapse excel-table text-sm">
-                                    <thead><tr class="bg-orange-800 text-white"><th class="p-3 w-10 text-center">No</th><th class="p-3 w-64">Nama Siswa</th><th class="p-3 w-64">Nama Ekstrakurikuler</th><th class="p-3">Deskripsi / Predikat</th></tr></thead>
+                                    <thead>
+                                        <tr>
+                                            <th class="p-3 w-10 text-center bg-gray-800 text-white sticky-col" rowspan="2">No</th>
+                                            <th class="p-3 w-64 bg-gray-800 text-white sticky-col-2" rowspan="2">Nama Siswa</th>
+                                            
+                                            <!-- HEADER EKSKUL 1 -->
+                                            <th colspan="2" class="p-2 text-center text-xs font-bold header-ekskul-1">EKSTRAKURIKULER 1 (WAJIB)</th>
+                                            <!-- HEADER EKSKUL 2 -->
+                                            <th colspan="2" class="p-2 text-center text-xs font-bold header-ekskul-2">EKSTRAKURIKULER 2 (OPSIONAL)</th>
+                                            <!-- HEADER EKSKUL 3 -->
+                                            <th colspan="2" class="p-2 text-center text-xs font-bold header-ekskul-3">EKSTRAKURIKULER 3 (OPSIONAL)</th>
+                                        </tr>
+                                        <tr class="text-slate-600 bg-slate-100">
+                                            <th class="p-2 w-48 text-center text-xs border-l">Nama Kegiatan</th><th class="p-2 w-48 text-center text-xs">Deskripsi / Predikat</th>
+                                            <th class="p-2 w-48 text-center text-xs border-l">Nama Kegiatan</th><th class="p-2 w-48 text-center text-xs">Deskripsi / Predikat</th>
+                                            <th class="p-2 w-48 text-center text-xs border-l">Nama Kegiatan</th><th class="p-2 w-48 text-center text-xs">Deskripsi / Predikat</th>
+                                        </tr>
+                                    </thead>
                                     <tbody class="bg-white">
                                         <tr v-for="(s, sIdx) in studentList" :key="s.id" class="hover:bg-orange-50">
-                                            <td class="text-center bg-gray-50 text-gray-500 select-none">{{ sIdx + 1 }}</td>
-                                            <td class="px-3 py-2 font-bold text-gray-700 select-none whitespace-nowrap">{{ s.nama }}</td>
-                                            <td class="p-0"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).nama_ekskul" @input="updateEkskul(s.id, 'nama_ekskul', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'nama_ekskul', true)" placeholder="Contoh: Pramuka"></td>
-                                            <td class="p-0"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).deskripsi" @input="updateEkskul(s.id, 'deskripsi', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'deskripsi', true)" placeholder="Sangat Baik, Aktif..."></td>
+                                            <td class="text-center bg-gray-50 text-gray-500 select-none sticky-col left-0">{{ sIdx + 1 }}</td>
+                                            <td class="px-3 py-2 font-bold text-gray-700 select-none whitespace-nowrap sticky-col-2 bg-white left-10">{{ s.nama }}</td>
+                                            
+                                            <!-- EKSKUL 1 (FIXED PRAMUKA) -->
+                                            <td class="p-0 border-l bg-orange-50/50"><input type="text" class="excel-input text-left font-bold text-orange-900 bg-transparent cursor-not-allowed" value="PRAMUKA" readonly></td>
+                                            <td class="p-0 bg-orange-50/50"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek1_desc" @input="updateEkskul(s.id, 'ek1_desc', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'ek1_desc', true)" placeholder="Sangat Baik..."></td>
+
+                                            <!-- EKSKUL 2 -->
+                                            <td class="p-0 border-l"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek2_nama" @input="updateEkskul(s.id, 'ek2_nama', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'ek2_nama', true)" placeholder="Nama Ekskul"></td>
+                                            <td class="p-0"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek2_desc" @input="updateEkskul(s.id, 'ek2_desc', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'ek2_desc', true)" placeholder="Predikat..."></td>
+
+                                            <!-- EKSKUL 3 -->
+                                            <td class="p-0 border-l"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek3_nama" @input="updateEkskul(s.id, 'ek3_nama', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'ek3_nama', true)" placeholder="Nama Ekskul"></td>
+                                            <td class="p-0"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek3_desc" @input="updateEkskul(s.id, 'ek3_desc', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'ek3_desc', true)" placeholder="Predikat..."></td>
                                         </tr>
                                     </tbody>
                                 </table>
