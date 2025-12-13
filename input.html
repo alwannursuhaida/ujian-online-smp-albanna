@@ -20,19 +20,20 @@
         /* Excel Table */
         .excel-table th, .excel-table td { border: 1px solid #e2e8f0; }
         .excel-input { width: 100%; height: 100%; padding: 4px; border: none; outline: none; text-align: center; background: transparent; font-family: monospace; font-weight: bold; font-size: 11px; }
+        .excel-input.text-left { text-align: left; padding-left: 8px; }
         .excel-input:focus { background: #eff6ff; box-shadow: inset 0 0 0 2px #3b82f6; }
         .input-error { background-color: #fee2e2 !important; color: #dc2626 !important; }
         
-        /* Sticky Column Name */
+        /* Sticky Column */
         .sticky-col { position: sticky; left: 0; z-index: 10; background-color: #f8fafc; border-right: 2px solid #e2e8f0; }
+        .sticky-col-2 { position: sticky; left: 40px; z-index: 10; background-color: #f8fafc; border-right: 2px solid #e2e8f0; }
         
-        /* Headers */
+        /* Headers Colors */
         .header-lm { background-color: #f1f5f9; border-left: 2px solid #94a3b8; }
         .header-asas { background-color: #fff7ed; border-left: 2px solid #ea580c; }
         .header-avg { background-color: #ecfdf5; border-left: 2px solid #059669; }
         .header-rapor { background-color: #eff6ff; border-left: 2px solid #2563eb; color: #1e40af; }
         
-        /* Read Only Input */
         .input-readonly { background-color: #f3f4f6; color: #4b5563; cursor: not-allowed; }
     </style>
 </head>
@@ -41,18 +42,28 @@
     <div id="app" class="flex h-screen overflow-hidden">
         
         <!-- SIDEBAR -->
-        <div class="w-64 bg-slate-900 text-white flex flex-col h-full shadow-2xl z-20">
+        <div class="w-64 bg-slate-900 text-white flex flex-col h-full shadow-2xl z-20 shrink-0">
             <div class="p-6 text-center border-b border-slate-700 bg-slate-800">
                 <h1 class="font-bold text-xl tracking-wider">E-RAPOR</h1>
-                <p class="text-xs text-slate-400 mt-1">GURU MAPEL</p>
+                <p class="text-xs text-slate-400 mt-1">GURU & WALI KELAS</p>
             </div>
             
             <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+                <div class="text-[10px] font-bold text-slate-500 uppercase mb-1 ml-2 tracking-wider">Guru Mapel</div>
                 <button @click="currentTab = 'identitas'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'identitas' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-id-card w-5"></i> Identitas Pelajaran</button>
                 <button @click="switchToTP" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'tp' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-bullseye w-5"></i> Penyusunan TP <i v-if="!isIdentityValid" class="fas fa-lock text-xs ml-auto opacity-50"></i></button>
                 <button @click="switchToNilai" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'nilai' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-edit w-5"></i> Input Nilai <i v-if="!isTpValid" class="fas fa-lock text-xs ml-auto opacity-50"></i></button>
+                
+                <div class="border-t border-slate-700 my-2"></div>
+                
+                <div class="text-[10px] font-bold text-slate-500 uppercase mb-1 ml-2 tracking-wider">Wali Kelas</div>
+                <button @click="switchToEkskul" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'ekskul' ? 'bg-orange-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']">
+                    <i class="fas fa-futbol w-5"></i> Input Ekstrakurikuler
+                </button>
+                
                 <div class="border-t border-slate-700 my-2"></div>
                 <button @click="currentTab = 'monitoring'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'monitoring' ? 'bg-indigo-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-chart-line w-5"></i> Monitoring Input</button>
+                <button @click="switchToRekap" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'rekap' ? 'bg-emerald-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-trophy w-5"></i> Rekapitulasi Nilai</button>
             </nav>
             <div class="p-4 border-t border-slate-800"><a href="index.html" class="w-full text-center text-xs text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 p-2 hover:bg-slate-800 rounded transition"><i class="fas fa-home"></i> KEMBALI KE MENU</a></div>
         </div>
@@ -61,7 +72,8 @@
         <div class="flex-1 flex flex-col h-full overflow-hidden bg-gray-50 relative">
             <div class="bg-white p-4 shadow-sm border-b flex justify-between items-center px-8 z-10">
                 <div><h2 class="text-2xl font-bold text-slate-800 uppercase">{{ getPageTitle() }}</h2><p class="text-xs text-gray-500">{{ getPageSubtitle() }}</p></div>
-                <button v-if="currentTab !== 'monitoring'" @click="handleSaveButton" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-green-700 transition flex items-center gap-2"><i class="fas fa-save"></i> SIMPAN PROGRES</button>
+                <button v-if="['identitas','tp','nilai','ekskul'].includes(currentTab)" @click="handleSaveButton" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-green-700 transition flex items-center gap-2"><i class="fas fa-save"></i> SIMPAN PROGRES</button>
+                <button v-if="currentTab === 'rekap'" @click="exportRekapExcel" class="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-emerald-700 transition flex items-center gap-2"><i class="fas fa-file-excel"></i> UNDUH EXCEL</button>
             </div>
 
             <div class="flex-1 overflow-y-auto p-8 pb-32">
@@ -85,7 +97,6 @@
                 <transition name="fade">
                     <div v-if="currentTab === 'tp'">
                         <div class="mb-6 flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-200 w-fit"><span class="font-bold text-indigo-900 text-sm">{{ identitas.mapel }}</span><span class="text-gray-400">|</span><span class="font-bold text-indigo-900 text-sm">Jenjang {{ identitas.jenjang }}</span></div>
-                        
                         <div v-for="(lm, lmIndex) in lingkupMateri" :key="lm.id" class="mb-8 bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
                             <div class="bg-slate-100 p-4 border-b flex items-center gap-4 cursor-pointer" @click="lm.isOpen = !lm.isOpen">
                                 <div class="bg-indigo-600 text-white w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm">{{ lmIndex + 1 }}</div>
@@ -96,119 +107,63 @@
                                 <div v-for="(tp, tpIndex) in lm.tujuan" :key="tpIndex" class="relative group border-b border-slate-100 pb-4">
                                     <h4 class="font-bold text-xs text-slate-500 mb-2">TP {{ lmIndex + 1 }}.{{ tpIndex + 1 }}</h4>
                                     <div class="grid grid-cols-1 md:grid-cols-12 gap-2 mb-2">
-                                        <div class="md:col-span-1"><input v-model="tp.a" readonly class="w-full p-2 border rounded bg-gray-100 text-center text-xs font-bold" title="Audience"></div>
-                                        <div class="md:col-span-5"><textarea v-model="tp.b" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Behavior (KKO + Materi)"></textarea></div>
-                                        <div class="md:col-span-3"><textarea v-model="tp.c" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Condition (Melalui...)"></textarea></div>
-                                        <div class="md:col-span-3"><textarea v-model="tp.d" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Degree (Kriteria)"></textarea></div>
+                                        <div class="md:col-span-1"><input v-model="tp.a" readonly class="w-full p-2 border rounded bg-gray-100 text-center text-xs font-bold"></div>
+                                        <div class="md:col-span-5"><textarea v-model="tp.b" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Behavior"></textarea></div>
+                                        <div class="md:col-span-3"><textarea v-model="tp.c" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Condition"></textarea></div>
+                                        <div class="md:col-span-3"><textarea v-model="tp.d" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Degree"></textarea></div>
                                     </div>
-                                    <!-- OTOMASI KALIMAT -->
-                                    <div class="bg-indigo-50 p-2 rounded border border-indigo-100 flex items-center gap-2">
-                                        <i class="fas fa-magic text-indigo-400 text-xs"></i>
-                                        <p class="text-xs text-indigo-900 italic font-medium">"{{ generateSentence(tp) }}"</p>
-                                    </div>
+                                    <div class="bg-indigo-50 p-2 rounded border border-indigo-100 flex items-center gap-2"><i class="fas fa-magic text-indigo-400 text-xs"></i><p class="text-xs text-indigo-900 italic font-medium">"{{ generateSentence(tp) }}"</p></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </transition>
 
-                <!-- 3. INPUT NILAI (UPDATED: EXCLUDE 0 FROM AVG) -->
+                <!-- 3. INPUT NILAI -->
                 <transition name="fade">
                     <div v-if="currentTab === 'nilai'">
                         <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-                            <div class="w-full md:w-1/3">
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pilih Kelas</label>
-                                <select v-model="selectedClass" @change="fetchStudentsAndScores" class="w-full p-2 border-2 border-blue-200 rounded font-bold text-blue-900">
-                                    <option value="" disabled>-- Pilih Kelas --</option>
-                                    <option v-for="c in filteredClasses" :value="c">{{ c }}</option>
-                                </select>
-                            </div>
-                            <div class="text-right text-xs text-gray-500">
-                                <p><strong>Mapel:</strong> {{ identitas.mapel }}</p>
-                                <p class="text-green-600 font-bold" v-if="lastSavedGrade">Tersimpan: {{ lastSavedGrade }}</p>
-                            </div>
+                            <div class="w-full md:w-1/3"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pilih Kelas</label><select v-model="selectedClass" @change="fetchStudentsAndScores" class="w-full p-2 border-2 border-blue-200 rounded font-bold text-blue-900"><option value="" disabled>-- Pilih Kelas --</option><option v-for="c in filteredClasses" :value="c">{{ c }}</option></select></div>
+                            <div class="text-right text-xs text-gray-500"><p><strong>Mapel:</strong> {{ identitas.mapel }}</p><p class="text-green-600 font-bold" v-if="lastSavedGrade">Tersimpan: {{ lastSavedGrade }}</p></div>
                         </div>
-
                         <div class="bg-white rounded-xl shadow border overflow-hidden relative">
                             <div v-if="!selectedClass" class="p-10 text-center text-gray-400"><i class="fas fa-arrow-up fa-2x mb-2"></i><br>Pilih kelas dulu.</div>
-                            <div v-else-if="isLoadingStudents" class="p-10 text-center text-blue-500"><i class="fas fa-circle-notch fa-spin fa-2x"></i><br>Mengambil data & menghitung ASAS...</div>
-                            
+                            <div v-else-if="isLoadingStudents" class="p-10 text-center text-blue-500"><i class="fas fa-circle-notch fa-spin fa-2x"></i></div>
                             <div v-else class="overflow-x-auto">
                                 <table class="w-full text-left border-collapse excel-table text-sm">
                                     <thead>
                                         <tr class="bg-slate-800 text-white">
                                             <th class="p-3 w-10 text-center sticky-col bg-slate-800" rowspan="2">No</th>
-                                            <th class="p-3 w-64 sticky-col bg-slate-800 left-10" rowspan="2">Nama Siswa</th>
-                                            
-                                            <!-- LINGKUP MATERI HEADERS -->
-                                            <template v-for="lm in activeLMs" :key="lm.id">
-                                                <th :colspan="lm.tpCount + 2" class="p-2 text-center text-xs font-bold header-lm text-slate-800">
-                                                    {{ lm.judul || 'LM ' + lm.id }}
-                                                </th>
-                                            </template>
-                                            
-                                            <!-- ASAS HEADER -->
+                                            <th class="p-3 w-64 sticky-col-2 bg-slate-800 left-10" rowspan="2">Nama Siswa</th>
+                                            <template v-for="lm in activeLMs" :key="lm.id"><th :colspan="lm.tpCount + 2" class="p-2 text-center text-xs font-bold header-lm text-slate-800">{{ lm.judul || 'LM ' + lm.id }}</th></template>
                                             <th colspan="2" class="p-2 text-center text-xs font-bold header-asas text-orange-800">ASAS</th>
-                                            
-                                            <!-- RATA-RATA HEADER (SIMPLIFIED) -->
                                             <th colspan="3" class="p-2 text-center text-xs font-bold header-avg text-green-800">RATA-RATA</th>
-                                            
-                                            <!-- NILAI AKHIR RAPOR HEADER -->
                                             <th rowspan="2" class="p-2 text-center text-xs font-bold header-rapor">Nilai Akhir (Rapor)</th>
                                         </tr>
                                         <tr class="bg-slate-100 text-slate-600">
-                                            <!-- TP & LM COLUMNS -->
                                             <template v-for="lm in activeLMs" :key="lm.id">
-                                                <template v-for="(tp, idx) in lm.tujuan" :key="lm.id + '_' + idx">
-                                                    <th class="p-2 text-center text-[10px] w-14 border-l" :title="generateSentence(tp)">TP {{ lm.id }}.{{ idx+1 }}</th>
-                                                </template>
-                                                <th class="p-2 text-center text-[10px] w-14 bg-blue-50 font-bold border-l-2">LM Tes</th>
-                                                <th class="p-2 text-center text-[10px] w-14 bg-blue-50 font-bold">LM Non-Tes</th>
+                                                <template v-for="(tp, idx) in lm.tujuan" :key="lm.id + '_' + idx"><th class="p-2 text-center text-[10px] w-16 border-l" :title="generateSentence(tp)">TP {{ lm.id }}.{{ idx+1 }}</th></template>
+                                                <th class="p-2 text-center text-[10px] w-14 bg-blue-50 font-bold border-l-2">LM Tes</th><th class="p-2 text-center text-[10px] w-14 bg-blue-50 font-bold">LM Non</th>
                                             </template>
-
-                                            <!-- ASAS COLUMNS -->
-                                            <th class="p-2 text-center text-[10px] w-20 bg-orange-50 font-bold">Tes (Auto)</th>
-                                            <th class="p-2 text-center text-[10px] w-20 bg-orange-50 font-bold">Non-Tes</th>
-
-                                            <!-- AVG COLUMNS -->
-                                            <th class="p-2 text-center text-[10px] w-16 bg-green-50 font-bold">Rata TP</th>
-                                            <th class="p-2 text-center text-[10px] w-16 bg-green-50 font-bold">Rata LM</th>
-                                            <th class="p-2 text-center text-[10px] w-16 bg-green-50 font-bold">Rata ASAS</th>
+                                            <th class="p-2 text-center text-[10px] w-16 bg-orange-50 font-bold">Tes</th><th class="p-2 text-center text-[10px] w-16 bg-orange-50 font-bold">Non</th>
+                                            <th class="p-2 text-center text-[10px] w-12 bg-green-50 font-bold">TP</th><th class="p-2 text-center text-[10px] w-12 bg-green-50 font-bold">LM</th><th class="p-2 text-center text-[10px] w-12 bg-green-50 font-bold">ASAS</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white">
                                         <tr v-for="(s, sIdx) in studentList" :key="s.id" class="hover:bg-blue-50">
                                             <td class="text-center bg-gray-50 text-gray-500 select-none sticky-col left-0">{{ sIdx + 1 }}</td>
-                                            <td class="px-3 py-2 font-bold text-gray-700 select-none whitespace-nowrap sticky-col bg-white left-10">{{ s.nama }}</td>
-                                            
-                                            <!-- INPUT TP & LM -->
+                                            <td class="px-3 py-2 font-bold text-gray-700 select-none whitespace-nowrap sticky-col-2 bg-white left-10">{{ s.nama }}</td>
                                             <template v-for="lm in activeLMs" :key="lm.id">
-                                                <!-- TP Inputs -->
-                                                <template v-for="(tp, idx) in lm.tujuan" :key="lm.id + '_' + idx">
-                                                    <td class="p-0"><input type="text" :class="['excel-input', getValidationClass(getGrade(s.id, `tp_${lm.id}_${idx+1}` ))]" :value="getGrade(s.id, `tp_${lm.id}_${idx+1}` )" @input="updateGrade(s.id, `tp_${lm.id}_${idx+1}`, $event.target.value)" @paste="handleGridPaste($event, sIdx, `tp_${lm.id}_${idx+1}`)"></td>
-                                                </template>
-                                                <!-- LM Sumatif Inputs -->
+                                                <template v-for="(tp, idx) in lm.tujuan" :key="lm.id + '_' + idx"><td class="p-0"><input type="text" :class="['excel-input', getValidationClass(getGrade(s.id, `tp_${lm.id}_${idx+1}` ))]" :value="getGrade(s.id, `tp_${lm.id}_${idx+1}` )" @input="updateGrade(s.id, `tp_${lm.id}_${idx+1}`, $event.target.value)" @paste="handleGridPaste($event, sIdx, `tp_${lm.id}_${idx+1}`)"></td></template>
                                                 <td class="p-0 bg-blue-50/20 border-l-2"><input type="text" :class="['excel-input font-bold text-blue-700', getValidationClass(getGrade(s.id, `lm_${lm.id}_tes`))]" :value="getGrade(s.id, `lm_${lm.id}_tes`)" @input="updateGrade(s.id, `lm_${lm.id}_tes`, $event.target.value)"></td>
                                                 <td class="p-0 bg-blue-50/20"><input type="text" :class="['excel-input font-bold text-blue-700', getValidationClass(getGrade(s.id, `lm_${lm.id}_nontes`))]" :value="getGrade(s.id, `lm_${lm.id}_nontes`)" @input="updateGrade(s.id, `lm_${lm.id}_nontes`, $event.target.value)"></td>
                                             </template>
-
-                                            <!-- ASAS COLUMNS -->
-                                            <td class="p-0 bg-orange-50/30 border-l-2">
-                                                <input type="text" class="excel-input font-bold text-orange-700 bg-orange-100 cursor-not-allowed" :value="s.asasTesScore" readonly title="Nilai otomatis dari Jawaban Siswa">
-                                            </td>
-                                            <td class="p-0 bg-orange-50/30">
-                                                <input type="text" :class="['excel-input font-bold text-orange-700', getValidationClass(getGrade(s.id, 'asas_nontes'))]" :value="getGrade(s.id, 'asas_nontes')" @input="updateGrade(s.id, 'asas_nontes', $event.target.value)">
-                                            </td>
-
-                                            <!-- CALCULATED AVERAGES (SKIP 0) -->
+                                            <td class="p-0 bg-orange-50/30 border-l-2"><input type="text" class="excel-input font-bold text-orange-700 bg-orange-100 cursor-not-allowed" :value="s.asasTesScore" readonly></td>
+                                            <td class="p-0 bg-orange-50/30"><input type="text" :class="['excel-input font-bold text-orange-700', getValidationClass(getGrade(s.id, 'asas_nontes'))]" :value="getGrade(s.id, 'asas_nontes')" @input="updateGrade(s.id, 'asas_nontes', $event.target.value)"></td>
                                             <td class="p-0 bg-green-50/30 text-center font-bold text-green-800 border-l-2">{{ calculateRataTP(s.id) }}</td>
                                             <td class="p-0 bg-green-50/30 text-center font-bold text-green-800">{{ calculateRataLM(s.id) }}</td>
                                             <td class="p-0 bg-green-50/30 text-center font-bold text-green-800">{{ calculateRataASAS(s.id, s.asasTesScore) }}</td>
-
-                                            <!-- NILAI AKHIR RAPOR (SKIP 0) -->
-                                            <td class="p-0 bg-blue-100 text-center font-extrabold text-blue-900 border-l-2">
-                                                {{ calculateNilaiRapor(s.id, s.asasTesScore) }}
-                                            </td>
+                                            <td class="p-0 bg-blue-100 text-center font-extrabold text-blue-900 border-l-2">{{ calculateNilaiRapor(s.id, s.asasTesScore) }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -217,7 +172,40 @@
                     </div>
                 </transition>
 
-                <!-- 4. MONITORING -->
+                <!-- 4. INPUT EKSTRAKURIKULER (RESTORED) -->
+                <transition name="fade">
+                    <div v-if="currentTab === 'ekskul'">
+                        <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div class="w-full md:w-1/3">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pilih Kelas (Wali Kelas)</label>
+                                <select v-model="selectedClass" @change="fetchStudents" class="w-full p-2 border-2 border-orange-200 rounded font-bold text-orange-900">
+                                    <option value="" disabled>-- Pilih Kelas --</option>
+                                    <option v-for="c in filteredClasses" :value="c">{{ c }}</option>
+                                </select>
+                            </div>
+                            <div class="text-right text-xs text-gray-500"><p><strong>Jenjang:</strong> Kelas {{ identitas.jenjang }}</p><p class="text-orange-600 italic">Khusus Wali Kelas</p></div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow border overflow-hidden relative">
+                            <div v-if="!selectedClass" class="p-10 text-center text-gray-400"><i class="fas fa-chalkboard-teacher fa-2x mb-2"></i><br>Pilih kelas perwalian Anda.</div>
+                            <div v-else-if="isLoadingStudents" class="p-10 text-center text-blue-500"><i class="fas fa-circle-notch fa-spin fa-2x"></i></div>
+                            <div v-else class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse excel-table text-sm">
+                                    <thead><tr class="bg-orange-800 text-white"><th class="p-3 w-10 text-center">No</th><th class="p-3 w-64">Nama Siswa</th><th class="p-3 w-64">Nama Ekstrakurikuler</th><th class="p-3">Deskripsi / Predikat</th></tr></thead>
+                                    <tbody class="bg-white">
+                                        <tr v-for="(s, sIdx) in studentList" :key="s.id" class="hover:bg-orange-50">
+                                            <td class="text-center bg-gray-50 text-gray-500 select-none">{{ sIdx + 1 }}</td>
+                                            <td class="px-3 py-2 font-bold text-gray-700 select-none whitespace-nowrap">{{ s.nama }}</td>
+                                            <td class="p-0"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).nama_ekskul" @input="updateEkskul(s.id, 'nama_ekskul', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'nama_ekskul', true)" placeholder="Contoh: Pramuka"></td>
+                                            <td class="p-0"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).deskripsi" @input="updateEkskul(s.id, 'deskripsi', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'deskripsi', true)" placeholder="Sangat Baik, Aktif..."></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+
+                <!-- 5. MONITORING -->
                 <transition name="fade">
                     <div v-if="currentTab === 'monitoring'">
                         <div class="bg-white p-6 rounded-xl shadow border">
@@ -233,6 +221,77 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </transition>
+                
+                <!-- 6. REKAPITULASI DETAIL (FULL MATRIX PER MAPEL) -->
+                <transition name="fade">
+                    <div v-if="currentTab === 'rekap'">
+                        <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div class="w-full md:w-1/3 flex gap-2">
+                                <div class="w-1/2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Jenjang</label><select v-model="rekapJenjang" class="w-full p-2 border rounded font-bold text-emerald-900"><option value="7">Kelas 7</option><option value="8">Kelas 8</option><option value="9">Kelas 9</option></select></div>
+                                <div class="w-1/2"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Kelas</label><select v-model="selectedClass" @change="fetchStudentsForRekap" class="w-full p-2 border-2 border-emerald-200 rounded font-bold text-emerald-900"><option value="" disabled>-- Pilih --</option><option v-for="c in classesMap[rekapJenjang]" :value="c">{{ c }}</option></select></div>
+                            </div>
+                            <div class="text-right text-xs text-gray-500 italic">Data diambil dari Input Nilai masing-masing Guru.</div>
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow border overflow-hidden relative">
+                             <div v-if="!selectedClass" class="p-10 text-center text-gray-400">Pilih kelas untuk melihat rekapitulasi.</div>
+                             <div v-else class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse excel-table text-xs">
+                                    <thead class="bg-emerald-800 text-white">
+                                        <tr>
+                                            <th class="p-3 w-10 text-center sticky-col bg-emerald-800" rowspan="2">Rank</th>
+                                            <th class="p-3 w-48 sticky-col-2 bg-emerald-800" rowspan="2">Nama Siswa</th>
+                                            
+                                            <!-- Loop Mapel -->
+                                            <template v-for="m in mapelList" :key="m">
+                                                <!-- Untuk header, kita perlu tahu struktur kolomnya. Disini kita pakai struktur standar: Rata TP, Rata LM, Rata ASAS, AKHIR -->
+                                                <!-- Namun permintaan Anda: "tampilkan juga seluruh kolom TP, LM...". Ini berarti kita harus loop TP per mapel. -->
+                                                <!-- Karena TP per mapel dinamis, kita perlu akses config mapel tersebut. -->
+                                                <!-- Kompleksitas: Column span dinamis per mapel. -->
+                                                <th :colspan="getMapelColSpan(m)" class="p-2 text-center border-l-4 border-emerald-400 bg-emerald-900">{{ m }}</th>
+                                            </template>
+                                            
+                                            <th class="p-3 text-center bg-emerald-950 sticky-right" rowspan="2">TOTAL SKOR</th>
+                                        </tr>
+                                        <tr class="bg-emerald-700 text-emerald-50">
+                                            <template v-for="m in mapelList" :key="m + '_sub'">
+                                                <!-- Render Header TP jika ada config -->
+                                                <template v-for="col in getMapelColumns(m)" :key="col.id">
+                                                    <th class="p-1 text-center w-8 border-l border-emerald-600" :title="col.title">{{ col.label }}</th>
+                                                </template>
+                                                <!-- Standard Summary Columns -->
+                                                <th class="p-1 text-center w-10 bg-emerald-600 font-bold border-l">R.TP</th>
+                                                <th class="p-1 text-center w-10 bg-emerald-600 font-bold">R.LM</th>
+                                                <th class="p-1 text-center w-10 bg-emerald-600 font-bold">R.ASAS</th>
+                                                <th class="p-1 text-center w-12 bg-yellow-400 text-black font-extrabold border-l-2">AKHIR</th>
+                                            </template>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white">
+                                        <tr v-for="(row, idx) in rekapData" :key="row.id" class="hover:bg-emerald-50">
+                                            <td class="text-center font-bold sticky-col bg-white">{{ idx + 1 }}</td>
+                                            <td class="px-3 py-2 font-bold text-gray-700 whitespace-nowrap sticky-col-2 bg-white">{{ row.nama }}</td>
+                                            
+                                            <template v-for="m in mapelList" :key="m">
+                                                <!-- Render Nilai TP per Mapel -->
+                                                <template v-for="col in getMapelColumns(m)" :key="col.id">
+                                                     <td class="text-center border-l text-gray-500">{{ row.grades[m]?.details?.[col.id] || '-' }}</td>
+                                                </template>
+                                                <!-- Render Summary -->
+                                                <td class="text-center font-bold text-emerald-700 bg-emerald-50 border-l">{{ row.grades[m]?.rTP || '-' }}</td>
+                                                <td class="text-center font-bold text-emerald-700 bg-emerald-50">{{ row.grades[m]?.rLM || '-' }}</td>
+                                                <td class="text-center font-bold text-emerald-700 bg-emerald-50">{{ row.grades[m]?.rASAS || '-' }}</td>
+                                                <td class="text-center font-extrabold text-blue-900 bg-blue-100 border-l-2 border-blue-200">{{ row.grades[m]?.final || '-' }}</td>
+                                            </template>
+
+                                            <td class="text-center font-extrabold text-white bg-emerald-900 sticky-right">{{ row.total }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                             </div>
                         </div>
                     </div>
                 </transition>
@@ -260,19 +319,13 @@
         createApp({
             data() {
                 return {
-                    currentTab: 'identitas',
-                    selectedClass: '',
-                    studentList: [],
-                    isLoadingStudents: false,
-                    lastSavedGrade: null,
-                    
+                    currentTab: 'identitas', selectedClass: '', studentList: [], isLoadingStudents: false, lastSavedGrade: null,
                     identitas: { mapel: '', guru: '', jenjang: '' }, 
                     lingkupMateri: Array.from({ length: 5 }, (_, i) => ({ id: i + 1, judul: '', isOpen: i === 0, tujuan: Array.from({ length: 5 }, () => ({ a: 'Murid', b: '', c: '', d: '' })) })),
                     
-                    // STORAGE STRUKTUR: grades[kelas][mapel][siswa_id][key]
-                    allGrades: {}, 
-                    savedProgress: {}, 
-                    bankSoalCache: {}, 
+                    allGrades: {}, savedProgress: {}, bankSoalCache: {},
+                    ekskulData: {}, mapelConfigs: {}, // NEW: Store Mapel configs
+                    rekapJenjang: '7',
 
                     mapelList: ['AGAMA ISLAM', 'BAHASA ARAB', 'BAHASA BALI', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 'INFORMATIKA', 'IPA', 'IPS', 'KKA', 'MATEMATIKA', 'OLAHRAGA', 'PKN', 'SENI BUDAYA'],
                     classesMap: { '7': ['7A','7B','7C','7D','7E','7F'], '8': ['8A','8B','8C','8D','8E','8F'], '9': ['9A','9B','9C','9D','9E'] }
@@ -283,235 +336,214 @@
                 isTpValid() { return this.lingkupMateri.some(lm => lm.judul && lm.tujuan.some(tp => tp.b)); },
                 filteredClasses() { return this.identitas.jenjang ? this.classesMap[this.identitas.jenjang] : []; },
                 
-                activeLMs() {
-                    return this.lingkupMateri.filter(lm => lm.judul).map(lm => {
-                        return { ...lm, tujuan: lm.tujuan.filter(tp => tp.b), tpCount: lm.tujuan.filter(tp => tp.b).length };
-                    }).filter(lm => lm.tpCount > 0);
-                },
-                activeTPs() {
-                    const tps = [];
-                    this.activeLMs.forEach(lm => {
-                        lm.tujuan.forEach((tp, idx) => {
-                            if (tp.b) tps.push({ uniqueId: `tp_${lm.id}_${idx+1}` });
+                activeLMs() { return this.lingkupMateri.filter(lm => lm.judul).map(lm => ({ ...lm, tujuan: lm.tujuan.filter(tp => tp.b), tpCount: lm.tujuan.filter(tp => tp.b).length })).filter(lm => lm.tpCount > 0); },
+                activeTPs() { const tps=[]; this.activeLMs.forEach(lm=>{ lm.tujuan.forEach((tp,i)=>{ if(tp.b) tps.push({uniqueId:`tp_${lm.id}_${i+1}`}); }); }); return tps; },
+                
+                // REKAP DETAIL COMPUTED
+                rekapData() {
+                    if (!this.selectedClass || this.currentTab !== 'rekap') return [];
+                    
+                    return this.studentList.map(s => {
+                        const grades = {};
+                        let total = 0;
+
+                        this.mapelList.forEach(m => {
+                            const raw = this.allGrades[this.selectedClass]?.[m]?.[s.id];
+                            
+                            if (raw) {
+                                // Re-Calculate Components based on Raw Data found in allGrades
+                                let sumTP=0, cTP=0, sumLM=0, cLM=0;
+                                let sumASAS=0, cASAS=0;
+                                let asasTes = raw['asas_tes_auto'] ? parseFloat(raw['asas_tes_auto']) : 0;
+                                let asasNon = raw['asas_nontes'] ? parseFloat(raw['asas_nontes']) : 0;
+                                const details = {}; // Store raw TP values
+
+                                // Scan raw keys
+                                Object.keys(raw).forEach(k => {
+                                    const val = parseFloat(raw[k]);
+                                    // Simpan detail untuk ditampilkan di kolom TP
+                                    details[k] = raw[k];
+
+                                    if(!isNaN(val) && val > 0) {
+                                        if (k.startsWith('tp_')) { sumTP+=val; cTP++; }
+                                        else if (k.startsWith('lm_')) { sumLM+=val; cLM++; }
+                                    }
+                                });
+
+                                const rTP = cTP > 0 ? Math.ceil(sumTP/cTP) : 0;
+                                const rLM = cLM > 0 ? Math.ceil(sumLM/cLM) : 0;
+                                
+                                // Calc ASAS (Tes + Non)
+                                let rASAS = 0;
+                                let cA = 0;
+                                if(asasTes > 0) { rASAS += asasTes; cA++; }
+                                if(asasNon > 0) { rASAS += asasNon; cA++; }
+                                rASAS = cA > 0 ? Math.ceil(rASAS/cA) : 0;
+
+                                // Final
+                                let sumFinal = 0, countFinal = 0;
+                                if(rTP > 0) { sumFinal += rTP; countFinal++; }
+                                if(rLM > 0) { sumFinal += rLM; countFinal++; }
+                                if(rASAS > 0) { sumFinal += rASAS; countFinal++; }
+                                const final = countFinal > 0 ? Math.ceil(sumFinal / countFinal) : 0;
+
+                                grades[m] = { rTP, rLM, rASAS, final, details };
+                                if(final > 0) total += final;
+                            } else {
+                                grades[m] = { rTP:'-', rLM:'-', rASAS:'-', final:'-', details: {} };
+                            }
                         });
-                    });
-                    return tps;
+
+                        return { id: s.id, nama: s.nama, grades, total };
+                    }).sort((a, b) => b.total - a.total);
                 }
             },
             mounted() {
-                const savedTp = localStorage.getItem('cbt_input_tp');
-                if (savedTp) {
-                    const data = JSON.parse(savedTp);
-                    this.identitas = data.identitas || this.identitas;
-                    this.lingkupMateri = data.lingkupMateri || this.lingkupMateri;
-                }
-                const savedGrades = localStorage.getItem('cbt_all_grades');
-                if (savedGrades) this.allGrades = JSON.parse(savedGrades);
-                const savedProg = localStorage.getItem('cbt_saved_progress');
-                if (savedProg) this.savedProgress = JSON.parse(savedProg);
-
+                const savedTp = localStorage.getItem('cbt_input_tp'); if (savedTp) { const data = JSON.parse(savedTp); this.identitas = data.identitas||this.identitas; this.lingkupMateri = data.lingkupMateri||this.lingkupMateri; }
+                const savedGrades = localStorage.getItem('cbt_all_grades'); if (savedGrades) this.allGrades = JSON.parse(savedGrades);
+                const savedProg = localStorage.getItem('cbt_saved_progress'); if (savedProg) this.savedProgress = JSON.parse(savedProg);
+                const savedEkskul = localStorage.getItem('cbt_ekskul_data'); if (savedEkskul) this.ekskulData = JSON.parse(savedEkskul);
+                const savedMapelConfigs = localStorage.getItem('cbt_mapel_configs'); if (savedMapelConfigs) this.mapelConfigs = JSON.parse(savedMapelConfigs);
                 this.loadBankSoal();
             },
             methods: {
+                // --- HELPER UNTUK KOLOM DINAMIS REKAP ---
+                getMapelColSpan(mapel) {
+                    // 4 Kolom Summary (R.TP, R.LM, R.ASAS, Final) + Jumlah TP Detail
+                    return this.getMapelColumns(mapel).length + 4;
+                },
+                getMapelColumns(mapel) {
+                    // Ambil config tersimpan
+                    const config = this.mapelConfigs[mapel];
+                    if (!config) return []; // Jika belum ada config, return kosong
+                    
+                    const cols = [];
+                    config.forEach(lm => {
+                        if (lm.judul) {
+                            lm.tujuan.forEach((tp, i) => {
+                                if (tp.b) {
+                                    cols.push({ 
+                                        id: `tp_${lm.id}_${i+1}`, 
+                                        label: `TP ${lm.id}.${i+1}`,
+                                        title: `LM ${lm.id}: ${tp.b}`
+                                    });
+                                }
+                            });
+                            // Bisa tambah kolom LM Tes/Non Tes disini jika mau super detail
+                        }
+                    });
+                    return cols;
+                },
+
                 getPageTitle() {
                     if (this.currentTab === 'identitas') return 'IDENTITAS PELAJARAN';
                     if (this.currentTab === 'tp') return 'PENYUSUNAN TP (ABCD)';
                     if (this.currentTab === 'nilai') return 'INPUT NILAI RAPOR';
+                    if (this.currentTab === 'rekap') return 'REKAPITULASI NILAI';
+                    if (this.currentTab === 'ekskul') return 'INPUT EKSTRAKURIKULER';
                     return 'MONITORING INPUT';
                 },
-                getPageSubtitle() { return this.currentTab === 'monitoring' ? 'Pantau kelengkapan nilai seluruh kelas.' : 'Lengkapi data secara berurutan.'; },
+                getPageSubtitle() { 
+                    if (this.currentTab === 'ekskul') return 'Menu khusus Wali Kelas. Isi kegiatan siswa.';
+                    return this.currentTab === 'rekap' ? 'Ranking dan akumulasi nilai seluruh mata pelajaran.' : 'Lengkapi data secara berurutan.'; 
+                },
 
                 switchToTP() { if (!this.isIdentityValid) return Swal.fire('Lengkapi Identitas', '', 'warning'); this.currentTab = 'tp'; },
-                switchToNilai() { 
-                    if (!this.isIdentityValid || !this.isTpValid) return Swal.fire('Data Belum Lengkap', 'Isi Identitas dan TP dulu.', 'warning');
-                    this.currentTab = 'nilai'; this.selectedClass = ''; 
-                },
+                switchToNilai() { if (!this.isIdentityValid || !this.isTpValid) return Swal.fire('Data Belum Lengkap', 'Isi Identitas dan TP dulu.', 'warning'); this.currentTab = 'nilai'; this.selectedClass = ''; },
+                switchToEkskul() { if (!this.identitas.jenjang) return Swal.fire('Pilih Jenjang', '', 'warning'); this.currentTab = 'ekskul'; this.selectedClass = ''; },
+                switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
 
-                // --- DATA HANDLING ---
-                getGrade(sid, key) {
-                    const c = this.selectedClass; const m = this.identitas.mapel;
-                    if (this.allGrades[c] && this.allGrades[c][m] && this.allGrades[c][m][sid]) {
-                        return this.allGrades[c][m][sid][key] || '';
-                    }
-                    return '';
-                },
-                updateGrade(sid, key, val) {
-                    const c = this.selectedClass; const m = this.identitas.mapel;
-                    if (!this.allGrades[c]) this.allGrades[c] = {};
-                    if (!this.allGrades[c][m]) this.allGrades[c][m] = {};
-                    if (!this.allGrades[c][m][sid]) this.allGrades[c][m][sid] = {};
-                    this.allGrades[c][m][sid][key] = val;
-                },
-
-                // --- ASAS CALCULATION LOGIC ---
-                async loadBankSoal() {
-                    const q = query(collection(db, "bank_soal"));
-                    const snap = await getDocs(q);
-                    snap.forEach(doc => { this.bankSoalCache[doc.id] = doc.data(); });
-                },
+                getGrade(sid, key) { const c = this.selectedClass; const m = this.identitas.mapel; if (this.allGrades[c] && this.allGrades[c][m] && this.allGrades[c][m][sid]) return this.allGrades[c][m][sid][key] || ''; return ''; },
+                updateGrade(sid, key, val) { const c = this.selectedClass; const m = this.identitas.mapel; if (!this.allGrades[c]) this.allGrades[c] = {}; if (!this.allGrades[c][m]) this.allGrades[c][m] = {}; if (!this.allGrades[c][m][sid]) this.allGrades[c][m][sid] = {}; this.allGrades[c][m][sid][key] = val; },
                 
-                getRealScoreFromDoc(docData) {
-                    const exam = this.bankSoalCache[docData.examId];
-                    if (!exam) return 0;
-                    let score = 0;
-                    exam.soal.forEach((q, idx) => {
-                        if (['PG', 'BS'].includes(q.type) && docData.answers[idx] === q.answer) score += parseInt(q.poin);
-                        if (['URAIAN', 'ESAI', 'ISIAN'].includes(q.type) && docData.manualScores && docData.manualScores[idx] !== undefined) {
-                            score += parseInt(docData.manualScores[idx]);
-                        }
-                    });
-                    return score;
-                },
+                getEkskulData(sid) { const c = this.selectedClass; if (!this.ekskulData[c]) this.ekskulData[c] = {}; if (!this.ekskulData[c][sid]) this.ekskulData[c][sid] = { nama_ekskul: '', deskripsi: '' }; return this.ekskulData[c][sid]; },
+                updateEkskul(sid, f, v) { const c = this.selectedClass; if (!this.ekskulData[c]) this.ekskulData[c] = {}; if (!this.ekskulData[c][sid]) this.ekskulData[c][sid] = { nama_ekskul: '', deskripsi: '' }; this.ekskulData[c][sid][f] = v; },
 
-                // --- FETCH STUDENTS & SCORES ---
+                async loadBankSoal() { const q = query(collection(db, "bank_soal")); const snap = await getDocs(q); snap.forEach(doc => { this.bankSoalCache[doc.id] = doc.data(); }); },
+                getRealScoreFromDoc(docData) { const exam = this.bankSoalCache[docData.examId]; if (!exam) return 0; let score = 0; exam.soal.forEach((q, idx) => { if (['PG', 'BS'].includes(q.type) && docData.answers[idx] === q.answer) score += parseInt(q.poin); if (['URAIAN', 'ESAI', 'ISIAN'].includes(q.type) && docData.manualScores && docData.manualScores[idx] !== undefined) { score += parseInt(docData.manualScores[idx]); } }); return score; },
+                
                 async fetchStudentsAndScores() {
-                    if(!this.selectedClass) return;
-                    this.isLoadingStudents = true;
-                    this.studentList = [];
+                    if(!this.selectedClass) return; this.isLoadingStudents = true; this.studentList = [];
                     try {
                         const qAbsen = query(collection(db, "data_absensi"), where("kelas", "==", this.selectedClass));
                         const snapAbsen = await getDocs(qAbsen);
                         const uniqueMap = new Map();
-                        snapAbsen.docs.forEach(doc => {
-                            const d = doc.data();
-                            if(!uniqueMap.has(d.nama)) uniqueMap.set(d.nama, { id: doc.id, nama: d.nama, asasTesScore: 0 });
-                        });
+                        snapAbsen.docs.forEach(doc => { const d = doc.data(); if(!uniqueMap.has(d.nama)) uniqueMap.set(d.nama, { id: doc.id, nama: d.nama, asasTesScore: 0 }); });
 
-                        const qJawaban = query(collection(db, "jawaban_siswa"), where("mapel", "==", this.identitas.mapel), where("student.kelas", "==", this.selectedClass));
-                        const snapJawaban = await getDocs(qJawaban);
-                        
-                        snapJawaban.docs.forEach(doc => {
-                            const data = doc.data();
-                            const sName = data.student.nama;
-                            if (uniqueMap.has(sName)) {
-                                const score = this.getRealScoreFromDoc(data);
-                                const finalScore = data.isRemedialDone ? 75 : score; 
-                                uniqueMap.get(sName).asasTesScore = finalScore;
-                            }
-                        });
-
+                        if (this.currentTab === 'nilai') {
+                            const qJawaban = query(collection(db, "jawaban_siswa"), where("mapel", "==", this.identitas.mapel), where("student.kelas", "==", this.selectedClass));
+                            const snapJawaban = await getDocs(qJawaban);
+                            snapJawaban.docs.forEach(doc => { const data = doc.data(); const sName = data.student.nama; if (uniqueMap.has(sName)) { const score = this.getRealScoreFromDoc(data); const finalScore = data.isRemedialDone ? 75 : score; uniqueMap.get(sName).asasTesScore = finalScore; } });
+                        }
                         this.studentList = Array.from(uniqueMap.values()).sort((a,b) => a.nama.localeCompare(b.nama));
-                        
+                        // Init stores
                         this.studentList.forEach(s => {
                             if (!this.allGrades[this.selectedClass]) this.allGrades[this.selectedClass] = {};
                             if (!this.allGrades[this.selectedClass][this.identitas.mapel]) this.allGrades[this.selectedClass][this.identitas.mapel] = {};
                             if (!this.allGrades[this.selectedClass][this.identitas.mapel][s.id]) this.allGrades[this.selectedClass][this.identitas.mapel][s.id] = {};
+                            
+                            // Init Ekskul
+                            if (!this.ekskulData[this.selectedClass]) this.ekskulData[this.selectedClass] = {};
+                            if (!this.ekskulData[this.selectedClass][s.id]) this.ekskulData[this.selectedClass][s.id] = { nama_ekskul: '', deskripsi: '' };
                         });
-
-                    } catch(e) { console.error(e); } 
-                    finally { this.isLoadingStudents = false; }
+                    } catch(e) { console.error(e); } finally { this.isLoadingStudents = false; }
                 },
+                async fetchStudentsForRekap() { await this.fetchStudentsAndScores(); },
+                async fetchStudents() { await this.fetchStudentsAndScores(); },
 
-                // --- SMART CALCULATIONS (IGNORE 0/EMPTY) ---
-                getVal(sid, key) {
-                    const val = this.getGrade(sid, key);
-                    return val === '' ? 0 : parseFloat(val);
-                },
-                
-                calculateRataTP(sid) {
-                    let sum = 0; let count = 0;
-                    this.activeTPs.forEach(tp => {
-                        const v = this.getGrade(sid, tp.uniqueId);
-                        if (v !== '' && parseFloat(v) > 0) { sum += parseFloat(v); count++; }
-                    });
-                    return count > 0 ? Math.ceil(sum / count) : 0;
-                },
+                // --- CALCS ---
+                calculateRataTP(sid) { let sum=0, c=0; this.activeTPs.forEach(tp => { const v=this.getGrade(sid, tp.uniqueId); if(v!=='' && parseFloat(v)>0){sum+=parseFloat(v); c++;} }); return c>0 ? Math.ceil(sum/c) : 0; },
+                calculateRataLM(sid) { let sum=0, c=0; this.activeLMs.forEach(lm => { const t=this.getGrade(sid, `lm_${lm.id}_tes`); const nt=this.getGrade(sid, `lm_${lm.id}_nontes`); if(t!=='' && parseFloat(t)>0){sum+=parseFloat(t); c++;} if(nt!=='' && parseFloat(nt)>0){sum+=parseFloat(nt); c++;} }); return c>0 ? Math.ceil(sum/c) : 0; },
+                calculateRataASAS(sid, asasTesScore) { let sum=0, c=0; if(asasTesScore > 0) { sum += parseFloat(asasTesScore); count++; } const nonTesRaw = this.getGrade(sid, 'asas_nontes'); if (nonTesRaw !== '' && parseFloat(nonTesRaw) > 0) { sum += parseFloat(nonTesRaw); count++; } return count > 0 ? Math.ceil(sum / count) : 0; },
+                calculateNilaiRapor(sid, asasTesScore) { const rTP = this.calculateRataTP(sid); const rLM = this.calculateRataLM(sid); const rASAS = this.calculateRataASAS(sid, asasTesScore); let sum = 0; let count = 0; if (rTP > 0) { sum += rTP; count++; } if (rLM > 0) { sum += rLM; count++; } if (rASAS > 0) { sum += rASAS; count++; } return count > 0 ? Math.ceil(sum / count) : 0; },
 
-                calculateRataLM(sid) {
-                    let sum = 0; let count = 0;
-                    this.activeLMs.forEach(lm => {
-                        const t = this.getGrade(sid, `lm_${lm.id}_tes`);
-                        const nt = this.getGrade(sid, `lm_${lm.id}_nontes`);
-                        if (t !== '' && parseFloat(t) > 0) { sum += parseFloat(t); count++; }
-                        if (nt !== '' && parseFloat(nt) > 0) { sum += parseFloat(nt); count++; }
-                    });
-                    return count > 0 ? Math.ceil(sum / count) : 0;
-                },
-
-                calculateRataASAS(sid, asasTesScore) {
-                    let sum = 0; let count = 0;
-                    
-                    // ASAS TES (Auto)
-                    if (asasTesScore > 0) { sum += parseFloat(asasTesScore); count++; }
-
-                    // ASAS Non-Tes (Manual)
-                    const nonTesRaw = this.getGrade(sid, 'asas_nontes');
-                    if (nonTesRaw !== '' && parseFloat(nonTesRaw) > 0) { sum += parseFloat(nonTesRaw); count++; }
-                    
-                    return count > 0 ? Math.ceil(sum / count) : 0;
-                },
-
-                // --- NEW: NILAI AKHIR RAPOR (AVG OF AVG - SKIP 0) ---
-                calculateNilaiRapor(sid, asasTesScore) {
-                    const rTP = this.calculateRataTP(sid);
-                    const rLM = this.calculateRataLM(sid);
-                    const rASAS = this.calculateRataASAS(sid, asasTesScore);
-
-                    let sum = 0; let count = 0;
-                    if (rTP > 0) { sum += rTP; count++; }
-                    if (rLM > 0) { sum += rLM; count++; }
-                    if (rASAS > 0) { sum += rASAS; count++; }
-
-                    return count > 0 ? Math.ceil(sum / count) : 0;
-                },
-
-                // --- UTILS ---
-                isValidScore(val) { if(val==='') return true; const n = Number(val); return !isNaN(n) && n>=0 && n<=100; },
+                isValidScore(val) { if(val==='') return true; const n=Number(val); return !isNaN(n) && n>=0 && n<=100; },
                 getValidationClass(val) { return this.isValidScore(val) ? '' : 'input-error'; },
-                generateSentence(tp) {
-                    let s = (tp.c ? tp.c.trim() + ", " : "") + tp.a + (tp.b ? " dapat " + tp.b.trim() : "") + (tp.d ? " " + tp.d.trim() : "");
-                    return s.replace(/\s+/g, ' ').trim() + ".";
-                },
+                generateSentence(tp) { let s = (tp.c ? tp.c.trim() + ", " : "") + tp.a + (tp.b ? " dapat " + tp.b.trim() : "") + (tp.d ? " " + tp.d.trim() : ""); return s.replace(/\s+/g, ' ').trim() + "."; },
                 toggleSection(i) { this.lingkupMateri[i].isOpen = !this.lingkupMateri[i].isOpen; },
                 
                 handleSaveButton() {
-                    if(this.currentTab === 'nilai') {
-                        let incomplete = false;
-                        if (this.studentList.length > 0) {
-                            for (const s of this.studentList) {
-                                // Simple check: TP empty
-                                for (const tp of this.activeTPs) {
-                                    if (this.getGrade(s.id, tp.uniqueId) === '') { incomplete = true; break; }
-                                }
-                                if (incomplete) break;
-                            }
+                    if (this.currentTab === 'ekskul') {
+                        localStorage.setItem('cbt_ekskul_data', JSON.stringify(this.ekskulData));
+                        Swal.fire({ icon: 'success', title: 'Data Ekskul Tersimpan!', timer: 1000, showConfirmButton: false });
+                    }
+                    else if(this.currentTab === 'nilai') {
+                        // SAVE MAPEL CONFIG & GRADES
+                        if(this.studentList.length > 0) {
+                            this.studentList.forEach(s => { this.updateGrade(s.id, 'asas_tes_auto', s.asasTesScore); });
                         }
-                        if (incomplete) {
-                            Swal.fire({ title: 'Masih Kosong?', text: "Yakin simpan?", icon: 'question', showCancelButton: true, confirmButtonText: 'Ya' }).then((r) => { if(r.isConfirmed) this.saveWithFunnyMessage(); });
-                        } else {
-                            this.saveWithFunnyMessage();
-                        }
+                        this.mapelConfigs[this.identitas.mapel] = JSON.parse(JSON.stringify(this.lingkupMateri)); // Save config for future ref
+                        localStorage.setItem('cbt_mapel_configs', JSON.stringify(this.mapelConfigs));
+                        localStorage.setItem('cbt_all_grades', JSON.stringify(this.allGrades));
+                        
+                        if (this.selectedClass && this.identitas.mapel) { this.savedProgress[`${this.selectedClass}_${this.identitas.mapel}`] = true; localStorage.setItem('cbt_saved_progress', JSON.stringify(this.savedProgress)); }
+                        Swal.fire({ title: 'Alhamdulillah! 🤲', text: 'Selamat kamu sudah terbebas/sedikit terbebas dari tagihan wakakur :)', icon: 'success' });
                     } else {
                         const dataTP = { identitas: this.identitas, lingkupMateri: this.lingkupMateri };
                         localStorage.setItem('cbt_input_tp', JSON.stringify(dataTP));
                         Swal.fire({ icon: 'success', title: 'Tersimpan!', timer: 1000, showConfirmButton: false });
                     }
                 },
-                saveWithFunnyMessage() {
-                    localStorage.setItem('cbt_all_grades', JSON.stringify(this.allGrades));
-                    this.lastSavedGrade = new Date().toLocaleTimeString();
-                    
-                    // Mark as Saved for Monitoring
-                    if (this.selectedClass && this.identitas.mapel) {
-                        this.savedProgress[`${this.selectedClass}_${this.identitas.mapel}`] = true;
-                        localStorage.setItem('cbt_saved_progress', JSON.stringify(this.savedProgress));
-                    }
-
-                    Swal.fire({ title: 'Alhamdulillah! 🤲', text: 'Selamat kamu sudah terbebas/sedikit terbebas dari tagihan wakakur :)', icon: 'success' });
-                },
-                
-                hasData(cls, mapel) {
-                    return this.savedProgress[`${cls}_${mapel}`] === true;
-                },
-                handleGridPaste(e, startRowIdx, targetKey) {
+                hasData(cls, mapel) { return this.savedProgress[`${cls}_${mapel}`] === true; },
+                handleGridPaste(e, startRowIdx, targetKey, isEkskul=false) {
                     e.preventDefault(); const text = (e.clipboardData || window.clipboardData).getData('text'); const rows = text.split(/\r\n|\n|\r/).filter(r => r.trim() !== '');
                     rows.forEach((val, offset) => {
                         const targetRow = startRowIdx + offset;
                         if (targetRow < this.studentList.length) {
                             const sid = this.studentList[targetRow].id;
-                            this.updateGrade(sid, targetKey, val.trim());
+                            if(isEkskul) this.updateEkskul(sid, targetKey, val.trim()); else this.updateGrade(sid, targetKey, val.trim());
                         }
                     });
+                },
+                exportRekapExcel() {
+                    if(this.rekapData.length === 0) return Swal.fire('Data Kosong', 'Pilih kelas terlebih dahulu.', 'warning');
+                    const ws = XLSX.utils.json_to_sheet(this.rekapData.map((d, i) => {
+                        const row = { 'Rank': i+1, 'Nama Siswa': d.nama };
+                        this.mapelList.forEach(m => row[m] = d.grades[m]?.final || 0);
+                        row['Total'] = d.total; row['Rata-rata'] = d.average;
+                        return row;
+                    }));
+                    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Rekap Nilai"); XLSX.writeFile(wb, `Rekap_Nilai_Kelas_${this.selectedClass}.xlsx`);
                 }
             }
         }).mount('#app');
