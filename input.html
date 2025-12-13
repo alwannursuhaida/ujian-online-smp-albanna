@@ -111,10 +111,10 @@
                                 <div v-for="(tp, tpIndex) in lm.tujuan" :key="tpIndex" class="relative group border-b border-slate-100 pb-4">
                                     <h4 class="font-bold text-xs text-slate-500 mb-2">TP {{ lmIndex + 1 }}.{{ tpIndex + 1 }}</h4>
                                     <div class="grid grid-cols-1 md:grid-cols-12 gap-2 mb-2">
-                                        <div class="md:col-span-1"><input v-model="tp.a" readonly class="w-full p-2 border rounded bg-gray-100 text-center text-xs font-bold" title="Audience"></div>
-                                        <div class="md:col-span-5"><textarea v-model="tp.b" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Behavior (KKO + Materi)"></textarea></div>
-                                        <div class="md:col-span-3"><textarea v-model="tp.c" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Condition (Melalui...)"></textarea></div>
-                                        <div class="md:col-span-3"><textarea v-model="tp.d" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Degree (Kriteria)"></textarea></div>
+                                        <div class="md:col-span-1"><input v-model="tp.a" readonly class="w-full p-2 border rounded bg-gray-100 text-center text-xs font-bold"></div>
+                                        <div class="md:col-span-5"><textarea v-model="tp.b" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Behavior"></textarea></div>
+                                        <div class="md:col-span-3"><textarea v-model="tp.c" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Condition"></textarea></div>
+                                        <div class="md:col-span-3"><textarea v-model="tp.d" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Degree"></textarea></div>
                                     </div>
                                     <div class="bg-indigo-50 p-2 rounded border border-indigo-100 flex items-center gap-2"><i class="fas fa-magic text-indigo-400 text-xs"></i><p class="text-xs text-indigo-900 italic font-medium">"{{ generateSentence(tp) }}"</p></div>
                                 </div>
@@ -176,7 +176,7 @@
                     </div>
                 </transition>
 
-                <!-- 4. INPUT EKSTRAKURIKULER (UPDATED: 3 KOLOM) -->
+                <!-- 4. INPUT EKSTRAKURIKULER (RESTORED) -->
                 <transition name="fade">
                     <div v-if="currentTab === 'ekskul'">
                         <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -198,13 +198,9 @@
                                         <tr>
                                             <th class="p-3 w-10 text-center bg-gray-800 text-white sticky-col" rowspan="2">No</th>
                                             <th class="p-3 w-64 bg-gray-800 text-white sticky-col-2" rowspan="2">Nama Siswa</th>
-                                            
-                                            <!-- HEADER EKSKUL 1 -->
-                                            <th colspan="2" class="p-2 text-center text-xs font-bold header-ekskul-1">EKSTRAKURIKULER 1 (WAJIB)</th>
-                                            <!-- HEADER EKSKUL 2 -->
-                                            <th colspan="2" class="p-2 text-center text-xs font-bold header-ekskul-2">EKSTRAKURIKULER 2 (OPSIONAL)</th>
-                                            <!-- HEADER EKSKUL 3 -->
-                                            <th colspan="2" class="p-2 text-center text-xs font-bold header-ekskul-3">EKSTRAKURIKULER 3 (OPSIONAL)</th>
+                                            <th colspan="2" class="p-2 text-center text-xs font-bold header-ekskul-1">EKSKUL 1 (WAJIB)</th>
+                                            <th colspan="2" class="p-2 text-center text-xs font-bold header-ekskul-2">EKSKUL 2 (OPSIONAL)</th>
+                                            <th colspan="2" class="p-2 text-center text-xs font-bold header-ekskul-3">EKSKUL 3 (OPSIONAL)</th>
                                         </tr>
                                         <tr class="text-slate-600 bg-slate-100">
                                             <th class="p-2 w-48 text-center text-xs border-l">Nama Kegiatan</th><th class="p-2 w-48 text-center text-xs">Deskripsi / Predikat</th>
@@ -216,16 +212,10 @@
                                         <tr v-for="(s, sIdx) in studentList" :key="s.id" class="hover:bg-orange-50">
                                             <td class="text-center bg-gray-50 text-gray-500 select-none sticky-col left-0">{{ sIdx + 1 }}</td>
                                             <td class="px-3 py-2 font-bold text-gray-700 select-none whitespace-nowrap sticky-col-2 bg-white left-10">{{ s.nama }}</td>
-                                            
-                                            <!-- EKSKUL 1 (FIXED PRAMUKA) -->
                                             <td class="p-0 border-l bg-orange-50/50"><input type="text" class="excel-input text-left font-bold text-orange-900 bg-transparent cursor-not-allowed" value="PRAMUKA" readonly></td>
                                             <td class="p-0 bg-orange-50/50"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek1_desc" @input="updateEkskul(s.id, 'ek1_desc', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'ek1_desc', true)" placeholder="Sangat Baik..."></td>
-
-                                            <!-- EKSKUL 2 -->
                                             <td class="p-0 border-l"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek2_nama" @input="updateEkskul(s.id, 'ek2_nama', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'ek2_nama', true)" placeholder="Nama Ekskul"></td>
                                             <td class="p-0"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek2_desc" @input="updateEkskul(s.id, 'ek2_desc', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'ek2_desc', true)" placeholder="Predikat..."></td>
-
-                                            <!-- EKSKUL 3 -->
                                             <td class="p-0 border-l"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek3_nama" @input="updateEkskul(s.id, 'ek3_nama', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'ek3_nama', true)" placeholder="Nama Ekskul"></td>
                                             <td class="p-0"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek3_desc" @input="updateEkskul(s.id, 'ek3_desc', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'ek3_desc', true)" placeholder="Predikat..."></td>
                                         </tr>
@@ -273,7 +263,7 @@
                                 <table class="w-full text-left border-collapse excel-table text-xs">
                                     <thead class="bg-emerald-800 text-white">
                                         <tr>
-                                            <th class="p-3 w-10 text-center sticky-col bg-emerald-800" rowspan="2">Rank</th>
+                                            <th class="p-3 w-10 text-center sticky-col bg-emerald-800" rowspan="2">No</th>
                                             <th class="p-3 w-48 sticky-col-2 bg-emerald-800" rowspan="2">Nama Siswa</th>
                                             
                                             <!-- Loop Mapel -->
@@ -281,7 +271,9 @@
                                                 <th :colspan="getMapelColSpan(m)" class="p-2 text-center border-l-4 border-emerald-400 bg-emerald-900">{{ m }}</th>
                                             </template>
                                             
-                                            <th class="p-3 text-center bg-emerald-950 sticky-right" rowspan="2">TOTAL SKOR</th>
+                                            <th class="p-3 text-center bg-emerald-950 sticky-right w-16" rowspan="2">TOTAL SKOR</th>
+                                            <th class="p-3 text-center bg-emerald-950 sticky-right w-16" rowspan="2">RATA-RATA</th>
+                                            <th class="p-3 text-center bg-yellow-600 text-black sticky-right w-10 font-extrabold" rowspan="2">RANK</th>
                                         </tr>
                                         <tr class="bg-emerald-700 text-emerald-50">
                                             <template v-for="m in mapelList" :key="m + '_sub'">
@@ -299,8 +291,8 @@
                                     </thead>
                                     <tbody class="bg-white">
                                         <tr v-for="(row, idx) in rekapData" :key="row.id" class="hover:bg-emerald-50">
-                                            <td class="text-center font-bold sticky-col bg-white">{{ idx + 1 }}</td>
-                                            <td class="px-3 py-2 font-bold text-gray-700 whitespace-nowrap sticky-col-2 bg-white">{{ row.nama }}</td>
+                                            <td class="text-center bg-gray-50 text-gray-500 select-none sticky-col left-0">{{ idx + 1 }}</td> <!-- No Urut Biasa -->
+                                            <td class="px-3 py-2 font-bold text-gray-700 whitespace-nowrap sticky-col-2 bg-white left-10">{{ row.nama }}</td>
                                             
                                             <template v-for="m in mapelList" :key="m">
                                                 <!-- Render Nilai TP per Mapel -->
@@ -315,6 +307,8 @@
                                             </template>
 
                                             <td class="text-center font-extrabold text-white bg-emerald-900 sticky-right">{{ row.total }}</td>
+                                            <td class="text-center font-bold text-white bg-emerald-800 sticky-right">{{ row.average }}</td>
+                                            <td class="text-center font-extrabold text-black bg-yellow-400 sticky-right border-l-2 border-yellow-600">{{ row.rank }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -351,7 +345,7 @@
                     lingkupMateri: Array.from({ length: 5 }, (_, i) => ({ id: i + 1, judul: '', isOpen: i === 0, tujuan: Array.from({ length: 5 }, () => ({ a: 'Murid', b: '', c: '', d: '' })) })),
                     
                     allGrades: {}, savedProgress: {}, bankSoalCache: {},
-                    ekskulData: {}, mapelConfigs: {}, // NEW: Store Mapel configs
+                    ekskulData: {}, mapelConfigs: {}, 
                     rekapJenjang: '7',
 
                     mapelList: ['AGAMA ISLAM', 'BAHASA ARAB', 'BAHASA BALI', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 'INFORMATIKA', 'IPA', 'IPS', 'KKA', 'MATEMATIKA', 'OLAHRAGA', 'PKN', 'SENI BUDAYA'],
@@ -366,31 +360,28 @@
                 activeLMs() { return this.lingkupMateri.filter(lm => lm.judul).map(lm => ({ ...lm, tujuan: lm.tujuan.filter(tp => tp.b), tpCount: lm.tujuan.filter(tp => tp.b).length })).filter(lm => lm.tpCount > 0); },
                 activeTPs() { const tps=[]; this.activeLMs.forEach(lm=>{ lm.tujuan.forEach((tp,i)=>{ if(tp.b) tps.push({uniqueId:`tp_${lm.id}_${i+1}`}); }); }); return tps; },
                 
-                // REKAP DETAIL COMPUTED
+                // REKAP DETAIL COMPUTED WITH RANK
                 rekapData() {
                     if (!this.selectedClass || this.currentTab !== 'rekap') return [];
                     
-                    return this.studentList.map(s => {
+                    // 1. Calculate Raw Data & Total
+                    const rawList = this.studentList.map(s => {
                         const grades = {};
                         let total = 0;
+                        let countMapel = 0;
 
                         this.mapelList.forEach(m => {
                             const raw = this.allGrades[this.selectedClass]?.[m]?.[s.id];
                             
                             if (raw) {
-                                // Re-Calculate Components based on Raw Data found in allGrades
                                 let sumTP=0, cTP=0, sumLM=0, cLM=0;
-                                let sumASAS=0, cASAS=0;
                                 let asasTes = raw['asas_tes_auto'] ? parseFloat(raw['asas_tes_auto']) : 0;
                                 let asasNon = raw['asas_nontes'] ? parseFloat(raw['asas_nontes']) : 0;
-                                const details = {}; // Store raw TP values
+                                const details = {}; 
 
-                                // Scan raw keys
                                 Object.keys(raw).forEach(k => {
                                     const val = parseFloat(raw[k]);
-                                    // Simpan detail untuk ditampilkan di kolom TP
                                     details[k] = raw[k];
-
                                     if(!isNaN(val) && val > 0) {
                                         if (k.startsWith('tp_')) { sumTP+=val; cTP++; }
                                         else if (k.startsWith('lm_')) { sumLM+=val; cLM++; }
@@ -400,14 +391,11 @@
                                 const rTP = cTP > 0 ? Math.ceil(sumTP/cTP) : 0;
                                 const rLM = cLM > 0 ? Math.ceil(sumLM/cLM) : 0;
                                 
-                                // Calc ASAS (Tes + Non)
-                                let rASAS = 0;
-                                let cA = 0;
+                                let rASAS = 0, cA = 0;
                                 if(asasTes > 0) { rASAS += asasTes; cA++; }
                                 if(asasNon > 0) { rASAS += asasNon; cA++; }
                                 rASAS = cA > 0 ? Math.ceil(rASAS/cA) : 0;
 
-                                // Final
                                 let sumFinal = 0, countFinal = 0;
                                 if(rTP > 0) { sumFinal += rTP; countFinal++; }
                                 if(rLM > 0) { sumFinal += rLM; countFinal++; }
@@ -415,14 +403,31 @@
                                 const final = countFinal > 0 ? Math.ceil(sumFinal / countFinal) : 0;
 
                                 grades[m] = { rTP, rLM, rASAS, final, details };
-                                if(final > 0) total += final;
+                                if(final > 0) { total += final; countMapel++; }
                             } else {
                                 grades[m] = { rTP:'-', rLM:'-', rASAS:'-', final:'-', details: {} };
                             }
                         });
+                        
+                        const average = countMapel > 0 ? Math.round(total / countMapel) : 0;
 
-                        return { id: s.id, nama: s.nama, grades, total };
-                    }).sort((a, b) => b.total - a.total);
+                        return { id: s.id, nama: s.nama, grades, total, average };
+                    });
+                    
+                    // 2. Determine Ranks
+                    // Sort copy to find rank
+                    const sortedByTotal = [...rawList].sort((a, b) => b.total - a.total);
+                    const rankMap = {};
+                    sortedByTotal.forEach((item, index) => {
+                        // Handle tie logic simple for now
+                        rankMap[item.id] = index + 1;
+                    });
+
+                    // 3. Return mapped with Rank (Alphabetical order preferred for display)
+                    return rawList.map(item => ({
+                        ...item,
+                        rank: rankMap[item.id]
+                    })).sort((a, b) => a.nama.localeCompare(b.nama)); // Sort by Name for display
                 }
             },
             mounted() {
@@ -435,28 +440,16 @@
             },
             methods: {
                 // --- HELPER UNTUK KOLOM DINAMIS REKAP ---
-                getMapelColSpan(mapel) {
-                    // 4 Kolom Summary (R.TP, R.LM, R.ASAS, Final) + Jumlah TP Detail
-                    return this.getMapelColumns(mapel).length + 4;
-                },
+                getMapelColSpan(mapel) { return this.getMapelColumns(mapel).length + 4; },
                 getMapelColumns(mapel) {
-                    // Ambil config tersimpan
                     const config = this.mapelConfigs[mapel];
-                    if (!config) return []; // Jika belum ada config, return kosong
-                    
+                    if (!config) return []; 
                     const cols = [];
                     config.forEach(lm => {
                         if (lm.judul) {
                             lm.tujuan.forEach((tp, i) => {
-                                if (tp.b) {
-                                    cols.push({ 
-                                        id: `tp_${lm.id}_${i+1}`, 
-                                        label: `TP ${lm.id}.${i+1}`,
-                                        title: `LM ${lm.id}: ${tp.b}`
-                                    });
-                                }
+                                if (tp.b) cols.push({ id: `tp_${lm.id}_${i+1}`, label: `TP ${lm.id}.${i+1}`, title: `LM ${lm.id}: ${tp.b}` });
                             });
-                            // Bisa tambah kolom LM Tes/Non Tes disini jika mau super detail
                         }
                     });
                     return cols;
