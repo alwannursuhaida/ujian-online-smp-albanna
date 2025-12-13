@@ -247,10 +247,6 @@
                                             
                                             <!-- Loop Mapel -->
                                             <template v-for="m in mapelList" :key="m">
-                                                <!-- Untuk header, kita perlu tahu struktur kolomnya. Disini kita pakai struktur standar: Rata TP, Rata LM, Rata ASAS, AKHIR -->
-                                                <!-- Namun permintaan Anda: "tampilkan juga seluruh kolom TP, LM...". Ini berarti kita harus loop TP per mapel. -->
-                                                <!-- Karena TP per mapel dinamis, kita perlu akses config mapel tersebut. -->
-                                                <!-- Kompleksitas: Column span dinamis per mapel. -->
                                                 <th :colspan="getMapelColSpan(m)" class="p-2 text-center border-l-4 border-emerald-400 bg-emerald-900">{{ m }}</th>
                                             </template>
                                             
