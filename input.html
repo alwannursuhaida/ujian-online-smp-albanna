@@ -46,6 +46,7 @@
 
     <div id="app" class="flex h-screen overflow-hidden">
         
+        <!-- SIDEBAR -->
         <div class="w-64 bg-slate-900 text-white flex flex-col h-full shadow-2xl z-20 shrink-0">
             <div class="p-6 text-center border-b border-slate-700 bg-slate-800">
                 <h1 class="font-bold text-xl tracking-wider">E-RAPOR</h1>
@@ -68,11 +69,13 @@
                 <div class="border-t border-slate-700 my-2"></div>
                 <button @click="currentTab = 'monitoring'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'monitoring' ? 'bg-indigo-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-chart-line w-5"></i> Monitoring Input</button>
                 <button @click="switchToRekap" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'rekap' ? 'bg-emerald-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-trophy w-5"></i> Rekapitulasi Nilai</button>
-                <button @click="switchToRekapAkhir" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'rekap_akhir' ? 'bg-purple-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-file-invoice w-5"></i> Cetak Rapor</button>
+                <button @click="switchToRekapAkhir" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'rekap_akhir' ? 'bg-purple-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-file-invoice w-5"></i> LHBTS</button>
+                <button @click="switchToLhbs" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'lhbs' ? 'bg-pink-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-print w-5"></i> Cetak LHBS</button>
             </nav>
             <div class="p-4 border-t border-slate-800"><a href="index.html" class="w-full text-center text-xs text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 p-2 hover:bg-slate-800 rounded transition"><i class="fas fa-home"></i> KEMBALI KE MENU</a></div>
         </div>
 
+        <!-- MAIN CONTENT -->
         <div class="flex-1 flex flex-col h-full overflow-hidden bg-gray-50 relative">
             <div class="bg-white p-4 shadow-sm border-b flex justify-between items-center px-8 z-10">
                 <div><h2 class="text-2xl font-bold text-slate-800 uppercase">{{ getPageTitle() }}</h2><p class="text-xs text-gray-500">{{ getPageSubtitle() }}</p></div>
@@ -81,7 +84,8 @@
                 
                 <button v-if="currentTab === 'rekap'" @click="exportRekapExcel" class="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-emerald-700 transition flex items-center gap-2"><i class="fas fa-file-excel"></i> UNDUH LENGKAP</button>
                 
-                <div v-if="currentTab === 'rekap_akhir'" class="flex gap-2 items-center">
+                <!-- TOMBOL DOWNLOAD BACKEND DI MENU REKAP AKHIR -->
+                <div v-if="currentTab === 'rekap_akhir' || currentTab === 'lhbs'" class="flex gap-2 items-center">
                     <div class="flex flex-col">
                         <label class="text-[10px] text-gray-500 font-bold">MODE UNDUH</label>
                         <select v-model="downloadMode" class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-purple-500 focus:border-purple-500 block p-1">
@@ -104,12 +108,16 @@
 
             <div class="flex-1 overflow-y-auto p-8 pb-32">
                 
+                <!-- 1. IDENTITAS -->
                 <transition name="fade"><div v-if="currentTab === 'identitas'"><div class="bg-white p-8 rounded-xl shadow-lg border border-indigo-100 max-w-3xl mx-auto mt-10"><div class="text-center mb-8"><div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-600"><i class="fas fa-book-reader fa-2x"></i></div><h3 class="text-xl font-bold text-slate-800">Lengkapi Data Awal</h3></div><div class="space-y-6"><div><label class="block text-sm font-bold text-gray-600 uppercase mb-2">Pilih Mata Pelajaran <span class="text-red-500">*</span></label><select v-model="identitas.mapel" class="w-full p-4 border-2 border-indigo-100 rounded-xl bg-indigo-50/30 focus:border-indigo-500 outline-none font-bold text-slate-800"><option value="" disabled>-- Pilih Mapel --</option><option v-for="m in mapelList" :value="m">{{ m }}</option></select></div><div><label class="block text-sm font-bold text-gray-600 uppercase mb-2">Jenjang Kelas <span class="text-red-500">*</span></label><select v-model="identitas.jenjang" class="w-full p-4 border-2 border-indigo-100 rounded-xl bg-indigo-50/30 focus:border-indigo-500 outline-none font-bold text-slate-800"><option value="" disabled>-- Pilih Jenjang --</option><option value="7">Kelas 7</option><option value="8">Kelas 8</option><option value="9">Kelas 9</option></select></div><div><label class="block text-sm font-bold text-gray-600 uppercase mb-2">Nama Guru Pengampu <span class="text-red-500">*</span></label><input v-model="identitas.guru" class="w-full pl-4 p-4 border-2 border-gray-200 rounded-xl focus:border-indigo-500 outline-none text-slate-800" placeholder="Nama Lengkap & Gelar"></div><div class="pt-4"><button @click="switchToTP" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg flex justify-center items-center gap-2">MULAI MENYUSUN TP <i class="fas fa-arrow-right"></i></button></div></div></div></div></transition>
 
+                <!-- 2. PENYUSUNAN TP -->
                 <transition name="fade"><div v-if="currentTab === 'tp'"><div class="mb-6 flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-200 w-fit"><span class="font-bold text-indigo-900 text-sm">{{ identitas.mapel }}</span><span class="text-gray-400">|</span><span class="font-bold text-indigo-900 text-sm">Jenjang {{ identitas.jenjang }}</span></div><div v-for="(lm, lmIndex) in lingkupMateri" :key="lm.id" class="mb-8 bg-white rounded-xl shadow border border-slate-200 overflow-hidden"><div class="bg-slate-100 p-4 border-b flex items-center gap-4 cursor-pointer" @click="lm.isOpen = !lm.isOpen"><div class="bg-indigo-600 text-white w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm">{{ lmIndex + 1 }}</div><div class="flex-1" @click.stop><input v-model="lm.judul" class="w-full p-2 bg-transparent border-b-2 border-slate-300 focus:border-indigo-600 outline-none font-bold" :placeholder="'Lingkup Materi ' + (lmIndex + 1)"></div><i :class="['fas text-slate-400', lm.isOpen ? 'fa-chevron-up' : 'fa-chevron-down']"></i></div><div v-show="lm.isOpen" class="p-6 space-y-6 bg-slate-50/30"><div v-for="(tp, tpIndex) in lm.tujuan" :key="tpIndex" class="relative group border-b border-slate-100 pb-4"><h4 class="font-bold text-xs text-slate-500 mb-2">TP {{ lmIndex + 1 }}.{{ tpIndex + 1 }}</h4><div class="grid grid-cols-1 md:grid-cols-12 gap-2 mb-2"><div class="md:col-span-1"><input v-model="tp.a" readonly class="w-full p-2 border rounded bg-gray-100 text-center text-xs font-bold"></div><div class="md:col-span-5"><textarea v-model="tp.b" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Behavior (KKO + Materi)"></textarea></div><div class="md:col-span-3"><textarea v-model="tp.c" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Condition (Melalui...)"></textarea></div><div class="md:col-span-3"><textarea v-model="tp.d" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Degree (Kriteria)"></textarea></div></div><div class="bg-indigo-50 p-2 rounded border border-indigo-100 flex items-center gap-2"><i class="fas fa-magic text-indigo-400 text-xs"></i><p class="text-xs text-indigo-900 italic font-medium">"{{ generateSentence(tp) }}"</p></div></div></div></div></div></transition>
 
+                <!-- 3. INPUT NILAI -->
                 <transition name="fade"><div v-if="currentTab === 'nilai'"><div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4"><div class="w-full md:w-1/3"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pilih Kelas</label><select v-model="selectedClass" @change="fetchStudentsAndScores" class="w-full p-2 border-2 border-blue-200 rounded font-bold text-blue-900"><option value="" disabled>-- Pilih Kelas --</option><option v-for="c in filteredClasses" :value="c">{{ c }}</option></select></div><div class="text-right text-xs text-gray-500"><p><strong>Mapel:</strong> {{ identitas.mapel }}</p><p class="text-green-600 font-bold" v-if="lastSavedGrade">Tersimpan: {{ lastSavedGrade }}</p></div></div><div class="bg-white rounded-xl shadow border overflow-hidden relative"><div v-if="!selectedClass" class="p-10 text-center text-gray-400"><i class="fas fa-arrow-up fa-2x mb-2"></i><br>Pilih kelas dulu.</div><div v-else-if="isLoadingStudents" class="p-10 text-center text-blue-500"><i class="fas fa-circle-notch fa-spin fa-2x"></i></div><div v-else class="overflow-x-auto"><table class="w-full text-left border-collapse excel-table text-sm"><thead><tr class="bg-slate-800 text-white"><th class="p-3 w-10 text-center sticky-col bg-slate-800" rowspan="2">No</th><th class="p-3 w-64 sticky-col-2 bg-slate-800 left-10" rowspan="2">Nama Siswa</th><template v-for="lm in activeLMs" :key="lm.id"><th :colspan="lm.tpCount + 2" class="p-2 text-center text-xs font-bold header-lm text-slate-800">{{ lm.judul || 'LM ' + lm.id }}</th></template><th colspan="2" class="p-2 text-center text-xs font-bold header-asas text-orange-800">ASAS</th><th colspan="3" class="p-2 text-center text-xs font-bold header-avg text-green-800">RATA-RATA</th><th rowspan="2" class="p-2 text-center text-xs font-bold header-rapor">Nilai Akhir (Rapor)</th></tr><tr class="bg-slate-100 text-slate-600"><template v-for="lm in activeLMs" :key="lm.id"><template v-for="(tp, idx) in lm.tujuan" :key="lm.id + '_' + idx"><th class="p-2 text-center text-[10px] w-16 border-l" :title="generateSentence(tp)">TP {{ lm.id }}.{{ idx+1 }}</th></template><th class="p-2 text-center text-[10px] w-14 bg-blue-50 font-bold border-l-2">LM Tes</th><th class="p-2 text-center text-[10px] w-14 bg-blue-50 font-bold">LM Non</th></template><th class="p-2 text-center text-[10px] w-16 bg-orange-50 font-bold">Tes</th><th class="p-2 text-center text-[10px] w-16 bg-orange-50 font-bold">Non</th><th class="p-2 text-center text-[10px] w-12 bg-green-50 font-bold">TP</th><th class="p-2 text-center text-[10px] w-12 bg-green-50 font-bold">LM</th><th class="p-2 text-center text-[10px] w-12 bg-green-50 font-bold">ASAS</th></tr></thead><tbody class="bg-white"><tr v-for="(s, sIdx) in studentList" :key="s.id" class="hover:bg-blue-50"><td class="text-center bg-gray-50 text-gray-500 select-none sticky-col left-0">{{ sIdx + 1 }}</td><td class="px-3 py-2 font-bold text-gray-700 select-none whitespace-nowrap sticky-col-2 bg-white left-10">{{ s.nama }}</td><template v-for="lm in activeLMs" :key="lm.id"><template v-for="(tp, idx) in lm.tujuan" :key="lm.id + '_' + idx"><td class="p-0"><input type="text" :class="['excel-input', getValidationClass(getGrade(s.id, `tp_${lm.id}_${idx+1}` ))]" :value="getGrade(s.id, `tp_${lm.id}_${idx+1}` )" @input="updateGrade(s.id, `tp_${lm.id}_${idx+1}`, $event.target.value)" @paste="handleGridPaste($event, sIdx, `tp_${lm.id}_${idx+1}`)"></td></template><td class="p-0 bg-blue-50/20 border-l-2"><input type="text" :class="['excel-input font-bold text-blue-700', getValidationClass(getGrade(s.id, `lm_${lm.id}_tes`))]" :value="getGrade(s.id, `lm_${lm.id}_tes`)" @input="updateGrade(s.id, `lm_${lm.id}_tes`, $event.target.value)"></td><td class="p-0 bg-blue-50/20"><input type="text" :class="['excel-input font-bold text-blue-700', getValidationClass(getGrade(s.id, `lm_${lm.id}_nontes`))]" :value="getGrade(s.id, `lm_${lm.id}_nontes`)" @input="updateGrade(s.id, `lm_${lm.id}_nontes`, $event.target.value)"></td></template><td class="p-0 bg-orange-50/30 border-l-2"><input type="text" class="excel-input font-bold text-orange-700 bg-orange-100 cursor-not-allowed" :value="s.asasTesScore" readonly></td><td class="p-0 bg-orange-50/30"><input type="text" :class="['excel-input font-bold text-orange-700', getValidationClass(getGrade(s.id, 'asas_nontes'))]" :value="getGrade(s.id, 'asas_nontes')" @input="updateGrade(s.id, 'asas_nontes', $event.target.value)"></td><td class="p-0 bg-green-50/30 text-center font-bold text-green-800 border-l-2">{{ calculateRataTP(s.id) }}</td><td class="p-0 bg-green-50/30 text-center font-bold text-green-800">{{ calculateRataLM(s.id) }}</td><td class="p-0 bg-green-50/30 text-center font-bold text-green-800">{{ calculateRataASAS(s.id, s.asasTesScore) }}</td><td class="p-0 bg-blue-100 text-center font-extrabold text-blue-900 border-l-2">{{ calculateNilaiRapor(s.id, s.asasTesScore) }}</td></tr></tbody></table></div></div></div></transition>
 
+                <!-- 4. EKSKUL (RESTORED) -->
                 <transition name="fade">
                     <div v-if="currentTab === 'ekskul'">
                         <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -142,6 +150,7 @@
                     </div>
                 </transition>
 
+                <!-- 5. MENU KEWALASAN (RESTORED) -->
                 <transition name="fade">
                     <div v-if="currentTab === 'kewalasan'">
                         <div class="bg-white p-6 rounded-xl shadow border mb-6">
@@ -160,7 +169,7 @@
                             </div>
                         </div>
                         <div class="bg-white rounded-xl shadow border overflow-hidden relative">
-                            <div v-if="!selectedClass" class="p-10 text-center text-gray-400">Pilih kelas perwalian Anda.</div>
+                            <div v-if="!selectedClass" class="p-10 text-center text-gray-400"><i class="fas fa-chalkboard-teacher fa-2x mb-2"></i><br>Pilih kelas perwalian Anda.</div>
                             <div v-else class="overflow-x-auto">
                                 <table class="w-full text-left border-collapse excel-table text-sm">
                                     <thead>
@@ -199,6 +208,7 @@
                     </div>
                 </transition>
 
+                <!-- 6. MENU 7 KAIH (RESTORED) -->
                 <transition name="fade">
                     <div v-if="currentTab === 'kaih'">
                         <div class="bg-white p-6 rounded-xl shadow border mb-6">
@@ -215,7 +225,7 @@
                         </div>
 
                         <div class="bg-white rounded-xl shadow border overflow-hidden relative">
-                            <div v-if="!selectedClass" class="p-10 text-center text-gray-400">Pilih kelas perwalian Anda.</div>
+                            <div v-if="!selectedClass" class="p-10 text-center text-gray-400"><i class="fas fa-chalkboard-teacher fa-2x mb-2"></i><br>Pilih kelas perwalian Anda.</div>
                             <div v-else class="overflow-x-auto">
                                 <table class="w-full text-left border-collapse excel-table text-sm">
                                     <thead>
@@ -223,6 +233,7 @@
                                             <th class="p-3 w-10 text-center sticky-col bg-cyan-800" rowspan="2">No</th>
                                             <th class="p-3 w-64 sticky-col-2 bg-cyan-800" rowspan="2">Nama Siswa</th>
                                             
+                                            <!-- Looping Aspek Utama -->
                                             <template v-for="aspect in kaihConfig" :key="aspect.id">
                                                 <th :colspan="aspect.count" class="p-1 text-center font-bold text-[10px] border-l border-cyan-600 bg-cyan-900">
                                                     {{ aspect.name }}
@@ -232,6 +243,7 @@
                                             <th class="p-3 w-96 text-center bg-gray-800 sticky-right" rowspan="2">Deskripsi 7 KAIH (Otomatis)</th>
                                         </tr>
                                         <tr class="bg-cyan-700 text-cyan-50">
+                                            <!-- Sub-header Indikator Numbers -->
                                             <template v-for="aspect in kaihConfig" :key="aspect.id + '_sub'">
                                                 <th v-for="n in aspect.count" :key="aspect.id + '_' + n" class="p-1 text-center w-8 text-[9px] border-l border-cyan-600">
                                                     Ind.{{ n }}
@@ -244,6 +256,7 @@
                                             <td class="text-center bg-gray-50 text-gray-500 select-none sticky-col left-0">{{ sIdx + 1 }}</td>
                                             <td class="px-3 py-2 font-bold text-gray-700 whitespace-nowrap sticky-col-2 bg-white left-10">{{ s.nama }}</td>
                                             
+                                            <!-- Input Loops -->
                                             <template v-for="aspect in kaihConfig" :key="aspect.id">
                                                 <td v-for="n in aspect.count" :key="aspect.id + '_' + n" class="p-0 border-l border-gray-100">
                                                     <input 
@@ -268,6 +281,7 @@
                     </div>
                 </transition>
 
+                <!-- 7. MONITORING (RESTORED) -->
                 <transition name="fade">
                     <div v-if="currentTab === 'monitoring'">
                         <div class="bg-white p-6 rounded-xl shadow border">
@@ -282,6 +296,7 @@
                     </div>
                 </transition>
                 
+                <!-- 8. REKAPITULASI NILAI -->
                 <transition name="fade">
                     <div v-if="currentTab === 'rekap'">
                         <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -295,6 +310,7 @@
                     </div>
                 </transition>
 
+                <!-- 9. LHBTS (REKAP AKHIR RENAMED) -->
                 <transition name="fade">
                     <div v-if="currentTab === 'rekap_akhir'">
                         <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -309,10 +325,30 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="text-right text-xs text-gray-500">Preview Rapor Lengkap</div>
+                            
+                            <!-- TOMBOL DOWNLOAD BACKEND DI MENU REKAP AKHIR (LHBTS) -->
+                            <div class="flex gap-2 items-center">
+                                <div class="flex flex-col">
+                                    <label class="text-[10px] text-gray-500 font-bold">MODE UNDUH</label>
+                                    <select v-model="downloadMode" class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-purple-500 focus:border-purple-500 block p-1">
+                                        <option value="batch">ZIP (File Terpisah)</option>
+                                        <option value="combine">GABUNG (1 File)</option>
+                                    </select>
+                                </div>
+                                <button @click="generateRaporBackend('xlsx')" :disabled="isProcessingDownload" :class="['text-white px-4 py-2 rounded-lg font-bold shadow transition flex items-center gap-2 text-xs', isProcessingDownload ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700']">
+                                    <i v-if="isProcessingDownload" class="fas fa-spinner fa-spin"></i>
+                                    <i v-else class="fas fa-file-excel"></i> 
+                                    {{ isProcessingDownload ? 'MEMPROSES...' : 'XLSX LHBTS' }}
+                                </button>
+                                <button @click="generateRaporBackend('pdf')" :disabled="isProcessingDownload" :class="['text-white px-4 py-2 rounded-lg font-bold shadow transition flex items-center gap-2 text-xs', isProcessingDownload ? 'bg-gray-400' : 'bg-red-600 hover:bg-red-700']">
+                                    <i v-if="isProcessingDownload" class="fas fa-spinner fa-spin"></i>
+                                    <i v-else class="fas fa-file-pdf"></i> 
+                                    {{ isProcessingDownload ? 'MEMPROSES...' : 'PDF LHBTS' }}
+                                </button>
+                            </div>
                         </div>
                         <div class="bg-white rounded-xl shadow border overflow-hidden relative">
-                            <div v-if="!selectedClass" class="p-10 text-center text-gray-400">Pilih kelas (atau semua kelas) untuk melihat Rapor Akhir.</div>
+                            <div v-if="!selectedClass" class="p-10 text-center text-gray-400">Pilih kelas (atau semua kelas) untuk melihat LHBTS.</div>
                             <div v-else class="overflow-x-auto">
                                 <table class="w-full text-left border-collapse excel-table text-xs">
                                     <thead class="bg-purple-800 text-white">
@@ -333,6 +369,56 @@
                                             <td class="px-3 py-2 text-center text-gray-600 font-bold sticky-col-3 bg-white">{{ row.kelas }}</td>
                                             <template v-for="m in mapelList" :key="m">
                                                 <td class="text-center font-extrabold text-lg text-purple-800 bg-purple-50 border-l">{{ row.data[m].nilai || '-' }}</td>
+                                                <td class="p-2 border text-[11px] text-green-700 align-top whitespace-normal leading-relaxed">{{ row.data[m].desc1 }}</td>
+                                                <td class="p-2 border text-[11px] text-orange-700 align-top whitespace-normal leading-relaxed">{{ row.data[m].desc2 }}</td>
+                                            </template>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+
+                <!-- 10. CETAK LHBS -->
+                <transition name="fade">
+                    <div v-if="currentTab === 'lhbs'">
+                        <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div class="w-full md:w-1/2 flex gap-2">
+                                <div class="w-1/3"><label class="block text-xs font-bold text-pink-500 uppercase mb-1">Jenjang</label><select v-model="rekapJenjang" class="w-full p-2 border rounded font-bold text-pink-900"><option value="7">Kelas 7</option><option value="8">Kelas 8</option><option value="9">Kelas 9</option></select></div>
+                                <div class="w-2/3">
+                                    <label class="block text-xs font-bold text-pink-500 uppercase mb-1">Kelas / Filter</label>
+                                    <select v-model="selectedClass" @change="fetchStudentsForRekap" class="w-full p-2 border-2 border-pink-200 rounded font-bold text-pink-900">
+                                        <option value="" disabled>-- Pilih --</option>
+                                        <option value="SEMUA">-- SEMUA KELAS {{ rekapJenjang }} --</option>
+                                        <option v-for="c in classesMap[rekapJenjang]" :value="c">{{ c }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="text-right text-xs text-gray-500">Preview LHBS Lengkap</div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow border overflow-hidden relative">
+                            <div v-if="!selectedClass" class="p-10 text-center text-gray-400">Pilih kelas (atau semua kelas) untuk melihat LHBS.</div>
+                            <div v-else class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse excel-table text-xs">
+                                    <thead class="bg-pink-800 text-white">
+                                        <tr>
+                                            <th class="p-3 w-10 text-center sticky-col bg-pink-800" rowspan="2">No</th>
+                                            <th class="p-3 w-48 sticky-col-2 bg-pink-800" rowspan="2">Nama Siswa</th>
+                                            <th class="p-3 w-20 sticky-col-3 bg-pink-800" rowspan="2">Kelas</th>
+                                            <template v-for="m in mapelList" :key="m"><th colspan="3" class="p-2 text-center border-l-4 border-pink-500 bg-pink-900">{{ m }}</th></template>
+                                        </tr>
+                                        <tr class="bg-pink-700 text-pink-100">
+                                            <template v-for="m in mapelList" :key="m + '_desc'"><th class="p-2 text-center w-12 font-bold bg-pink-600 border-l">NILAI</th><th class="p-2 text-center min-w-[350px]">Deskripsi 1 (Kuat)</th><th class="p-2 text-center min-w-[350px]">Deskripsi 2 (Lemah)</th></template>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white">
+                                        <tr v-for="(row, idx) in rekapAkhirTableData" :key="row.id" class="hover:bg-pink-50">
+                                            <td class="text-center font-bold sticky-col bg-white">{{ idx + 1 }}</td>
+                                            <td class="px-3 py-2 font-bold text-gray-700 whitespace-nowrap sticky-col-2 bg-white left-10">{{ row.nama }}</td>
+                                            <td class="px-3 py-2 text-center text-gray-600 font-bold sticky-col-3 bg-white">{{ row.kelas }}</td>
+                                            <template v-for="m in mapelList" :key="m">
+                                                <td class="text-center font-extrabold text-lg text-pink-800 bg-pink-50 border-l">{{ row.data[m].nilai || '-' }}</td>
                                                 <td class="p-2 border text-[11px] text-green-700 align-top whitespace-normal leading-relaxed">{{ row.data[m].desc1 }}</td>
                                                 <td class="p-2 border text-[11px] text-orange-700 align-top whitespace-normal leading-relaxed">{{ row.data[m].desc2 }}</td>
                                             </template>
@@ -392,7 +478,7 @@
                     classesMap: { '7': ['7A','7B','7C','7D','7E','7F'], '8': ['8A','8B','8C','8D','8E','8F'], '9': ['9A','9B','9C','9D','9E'] },
 
                     // --- BACKEND CONFIG ---
-                    // URL Backend yang sudah diperbarui ke localhost
+                    // PENTING: GANTI URL INI SETELAH DEPLOY DI RENDER
                     backendUrl: 'http://localhost:8000', 
                     isProcessingDownload: false,
                     downloadMode: 'batch'
@@ -460,7 +546,7 @@
 
                 // REKAP AKHIR TABLE DATA
                 rekapAkhirTableData() {
-                     if (!this.selectedClass || this.currentTab !== 'rekap_akhir') return [];
+                     if (!this.selectedClass || (this.currentTab !== 'rekap_akhir' && this.currentTab !== 'lhbs')) return [];
                      
                      return this.studentList.map(s => {
                          const dataPerMapel = {};
@@ -524,7 +610,7 @@
                 getMapelColSpan(mapel) { return this.getMapelColumns(mapel).length + 4; },
                 getMapelColumns(mapel) { const c=this.mapelConfigs[mapel]; if(!c)return[]; const cs=[]; c.forEach(lm=>{if(lm.judul) lm.tujuan.forEach((tp,i)=>{if(tp.b)cs.push({id:`tp_${lm.id}_${i+1}`,label:`TP${lm.id}.${i+1}`,title:`${tp.b}`})})}); return cs; },
                 getPageTitle() { 
-                    if (this.currentTab === 'rekap_akhir') return 'REKAP AKHIR RAPOR'; 
+                    if (this.currentTab === 'rekap_akhir') return 'LHBTS'; 
                     if (this.currentTab === 'identitas') return 'IDENTITAS PELAJARAN'; 
                     if (this.currentTab === 'tp') return 'PENYUSUNAN TP (ABCD)'; 
                     if (this.currentTab === 'nilai') return 'INPUT NILAI RAPOR'; 
@@ -532,12 +618,15 @@
                     if (this.currentTab === 'ekskul') return 'INPUT EKSTRAKURIKULER'; 
                     if (this.currentTab === 'kewalasan') return 'KEWALASAN (KARAKTER)';
                     if (this.currentTab === 'kaih') return '7 KAIH';
+                    if (this.currentTab === 'lhbs') return 'CETAK LHBS';
                     return 'MONITORING INPUT'; 
                 },
                 getPageSubtitle() { 
                     if (this.currentTab === 'kaih') return 'Input nilai 7 Kebiasaan Anak Indonesia Hebat.';
                     if (this.currentTab === 'kewalasan') return 'Input Absensi dan Perkembangan Karakter Siswa.';
-                    if (this.currentTab === 'rekap_akhir') return 'Preview Nilai dan Deskripsi Rapor per Siswa.'; return this.currentTab === 'ekskul' ? 'Menu khusus Wali Kelas. Isi kegiatan siswa.' : 'Lengkapi data secara berurutan.'; 
+                    if (this.currentTab === 'rekap_akhir') return 'Preview Nilai dan Deskripsi LHBTS per Siswa.'; 
+                    if (this.currentTab === 'lhbs') return 'Preview Laporan Hasil Belajar Semester dan Cetak.';
+                    return this.currentTab === 'ekskul' ? 'Menu khusus Wali Kelas. Isi kegiatan siswa.' : 'Lengkapi data secara berurutan.'; 
                 },
 
                 switchToTP() { if (!this.isIdentityValid) return Swal.fire('Lengkapi Identitas', '', 'warning'); this.currentTab = 'tp'; },
@@ -547,6 +636,7 @@
                 switchToKaih() { if (!this.identitas.jenjang) return Swal.fire('Pilih Jenjang', '', 'warning'); this.currentTab = 'kaih'; this.selectedClass = ''; },
                 switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                 switchToRekapAkhir() { this.currentTab = 'rekap_akhir'; this.selectedClass = ''; },
+                switchToLhbs() { this.currentTab = 'lhbs'; this.selectedClass = ''; },
 
                 getGrade(sid, key) { const c = this.selectedClass; const m = this.identitas.mapel; if (this.allGrades[c] && this.allGrades[c][m] && this.allGrades[c][m][sid]) return this.allGrades[c][m][sid][key] || ''; return ''; },
                 updateGrade(sid, key, val) { const c = this.selectedClass; const m = this.identitas.mapel; if (!this.allGrades[c]) this.allGrades[c] = {}; if (!this.allGrades[c][m]) this.allGrades[c][m] = {}; if (!this.allGrades[c][m][sid]) this.allGrades[c][m][sid] = {}; this.allGrades[c][m][sid][key] = val; },
@@ -755,112 +845,64 @@
                     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Rapor Akhir"); XLSX.writeFile(wb, `Leger_Rapor_${this.rekapJenjang}_${this.selectedClass}.xlsx`);
                 },
 
-                // --- INTEGRASI BACKEND (DIPERBARUI) ---
+                // --- INTEGRASI BACKEND ---
                 async generateRaporBackend(format) {
-                    // 1. Validasi: Pastikan data tabel rekap akhir tidak kosong
-                    if (this.rekapAkhirTableData.length === 0) {
-                        return Swal.fire('Data Kosong', 'Silakan pilih kelas terlebih dahulu di menu Rekap Akhir.', 'warning');
-                    }
-                    
+                    if(this.rekapAkhirTableData.length === 0) return Swal.fire('Data Kosong', 'Pilih kelas terlebih dahulu.', 'warning');
                     this.isProcessingDownload = true;
                     
                     try {
-                        // 2. Mapping Data dari Frontend ke Format yang Diminta Backend (app.py)
+                        // Mapping Data ke Format API
                         const siswaPayload = this.studentList.map((s, index) => {
-                            // Cari data nilai siswa yang sesuai di tabel rekap akhir
                             const studentRow = this.rekapAkhirTableData.find(r => r.id === s.id);
-                            
-                            // Jika data tidak ditemukan di tabel rekap, lewati
                             if (!studentRow) return null;
 
-                            // Loop setiap mapel untuk mengambil nilai dan deskripsi
                             const listMapel = this.mapelList.map(m => {
                                 const dataNilai = studentRow.data[m];
-                                
-                                // Gabungkan Deskripsi Kuat (desc1) dan Lemah (desc2) menjadi satu string rapi
                                 let fullDesc = "";
-                                
-                                // Masukkan deskripsi kompetensi tertinggi (jika ada)
-                                if (dataNilai.desc1 && dataNilai.desc1 !== '-') {
-                                    fullDesc += dataNilai.desc1;
-                                }
-                                
-                                // Masukkan deskripsi kompetensi terendah (jika ada)
-                                if (dataNilai.desc2 && dataNilai.desc2 !== '-') {
-                                    // Tambahkan baris baru (Enter) jika sebelumnya sudah ada isinya
-                                    if (fullDesc) fullDesc += "\n\n"; 
+                                if(dataNilai.desc1 && dataNilai.desc1 !== '-') fullDesc += dataNilai.desc1;
+                                if(dataNilai.desc2 && dataNilai.desc2 !== '-') {
+                                    if(fullDesc) fullDesc += "\n\n";
                                     fullDesc += dataNilai.desc2;
                                 }
                                 
                                 return {
-                                    mapel_key: m,                     // Contoh: "AGAMA ISLAM" (nanti di-normalize backend)
+                                    mapel_key: m,
                                     na: parseFloat(dataNilai.nilai) || 0,
-                                    deskripsi: fullDesc || "-"        // Kirim "-" jika kosong agar tidak error
+                                    deskripsi: fullDesc || "-"
                                 };
                             });
-
-                            // Ambil NIS/NISN. Prioritas: NIS -> NISN -> "-"
-                            const nisValue = s.nis || s.nisn || "-";
 
                             return {
                                 no_urut: index + 1,
                                 nama_peserta: s.nama,
-                                nis_nisn: nisValue,
+                                nis_nisn: s.nis || "-", // Data NIS diambil dari fetchStudentsAndScores
                                 nama_sekolah: "SMP ALBANNA",
                                 alamat_sekolah: "Jl. Tukad Yeh Ho III No. 16",
-                                kelas: s.kelas,            // Kelas asli siswa (misal 7A)
-                                fase: "D",                 // Fase SMP
+                                kelas: s.kelas, // Menggunakan kelas asli siswa
+                                fase: "D",
                                 semester: "1 (Ganjil)",
                                 tahun_ajaran: "2024/2025",
                                 mapel: listMapel
                             };
-                        }).filter(Boolean); // Hapus data null jika ada error mapping
+                        }).filter(Boolean);
 
-                        // 3. Siapkan Payload (Bungkusan Data)
                         const payload = { siswa: siswaPayload };
-                        
-                        // Cek mode download (batch/zip atau combine/gabung)
                         const combineParam = this.downloadMode === 'combine' ? 1 : 0;
-                        
-                        // Susun URL Endpoint
                         const endpoint = `${this.backendUrl}/api/rapor/${format}?combine=${combineParam}`;
 
-                        console.log("Mengirim data ke backend:", endpoint); 
-
-                        // 4. Kirim Request ke Backend menggunakan Fetch API
                         const response = await fetch(endpoint, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
                         });
 
-                        // Cek jika backend merespon dengan error
-                        if (!response.ok) {
-                            const errorText = await response.text();
-                            throw new Error(errorText || "Terjadi kesalahan di server backend.");
-                        }
+                        if (!response.ok) throw new Error(await response.text());
 
-                        // 5. Proses File yang Diterima (Blob)
                         const blob = await response.blob();
-                        
-                        // Tentukan nama file output
                         let filename = `Rapor_${this.selectedClass}`;
-                        
-                        if (this.downloadMode === 'combine') {
-                            filename += `_Gabungan.${format === 'xlsx' ? 'xlsx' : 'pdf'}`;
-                        } else {
-                            // Cek header untuk memastikan ekstensi (fallback logic)
-                            const headerContentDisp = response.headers.get('Content-Disposition');
-                            if (headerContentDisp && headerContentDisp.includes('.xlsx')) {
-                                filename += `.xlsx`;
-                            } else if (headerContentDisp && headerContentDisp.includes('.pdf')) {
-                                filename += `.pdf`;
-                            } else {
-                                filename += `_Batch.zip`;
-                            }
-                        }
+                        if (this.downloadMode === 'combine') filename += `.${format === 'xlsx' ? 'xlsx' : 'pdf'}`;
+                        else filename += `.zip`;
 
-                        // Buat link download virtual dan klik otomatis
                         const url = window.URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         a.href = url;
@@ -868,22 +910,10 @@
                         document.body.appendChild(a);
                         a.click();
                         document.body.removeChild(a);
-                        
-                        // Tampilkan notifikasi sukses
-                        Swal.fire({ 
-                            icon: 'success', 
-                            title: 'Berhasil', 
-                            text: `File ${format.toUpperCase()} berhasil diunduh!` 
-                        });
-
+                        Swal.fire({ icon: 'success', title: 'Berhasil', text: 'File berhasil diunduh!' });
                     } catch (error) {
-                        console.error("Error Download:", error);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Gagal',
-                            text: 'Gagal memproses data: ' + error.message,
-                            footer: 'Pastikan backend (uvicorn) sudah berjalan di localhost:8000'
-                        });
+                        console.error(error);
+                        Swal.fire('Gagal', 'Gagal menghubungi server backend: ' + error.message, 'error');
                     } finally {
                         this.isProcessingDownload = false;
                     }
