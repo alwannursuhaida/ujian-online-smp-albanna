@@ -65,6 +65,11 @@
                 <button @click="switchToEkskul" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'ekskul' ? 'bg-orange-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-futbol w-5"></i> Input Ekskul</button>
                 <button @click="switchToKewalasan" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'kewalasan' ? 'bg-teal-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-user-graduate w-5"></i> Kewalasan</button>
                 <button @click="switchToKaih" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'kaih' ? 'bg-cyan-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-star w-5"></i> Input 7 KAIH</button>
+
+                <button @click="switchToDataSiswa" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'data_siswa' ? 'bg-slate-700 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']">
+                    <i class="fas fa-address-book w-5"></i> Data Siswa, Guru, &amp; Wali Kelas
+                </button>
+
                 
                 <div class="border-t border-slate-700 my-2"></div>
                 <button @click="currentTab = 'monitoring'" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'monitoring' ? 'bg-indigo-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-chart-line w-5"></i> Monitoring Input</button>
@@ -80,7 +85,7 @@
             <div class="bg-white p-4 shadow-sm border-b flex justify-between items-center px-8 z-10">
                 <div><h2 class="text-2xl font-bold text-slate-800 uppercase">{{ getPageTitle() }}</h2><p class="text-xs text-gray-500">{{ getPageSubtitle() }}</p></div>
                 
-                <button v-if="['identitas','tp','nilai','ekskul','kewalasan','kaih'].includes(currentTab)" @click="handleSaveButton" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-green-700 transition flex items-center gap-2"><i class="fas fa-save"></i> SIMPAN PROGRES</button>
+                <button v-if="['identitas','tp','nilai','ekskul','kewalasan','kaih','data_siswa'].includes(currentTab)" @click="handleSaveButton" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-green-700 transition flex items-center gap-2"><i class="fas fa-save"></i> SIMPAN PROGRES</button>
                 
                 <button v-if="currentTab === 'rekap'" @click="exportRekapExcel" class="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-emerald-700 transition flex items-center gap-2"><i class="fas fa-file-excel"></i> UNDUH LENGKAP</button>
                 
@@ -109,7 +114,19 @@
             <div class="flex-1 overflow-y-auto p-8 pb-32">
                 
                 <!-- 1. IDENTITAS -->
-                <transition name="fade"><div v-if="currentTab === 'identitas'"><div class="bg-white p-8 rounded-xl shadow-lg border border-indigo-100 max-w-3xl mx-auto mt-10"><div class="text-center mb-8"><div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-600"><i class="fas fa-book-reader fa-2x"></i></div><h3 class="text-xl font-bold text-slate-800">Lengkapi Data Awal</h3></div><div class="space-y-6"><div><label class="block text-sm font-bold text-gray-600 uppercase mb-2">Pilih Mata Pelajaran <span class="text-red-500">*</span></label><select v-model="identitas.mapel" class="w-full p-4 border-2 border-indigo-100 rounded-xl bg-indigo-50/30 focus:border-indigo-500 outline-none font-bold text-slate-800"><option value="" disabled>-- Pilih Mapel --</option><option v-for="m in mapelList" :value="m">{{ m }}</option></select></div><div><label class="block text-sm font-bold text-gray-600 uppercase mb-2">Jenjang Kelas <span class="text-red-500">*</span></label><select v-model="identitas.jenjang" class="w-full p-4 border-2 border-indigo-100 rounded-xl bg-indigo-50/30 focus:border-indigo-500 outline-none font-bold text-slate-800"><option value="" disabled>-- Pilih Jenjang --</option><option value="7">Kelas 7</option><option value="8">Kelas 8</option><option value="9">Kelas 9</option></select></div><div><label class="block text-sm font-bold text-gray-600 uppercase mb-2">Nama Guru Pengampu <span class="text-red-500">*</span></label><input v-model="identitas.guru" class="w-full pl-4 p-4 border-2 border-gray-200 rounded-xl focus:border-indigo-500 outline-none text-slate-800" placeholder="Nama Lengkap & Gelar"></div><div class="pt-4"><button @click="switchToTP" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg flex justify-center items-center gap-2">MULAI MENYUSUN TP <i class="fas fa-arrow-right"></i></button></div></div></div></div></transition>
+                <transition name="fade"><div v-if="currentTab === 'identitas'"><div class="bg-white p-8 rounded-xl shadow-lg border border-indigo-100 max-w-3xl mx-auto mt-10"><div class="text-center mb-8"><div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-600"><i class="fas fa-book-reader fa-2x"></i></div><h3 class="text-xl font-bold text-slate-800">Lengkapi Data Awal</h3></div><div class="space-y-6"><div><label class="block text-sm font-bold text-gray-600 uppercase mb-2">Pilih Mata Pelajaran <span class="text-red-500">*</span></label><select v-model="identitas.mapel" class="w-full p-4 border-2 border-indigo-100 rounded-xl bg-indigo-50/30 focus:border-indigo-500 outline-none font-bold text-slate-800"><option value="" disabled>-- Pilih Mapel --</option><option v-for="m in mapelList" :value="m">{{ m }}</option></select></div><div><label class="block text-sm font-bold text-gray-600 uppercase mb-2">Jenjang Kelas <span class="text-red-500">*</span></label><select v-model="identitas.jenjang" class="w-full p-4 border-2 border-indigo-100 rounded-xl bg-indigo-50/30 focus:border-indigo-500 outline-none font-bold text-slate-800"><option value="" disabled>-- Pilih Jenjang --</option><option value="7">Kelas 7</option><option value="8">Kelas 8</option><option value="9">Kelas 9</option></select></div>
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-600 uppercase mb-2">Semester <span class="text-red-500">*</span></label>
+                                    <select v-model="identitas.semester" class="w-full p-4 border-2 border-indigo-100 rounded-xl bg-indigo-50/30 focus:border-indigo-500 outline-none font-bold text-slate-800">
+                                        <option value="1 (Ganjil)">1 (Ganjil)</option>
+                                        <option value="2 (Genap)">2 (Genap)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-600 uppercase mb-2">Tahun Ajaran <span class="text-red-500">*</span></label>
+                                    <input v-model="identitas.tahun_ajaran" class="w-full pl-4 p-4 border-2 border-gray-200 rounded-xl focus:border-indigo-500 outline-none text-slate-800" placeholder="Contoh: 2024/2025">
+                                </div>
+<div><label class="block text-sm font-bold text-gray-600 uppercase mb-2">Nama Guru Pengampu <span class="text-red-500">*</span></label><input v-model="identitas.guru" class="w-full pl-4 p-4 border-2 border-gray-200 rounded-xl focus:border-indigo-500 outline-none text-slate-800" placeholder="Nama Lengkap & Gelar"></div><div class="pt-4"><button @click="switchToTP" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg flex justify-center items-center gap-2">MULAI MENYUSUN TP <i class="fas fa-arrow-right"></i></button></div></div></div></div></transition>
 
                 <!-- 2. PENYUSUNAN TP -->
                 <transition name="fade"><div v-if="currentTab === 'tp'"><div class="mb-6 flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-200 w-fit"><span class="font-bold text-indigo-900 text-sm">{{ identitas.mapel }}</span><span class="text-gray-400">|</span><span class="font-bold text-indigo-900 text-sm">Jenjang {{ identitas.jenjang }}</span></div><div v-for="(lm, lmIndex) in lingkupMateri" :key="lm.id" class="mb-8 bg-white rounded-xl shadow border border-slate-200 overflow-hidden"><div class="bg-slate-100 p-4 border-b flex items-center gap-4 cursor-pointer" @click="lm.isOpen = !lm.isOpen"><div class="bg-indigo-600 text-white w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm">{{ lmIndex + 1 }}</div><div class="flex-1" @click.stop><input v-model="lm.judul" class="w-full p-2 bg-transparent border-b-2 border-slate-300 focus:border-indigo-600 outline-none font-bold" :placeholder="'Lingkup Materi ' + (lmIndex + 1)"></div><i :class="['fas text-slate-400', lm.isOpen ? 'fa-chevron-up' : 'fa-chevron-down']"></i></div><div v-show="lm.isOpen" class="p-6 space-y-6 bg-slate-50/30"><div v-for="(tp, tpIndex) in lm.tujuan" :key="tpIndex" class="relative group border-b border-slate-100 pb-4"><h4 class="font-bold text-xs text-slate-500 mb-2">TP {{ lmIndex + 1 }}.{{ tpIndex + 1 }}</h4><div class="grid grid-cols-1 md:grid-cols-12 gap-2 mb-2"><div class="md:col-span-1"><input v-model="tp.a" readonly class="w-full p-2 border rounded bg-gray-100 text-center text-xs font-bold"></div><div class="md:col-span-5"><textarea v-model="tp.b" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Behavior (KKO + Materi)"></textarea></div><div class="md:col-span-3"><textarea v-model="tp.c" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Condition (Melalui...)"></textarea></div><div class="md:col-span-3"><textarea v-model="tp.d" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Degree (Kriteria)"></textarea></div></div><div class="bg-indigo-50 p-2 rounded border border-indigo-100 flex items-center gap-2"><i class="fas fa-magic text-indigo-400 text-xs"></i><p class="text-xs text-indigo-900 italic font-medium">"{{ generateSentence(tp) }}"</p></div></div></div></div></div></transition>
@@ -281,7 +298,98 @@
                     </div>
                 </transition>
 
-                <!-- 7. MONITORING (RESTORED) -->
+                
+                <!-- DATA SISWA, GURU, DAN WALI KELAS -->
+                <transition name="fade">
+                    <div v-if="currentTab === 'data_siswa'">
+                        <div class="bg-white p-6 rounded-xl shadow border mb-6">
+                            <h3 class="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2">
+                                <i class="fas fa-address-book"></i> Data siswa, guru, dan wali kelas
+                            </h3>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Jenjang</label>
+                                    <select v-model="rekapJenjang" class="w-full p-2 border rounded font-bold text-slate-900">
+                                        <option value="7">Kelas 7</option>
+                                        <option value="8">Kelas 8</option>
+                                        <option value="9">Kelas 9</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pilih Kelas</label>
+                                    <select v-model="selectedClass" @change="fetchStudents" class="w-full p-2 border-2 border-slate-200 rounded font-bold text-slate-900">
+                                        <option value="" disabled>-- Pilih --</option>
+                                        <option v-for="c in classesMap[rekapJenjang]" :value="c">{{ c }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nama Wali Kelas</label>
+                                    <input 
+                                        type="text"
+                                        class="w-full p-2 border-2 border-slate-200 rounded font-bold text-slate-900"
+                                        :disabled="!selectedClass"
+                                        :class="!selectedClass ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''"
+                                        :value="getWaliKelasByClass(selectedClass)"
+                                        @input="setWaliKelasByClass(selectedClass, $event.target.value)"
+                                        placeholder="Nama Wali Kelas"
+                                    >
+                                    <p class="text-[10px] text-gray-400 mt-1">Dipakai untuk cetak (sel I64 di template).</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nama Guru Pengampu</label>
+                                    <input type="text" class="w-full p-2 border rounded bg-gray-100 text-gray-600 cursor-not-allowed" :value="identitas.guru || '-'" readonly>
+                                    <p class="text-[10px] text-gray-400 mt-1">Diambil dari menu Identitas Pelajaran.</p>
+                                </div>
+                                <div class="text-xs text-gray-500 italic flex items-end">
+                                    Isi NIS/NISN per siswa untuk kebutuhan cetak. Data disimpan di browser (localStorage) dan aman jika internet mati.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow border overflow-hidden relative">
+                            <div v-if="!selectedClass" class="p-10 text-center text-gray-400">
+                                <i class="fas fa-arrow-up fa-2x mb-2"></i><br>Pilih kelas untuk mengisi data.
+                            </div>
+                            <div v-else-if="isLoadingStudents" class="p-10 text-center text-blue-500">
+                                <i class="fas fa-circle-notch fa-spin fa-2x"></i>
+                            </div>
+                            <div v-else class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse excel-table text-sm">
+                                    <thead class="bg-slate-800 text-white">
+                                        <tr>
+                                            <th class="p-3 w-10 text-center">No</th>
+                                            <th class="p-3 w-64">Nama Siswa</th>
+                                            <th class="p-3 w-48">NIS / NISN</th>
+                                            <th class="p-3 w-20 text-center">Kelas</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white">
+                                        <tr v-for="(s, sIdx) in studentList" :key="s.id" class="hover:bg-slate-50">
+                                            <td class="text-center bg-gray-50 text-gray-500 select-none">{{ sIdx + 1 }}</td>
+                                            <td class="px-3 py-2 font-bold text-gray-700 select-none whitespace-nowrap">{{ s.nama }}</td>
+                                            <td class="p-0">
+                                                <input 
+                                                    type="text" 
+                                                    class="excel-input text-left"
+                                                    :value="getStudentMetaByClass(s.kelas, s.id).nis_nisn"
+                                                    @input="updateStudentMeta(s.kelas, s.id, 'nis_nisn', $event.target.value)"
+                                                    placeholder="Masukkan NIS/NISN"
+                                                >
+                                            </td>
+                                            <td class="text-center text-gray-600 font-bold">{{ s.kelas }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+
+<!-- 7. MONITORING (RESTORED) -->
                 <transition name="fade">
                     <div v-if="currentTab === 'monitoring'">
                         <div class="bg-white p-6 rounded-xl shadow border">
@@ -454,7 +562,7 @@
             data() {
                 return {
                     currentTab: 'identitas', selectedClass: '', studentList: [], isLoadingStudents: false, lastSavedGrade: null,
-                    identitas: { mapel: '', guru: '', jenjang: '' }, 
+                    identitas: { mapel: '', guru: '', jenjang: '', semester: '1 (Ganjil)', tahun_ajaran: '2024/2025' }, 
                     lingkupMateri: Array.from({ length: 5 }, (_, i) => ({ id: i + 1, judul: '', isOpen: i === 0, tujuan: Array.from({ length: 5 }, () => ({ a: 'Murid', b: '', c: '', d: '' })) })),
                     
                     allGrades: {}, savedProgress: {}, bankSoalCache: {},
@@ -479,13 +587,16 @@
 
                     // --- BACKEND CONFIG ---
                     // PENTING: GANTI URL INI SETELAH DEPLOY DI RENDER
+                    studentMeta: {},
+                    waliKelasByClass: {},
+
                     backendUrl: 'http://localhost:8000', 
                     isProcessingDownload: false,
                     downloadMode: 'batch'
                 }
             },
             computed: {
-                isIdentityValid() { return this.identitas.mapel && this.identitas.jenjang && this.identitas.guru.trim() !== ''; },
+                isIdentityValid() { return this.identitas.mapel && this.identitas.jenjang && this.identitas.guru.trim() !== '' && this.identitas.semester && this.identitas.tahun_ajaran; },
                 isTpValid() { return this.lingkupMateri.some(lm => lm.judul && lm.tujuan.some(tp => tp.b)); },
                 filteredClasses() { return this.identitas.jenjang ? this.classesMap[this.identitas.jenjang] : []; },
                 
@@ -603,6 +714,12 @@
                 const savedWalas = localStorage.getItem('cbt_kewalasan_data'); if (savedWalas) { const d = JSON.parse(savedWalas); this.kewalasanConfig = d.config || this.kewalasanConfig; this.kewalasanData = d.data || {}; }
                 const savedKaih = localStorage.getItem('cbt_kaih_data'); if (savedKaih) this.kaihData = JSON.parse(savedKaih);
                 const savedMapelConfigs = localStorage.getItem('cbt_mapel_configs'); if (savedMapelConfigs) this.mapelConfigs = JSON.parse(savedMapelConfigs);
+                const savedStudentMeta = localStorage.getItem('cbt_student_meta');
+                if (savedStudentMeta) this.studentMeta = JSON.parse(savedStudentMeta);
+
+                const savedWaliKelas = localStorage.getItem('cbt_wali_kelas_by_class');
+                if (savedWaliKelas) this.waliKelasByClass = JSON.parse(savedWaliKelas);
+
                 this.loadBankSoal();
             },
             methods: {
@@ -618,11 +735,13 @@
                     if (this.currentTab === 'ekskul') return 'INPUT EKSTRAKURIKULER'; 
                     if (this.currentTab === 'kewalasan') return 'KEWALASAN (KARAKTER)';
                     if (this.currentTab === 'kaih') return '7 KAIH';
+                    if (this.currentTab === 'data_siswa') return 'DATA SISWA / GURU / WALI KELAS';
                     if (this.currentTab === 'lhbs') return 'CETAK LHBS';
                     return 'MONITORING INPUT'; 
                 },
                 getPageSubtitle() { 
                     if (this.currentTab === 'kaih') return 'Input nilai 7 Kebiasaan Anak Indonesia Hebat.';
+                    if (this.currentTab === 'data_siswa') return 'Input NIS/NISN dan Wali Kelas untuk kebutuhan cetak LHBS.';
                     if (this.currentTab === 'kewalasan') return 'Input Absensi dan Perkembangan Karakter Siswa.';
                     if (this.currentTab === 'rekap_akhir') return 'Preview Nilai dan Deskripsi LHBTS per Siswa.'; 
                     if (this.currentTab === 'lhbs') return 'Preview Laporan Hasil Belajar Semester dan Cetak.';
@@ -634,7 +753,41 @@
                 switchToEkskul() { if (!this.identitas.jenjang) return Swal.fire('Pilih Jenjang', '', 'warning'); this.currentTab = 'ekskul'; this.selectedClass = ''; },
                 switchToKewalasan() { if (!this.identitas.jenjang) return Swal.fire('Pilih Jenjang', '', 'warning'); this.currentTab = 'kewalasan'; this.selectedClass = ''; },
                 switchToKaih() { if (!this.identitas.jenjang) return Swal.fire('Pilih Jenjang', '', 'warning'); this.currentTab = 'kaih'; this.selectedClass = ''; },
-                switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
+                
+                switchToDataSiswa() { 
+                    // Menu untuk input NIS/NISN dan Wali Kelas (dipakai saat cetak)
+                    this.currentTab = 'data_siswa'; 
+                    this.selectedClass = ''; 
+                },
+
+                getStudentMetaByClass(kelas, sid) {
+                    if (!kelas) kelas = this.selectedClass;
+                    if (!this.studentMeta[kelas]) this.studentMeta[kelas] = {};
+                    if (!this.studentMeta[kelas][sid]) this.studentMeta[kelas][sid] = { nis_nisn: '-' };
+                    return this.studentMeta[kelas][sid];
+                },
+                updateStudentMeta(kelas, sid, field, value) {
+                    if (!kelas) kelas = this.selectedClass;
+                    if (!this.studentMeta[kelas]) this.studentMeta[kelas] = {};
+                    if (!this.studentMeta[kelas][sid]) this.studentMeta[kelas][sid] = { nis_nisn: '-' };
+                    this.studentMeta[kelas][sid][field] = value;
+                },
+
+                getWaliKelasByClass(kelas) {
+                    if (!kelas) return '';
+                    if (this.waliKelasByClass[kelas] === undefined) this.waliKelasByClass[kelas] = '';
+                    return this.waliKelasByClass[kelas] || '';
+                },
+                setWaliKelasByClass(kelas, value) {
+                    if (!kelas) return;
+                    this.waliKelasByClass[kelas] = value;
+                },
+
+                getNisNisnForStudent(kelas, sid) {
+                    const meta = this.getStudentMetaByClass(kelas, sid);
+                    return (meta && meta.nis_nisn && meta.nis_nisn.trim() !== '') ? meta.nis_nisn.trim() : '-';
+                },
+switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                 switchToRekapAkhir() { this.currentTab = 'rekap_akhir'; this.selectedClass = ''; },
                 switchToLhbs() { this.currentTab = 'lhbs'; this.selectedClass = ''; },
 
@@ -766,6 +919,12 @@
                             
                             if (!this.kaihData[s.kelas]) this.kaihData[s.kelas] = {};
                             if (!this.kaihData[s.kelas][s.id]) this.kaihData[s.kelas][s.id] = {};
+
+
+                            // Meta data siswa (NIS/NISN) & Wali Kelas per kelas
+                            if (!this.studentMeta[s.kelas]) this.studentMeta[s.kelas] = {};
+                            if (!this.studentMeta[s.kelas][s.id]) this.studentMeta[s.kelas][s.id] = { nis_nisn: '-' };
+                            if (this.waliKelasByClass[s.kelas] === undefined) this.waliKelasByClass[s.kelas] = '';
                         });
 
                     } catch(e) { 
@@ -790,6 +949,13 @@
                 generateSentence(tp) { let s = (tp.c ? tp.c.trim() + ", " : "") + tp.a + (tp.b ? " dapat " + tp.b.trim() : "") + (tp.d ? " " + tp.d.trim() : ""); return s.replace(/\s+/g, ' ').trim() + "."; },
                 toggleSection(i) { this.lingkupMateri[i].isOpen = !this.lingkupMateri[i].isOpen; },
                 handleSaveButton() {
+                    if (this.currentTab === 'data_siswa') {
+                        localStorage.setItem('cbt_student_meta', JSON.stringify(this.studentMeta));
+                        localStorage.setItem('cbt_wali_kelas_by_class', JSON.stringify(this.waliKelasByClass));
+                        Swal.fire({ icon: 'success', title: 'Data Siswa & Wali Kelas Tersimpan!', timer: 1200, showConfirmButton: false });
+                        return;
+                    }
+
                     if (this.currentTab === 'ekskul') { localStorage.setItem('cbt_ekskul_data', JSON.stringify(this.ekskulData)); Swal.fire({ icon: 'success', title: 'Data Ekskul Tersimpan!', timer: 1000, showConfirmButton: false }); }
                     else if (this.currentTab === 'kewalasan') { const dataWalas = { config: this.kewalasanConfig, data: this.kewalasanData }; localStorage.setItem('cbt_kewalasan_data', JSON.stringify(dataWalas)); Swal.fire({ icon: 'success', title: 'Data Kewalasan Tersimpan!', timer: 1000, showConfirmButton: false }); }
                     else if (this.currentTab === 'kaih') { localStorage.setItem('cbt_kaih_data', JSON.stringify(this.kaihData)); Swal.fire({ icon: 'success', title: 'Data 7 KAIH Tersimpan!', timer: 1000, showConfirmButton: false }); }
@@ -868,6 +1034,9 @@
                                 return {
                                     mapel_key: m,
                                     na: parseFloat(dataNilai.nilai) || 0,
+                                    deskripsi_kuat: (dataNilai.desc1 && dataNilai.desc1 !== '-') ? dataNilai.desc1 : '-',
+                                    deskripsi_lemah: (dataNilai.desc2 && dataNilai.desc2 !== '-') ? dataNilai.desc2 : '-',
+                                    // Backward compatibility
                                     deskripsi: fullDesc || "-"
                                 };
                             });
@@ -875,13 +1044,27 @@
                             return {
                                 no_urut: index + 1,
                                 nama_peserta: s.nama,
-                                nis_nisn: s.nis || "-", // Data NIS diambil dari fetchStudentsAndScores
+                                nis_nisn: this.getNisNisnForStudent(s.kelas, s.id),
                                 nama_sekolah: "SMP ALBANNA",
                                 alamat_sekolah: "Jl. Tukad Yeh Ho III No. 16",
                                 kelas: s.kelas, // Menggunakan kelas asli siswa
                                 fase: "D",
-                                semester: "1 (Ganjil)",
-                                tahun_ajaran: "2024/2025",
+                                semester: this.identitas.semester || "1 (Ganjil)",
+                                tahun_ajaran: this.identitas.tahun_ajaran || "2024/2025",
+
+                                // Data tambahan untuk Template2 (LHBS)
+                                nama_wali_kelas: this.getWaliKelasByClass(s.kelas) || "-",
+                                ekskul: [
+                                    { nama: "PRAMUKA", deskripsi: (this.ekskulData[s.kelas]?.[s.id]?.ek1_desc || "-") },
+                                    { nama: (this.ekskulData[s.kelas]?.[s.id]?.ek2_nama || "-"), deskripsi: (this.ekskulData[s.kelas]?.[s.id]?.ek2_desc || "-") },
+                                    { nama: (this.ekskulData[s.kelas]?.[s.id]?.ek3_nama || "-"), deskripsi: (this.ekskulData[s.kelas]?.[s.id]?.ek3_desc || "-") }
+                                ],
+                                absensi: {
+                                    sakit: parseInt(this.kewalasanData[s.kelas]?.[s.id]?.s || 0),
+                                    izin: parseInt(this.kewalasanData[s.kelas]?.[s.id]?.i || 0),
+                                    alpha: parseInt(this.kewalasanData[s.kelas]?.[s.id]?.a || 0)
+                                },
+
                                 mapel: listMapel
                             };
                         }).filter(Boolean);
