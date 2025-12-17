@@ -1069,9 +1069,11 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                             };
                         }).filter(Boolean);
 
-                        const payload = { siswa: siswaPayload };
+                        const payload = { 
+        tipe: this.currentTab,
+siswa: siswaPayload };
                         const combineParam = this.downloadMode === 'combine' ? 1 : 0;
-                        const endpoint = `${this.backendUrl}/api/rapor/${format}?combine=${combineParam}`;
+                        const endpoint = `${this.backendUrl}/api/rapor/${format}?tipe=${encodeURIComponent(this.currentTab)}&combine=${combineParam}`;
 
                         const response = await fetch(endpoint, {
                             method: 'POST',
