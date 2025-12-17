@@ -397,7 +397,14 @@
                             <div v-for="(classes, jenjang) in classesMap" :key="jenjang" class="mb-6">
                                 <h3 class="font-bold text-blue-900 border-b pb-2 mb-3">JENJANG KELAS {{ jenjang }}</h3>
                                 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                                    <div v-for="cls in classes" :key="cls" class="bg-gray-50 border p-3 rounded text-center"><div class="font-bold text-lg text-slate-700">{{ cls }}</div><div class="text-xs text-gray-500 mt-2 space-y-1"><div v-for="m in mapelList" :key="m" class="flex justify-between"><span>{{ m }}</span><i :class="hasData(cls, m) ? 'fas fa-check-circle text-green-500' : 'fas fa-circle text-gray-200'"></i></div><div class="border-t border-gray-200 my-2 pt-1 font-bold text-[10px] text-slate-400">WALI KELAS</div><div class="flex justify-between"><span>EKSKUL</span><i :class="hasData(cls, 'EKSKUL') ? 'fas fa-check-circle text-green-500' : 'fas fa-circle text-gray-200'"></i></div><div class="flex justify-between"><span>KEWALASAN</span><i :class="hasData(cls, 'KEWALASAN') ? 'fas fa-check-circle text-green-500' : 'fas fa-circle text-gray-200'"></i></div><div class="flex justify-between"><span>7 KAIH</span><i :class="hasData(cls, 'KAIH') ? 'fas fa-check-circle text-green-500' : 'fas fa-circle text-gray-200'"></i></div></div></div>
+                                    <div v-for="cls in classes" :key="cls" class="bg-gray-50 border p-3 rounded text-center"><div class="font-bold text-lg text-slate-700">{{ cls }}</div><div class="text-xs text-gray-500 mt-2 space-y-1"><div v-for="m in mapelList" :key="m" class="flex justify-between"><span>{{ m }}</span><i :class="hasData(cls, m) ? 'fas fa-check-circle text-green-500' : 'fas fa-circle text-gray-200'"></i></div><div class="border-t border-gray-200 my-2 pt-1 font-bold text-[10px] text-slate-400">WALI KELAS</div><div class="flex justify-between">
+                                    <span>DATA SISWA</span>
+                                    <i :class="hasData(cls, 'META') ? 'fas fa-check-circle text-green-500' : 'far fa-circle text-slate-300'"></i>
+                                </div>
+                                <div class="text-[11px] text-slate-500 leading-snug">
+                                    NIS/NISN: {{ (cloudProgress[cls]?.nis_filled ?? 0) }}/{{ (cloudProgress[cls]?.nis_total ?? 0) }} (belum: {{ (cloudProgress[cls]?.nis_total ?? 0) - (cloudProgress[cls]?.nis_filled ?? 0) }}) • Wali: {{ cloudProgress[cls]?.wali_kelas || '-' }}
+                                </div>
+                                <div class="flex justify-between"><span>EKSKUL</span><i :class="hasData(cls, 'EKSKUL') ? 'fas fa-check-circle text-green-500' : 'fas fa-circle text-gray-200'"></i></div><div class="flex justify-between"><span>KEWALASAN</span><i :class="hasData(cls, 'KEWALASAN') ? 'fas fa-check-circle text-green-500' : 'fas fa-circle text-gray-200'"></i></div><div class="flex justify-between"><span>7 KAIH</span><i :class="hasData(cls, 'KAIH') ? 'fas fa-check-circle text-green-500' : 'fas fa-circle text-gray-200'"></i></div></div></div>
                                 </div>
                             </div>
                         </div>
@@ -545,7 +552,7 @@
     <script type="module">
         import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, getDoc, setDoc, doc, query, where, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBivREr2y61OYTE0kLxRnkGtPCdLvHn_og",
@@ -592,7 +599,13 @@
 
                     backendUrl: 'http://localhost:8000', 
                     isProcessingDownload: false,
-                    downloadMode: 'batch'
+                    downloadMode: 'batch',
+                    cloudEnabled: true,
+                    cloudStatus: 'idle',
+                    cloudProgress: {},
+                    cloudLastSync: null,
+                    _autosaveTimers: { nilai: null, ekskul: null, kewalasan: null, kaih: null, meta: null, progress: null },
+                    _cloudInitDone: false
                 }
             },
             computed: {
@@ -721,8 +734,310 @@
                 if (savedWaliKelas) this.waliKelasByClass = JSON.parse(savedWaliKelas);
 
                 this.loadBankSoal();
+                    // Cloud bootstrap
+                    this.loadCloudProgress();
             },
             methods: {
+                // =========================
+                // CLOUD SYNC (Firestore)
+                // =========================
+                cloudKey() {
+                    const tahun = (this.identitas?.tahun_ajaran || '').trim() || '2024/2025';
+                    const sem = (this.identitas?.semester || '').trim() || '1 (Ganjil)';
+                    const jenjang = (this.identitas?.jenjang || '').trim() || 'SMP';
+                    return { tahun_ajaran: tahun, semester: sem, jenjang };
+                },
+                _docIdProgress(kelas) {
+                    const k = this.cloudKey();
+                    return `${k.tahun_ajaran}__${k.semester}__${kelas}`;
+                },
+                _docIdNilai(kelas, mapel) {
+                    const k = this.cloudKey();
+                    return `${k.tahun_ajaran}__${k.semester}__${kelas}__${mapel}`;
+                },
+                _docIdClass(kelas) {
+                    const k = this.cloudKey();
+                    return `${k.tahun_ajaran}__${k.semester}__${kelas}`;
+                },
+                _isNonEmpty(v) {
+                    if (v === null || v === undefined) return false;
+                    const s = String(v).trim();
+                    return s !== '' && s !== '-' && s.toLowerCase() !== 'null' && s.toLowerCase() !== 'undefined';
+                },
+                _countAnyNilaiFor(kelas, mapel) {
+                    const byClass = this.allGrades?.[kelas] || {};
+                    const byMapel = byClass?.[mapel] || {};
+                    let cnt = 0;
+                    for (const sid in byMapel) {
+                        const rec = byMapel[sid] || {};
+                        for (const k in rec) {
+                            if (this._isNonEmpty(rec[k])) { cnt++; break; }
+                        }
+                        if (cnt > 0) break;
+                    }
+                    return cnt;
+                },
+                _nisStats(kelas) {
+                    const students = this.studentMeta?.[kelas] || {};
+                    const ids = Object.keys(students);
+                    const total = ids.length;
+                    let filled = 0;
+                    for (const sid of ids) {
+                        if (this._isNonEmpty(students[sid]?.nis_nisn)) filled++;
+                    }
+                    return { filled, total };
+                },
+                async _cloudSetDoc(colName, docId, data, merge=true) {
+                    if (!this.cloudEnabled) return;
+                    try {
+                        await setDoc(doc(db, colName, docId), data, { merge });
+                    } catch (e) {
+                        console.error(`ERROR CLOUD setDoc ${colName}/${docId}`, e);
+                    }
+                },
+                async _cloudDeleteDoc(colName, docId) {
+                    if (!this.cloudEnabled) return;
+                    try {
+                        await deleteDoc(doc(db, colName, docId));
+                    } catch (e) {
+                        console.error(`ERROR CLOUD deleteDoc ${colName}/${docId}`, e);
+                    }
+                },
+                async loadCloudProgress() {
+                    if (!this.cloudEnabled) return;
+                    this.cloudStatus = 'loading';
+                    const k = this.cloudKey();
+                    try {
+                        const qRef = query(collection(db, 'erapor_progress'), where('tahun_ajaran', '==', k.tahun_ajaran), where('semester', '==', k.semester), where('jenjang', '==', k.jenjang));
+                        const snap = await getDocs(qRef);
+                        const map = {};
+                        snap.forEach(d => {
+                            const data = d.data() || {};
+                            const kelas = data.kelas || (d.id.split('__').slice(-1)[0]);
+                            map[kelas] = {
+                                flags: data.flags || {},
+                                nis_filled: data.nis_filled ?? null,
+                                nis_total: data.nis_total ?? null,
+                                wali_kelas: data.wali_kelas || null
+                            };
+                        });
+                        this.cloudProgress = map;
+                        this.cloudStatus = 'ok';
+                        this.cloudLastSync = new Date().toISOString();
+                        this._cloudInitDone = true;
+                    } catch (e) {
+                        console.error('ERROR CLOUD load progress', e);
+                        this.cloudStatus = 'error';
+                    }
+                },
+                async _updateProgressFlag(kelas, key, value) {
+                    if (!this.cloudEnabled) return;
+                    const k = this.cloudKey();
+                    const id = this._docIdProgress(kelas);
+                    const payload = {
+                        tahun_ajaran: k.tahun_ajaran,
+                        semester: k.semester,
+                        jenjang: k.jenjang,
+                        kelas,
+                        flags: { [key]: !!value },
+                        updated_at: serverTimestamp(),
+                    };
+                    await this._cloudSetDoc('erapor_progress', id, payload, true);
+                    if (!this.cloudProgress[kelas]) this.cloudProgress[kelas] = { flags: {} };
+                    if (!this.cloudProgress[kelas].flags) this.cloudProgress[kelas].flags = {};
+                    this.cloudProgress[kelas].flags[key] = !!value;
+                },
+                async _updateProgressMeta(kelas) {
+                    if (!this.cloudEnabled) return;
+                    const k = this.cloudKey();
+                    const id = this._docIdProgress(kelas);
+                    const stats = this._nisStats(kelas);
+                    const wali = this.waliKelasByClass?.[kelas] || null;
+                    const payload = {
+                        tahun_ajaran: k.tahun_ajaran,
+                        semester: k.semester,
+                        jenjang: k.jenjang,
+                        kelas,
+                        nis_filled: stats.filled,
+                        nis_total: stats.total,
+                        wali_kelas: wali,
+                        updated_at: serverTimestamp(),
+                    };
+                    await this._cloudSetDoc('erapor_progress', id, payload, true);
+                    if (!this.cloudProgress[kelas]) this.cloudProgress[kelas] = { flags: {} };
+                    this.cloudProgress[kelas].nis_filled = stats.filled;
+                    this.cloudProgress[kelas].nis_total = stats.total;
+                    this.cloudProgress[kelas].wali_kelas = wali;
+                },
+                _schedule(type, fn, delay=1500) {
+                    try {
+                        if (!this._autosaveTimers) this._autosaveTimers = { nilai: null, ekskul: null, kewalasan: null, kaih: null, meta: null, progress: null };
+                        if (this._autosaveTimers[type]) clearTimeout(this._autosaveTimers[type]);
+                        this._autosaveTimers[type] = setTimeout(fn, delay);
+                    } catch (e) {
+                        console.error('ERROR schedule', e);
+                    }
+                },
+                async loadCloudForClasses(classes, loadNilaiMode='none') {
+                    if (!this.cloudEnabled) return;
+                    const k = this.cloudKey();
+                    const kelasList = (classes || []).filter(Boolean);
+                    if (kelasList.length === 0) return;
+                    // META (NIS/NISN + wali kelas)
+                    try {
+                        for (const kelas of kelasList) {
+                            const id = this._docIdClass(kelas);
+                            const metaRef = doc(db, 'erapor_meta', id);
+                            const metaSnap = await getDoc(metaRef);
+                            if (metaSnap.exists()) {
+                                const d = metaSnap.data() || {};
+                                if (d.studentMeta) this.studentMeta[kelas] = d.studentMeta;
+                                if (d.wali_kelas) this.waliKelasByClass[kelas] = d.wali_kelas;
+                            }
+                        }
+                    } catch (e) {
+                        console.error('ERROR CLOUD load meta', e);
+                    }
+                    // EKSKUL
+                    try {
+                        for (const kelas of kelasList) {
+                            const id = this._docIdClass(kelas);
+                            const ref = doc(db, 'erapor_ekskul', id);
+                            const snap = await getDoc(ref);
+                            if (snap.exists()) {
+                                const d = snap.data() || {};
+                                if (d.data) this.ekskulData[kelas] = d.data;
+                            }
+                        }
+                    } catch (e) {
+                        console.error('ERROR CLOUD load ekskul', e);
+                    }
+                    // KEWALASAN
+                    try {
+                        for (const kelas of kelasList) {
+                            const id = this._docIdClass(kelas);
+                            const ref = doc(db, 'erapor_kewalasan', id);
+                            const snap = await getDoc(ref);
+                            if (snap.exists()) {
+                                const d = snap.data() || {};
+                                if (d.data) this.kewalasanData[kelas] = d.data;
+                                if (d.config) this.kewalasanConfig[kelas] = d.config;
+                            }
+                        }
+                    } catch (e) {
+                        console.error('ERROR CLOUD load kewalasan', e);
+                    }
+                    // KAIH
+                    try {
+                        for (const kelas of kelasList) {
+                            const id = this._docIdClass(kelas);
+                            const ref = doc(db, 'erapor_kaih', id);
+                            const snap = await getDoc(ref);
+                            if (snap.exists()) {
+                                const d = snap.data() || {};
+                                if (d.data) this.kaihData[kelas] = d.data;
+                            }
+                        }
+                    } catch (e) {
+                        console.error('ERROR CLOUD load kaih', e);
+                    }
+                    // NILAI
+                    if (loadNilaiMode !== 'none') {
+                        try {
+                            if (loadNilaiMode === 'current') {
+                                const mapel = this.identitas?.mapel;
+                                if (mapel) {
+                                    for (const kelas of kelasList) {
+                                        const id = this._docIdNilai(kelas, mapel);
+                                        const ref = doc(db, 'erapor_nilai', id);
+                                        const snap = await getDoc(ref);
+                                        if (snap.exists()) {
+                                            const d = snap.data() || {};
+                                            if (!this.allGrades[kelas]) this.allGrades[kelas] = {};
+                                            this.allGrades[kelas][mapel] = d.data || {};
+                                        }
+                                    }
+                                }
+                            } else if (loadNilaiMode === 'all') {
+                                for (const kelas of kelasList) {
+                                    const qN = query(collection(db, 'erapor_nilai'), where('tahun_ajaran', '==', k.tahun_ajaran), where('semester', '==', k.semester), where('kelas', '==', kelas));
+                                    const snap = await getDocs(qN);
+                                    snap.forEach(d => {
+                                        const rec = d.data() || {};
+                                        const mapel = rec.mapel;
+                                        if (!mapel) return;
+                                        if (!this.allGrades[kelas]) this.allGrades[kelas] = {};
+                                        this.allGrades[kelas][mapel] = rec.data || {};
+                                    });
+                                }
+                            }
+                        } catch (e) {
+                            console.error('ERROR CLOUD load nilai', e);
+                        }
+                    }
+                },
+                async saveNilaiToCloud(kelas, mapel) {
+                    if (!this.cloudEnabled) return;
+                    if (!kelas || !mapel) return;
+                    const k = this.cloudKey();
+                    const data = (this.allGrades?.[kelas]?.[mapel]) || {};
+                    const any = this._countAnyNilaiFor(kelas, mapel) > 0;
+                    const id = this._docIdNilai(kelas, mapel);
+                    const payload = {
+                        tahun_ajaran: k.tahun_ajaran,
+                        semester: k.semester,
+                        jenjang: k.jenjang,
+                        kelas,
+                        mapel,
+                        data,
+                        updated_at: serverTimestamp(),
+                    };
+                    await this._cloudSetDoc('erapor_nilai', id, payload, false);
+                    await this._updateProgressFlag(kelas, mapel, any);
+                },
+                async saveEkskulToCloud(kelas) {
+                    if (!this.cloudEnabled) return;
+                    if (!kelas) return;
+                    const k = this.cloudKey();
+                    const data = this.ekskulData?.[kelas] || {};
+                    const any = Object.values(data).some(row => row && (this._isNonEmpty(row.name1) || this._isNonEmpty(row.name2) || this._isNonEmpty(row.name3) || this._isNonEmpty(row.desc1) || this._isNonEmpty(row.desc2) || this._isNonEmpty(row.desc3)));
+                    const id = this._docIdClass(kelas);
+                    await this._cloudSetDoc('erapor_ekskul', id, { tahun_ajaran: k.tahun_ajaran, semester: k.semester, jenjang: k.jenjang, kelas, data, updated_at: serverTimestamp() }, false);
+                    await this._updateProgressFlag(kelas, 'EKSKUL', any);
+                },
+                async saveKewalasanToCloud(kelas) {
+                    if (!this.cloudEnabled) return;
+                    if (!kelas) return;
+                    const k = this.cloudKey();
+                    const data = this.kewalasanData?.[kelas] || {};
+                    const config = this.kewalasanConfig?.[kelas] || {};
+                    const any = Object.values(data).some(row => row && (this._isNonEmpty(row.s) || this._isNonEmpty(row.i) || this._isNonEmpty(row.a)));
+                    const id = this._docIdClass(kelas);
+                    await this._cloudSetDoc('erapor_kewalasan', id, { tahun_ajaran: k.tahun_ajaran, semester: k.semester, jenjang: k.jenjang, kelas, data, config, updated_at: serverTimestamp() }, false);
+                    await this._updateProgressFlag(kelas, 'KEWALASAN', any);
+                },
+                async saveKaihToCloud(kelas) {
+                    if (!this.cloudEnabled) return;
+                    if (!kelas) return;
+                    const k = this.cloudKey();
+                    const data = this.kaihData?.[kelas] || {};
+                    const any = Object.values(data).some(row => row && (this._isNonEmpty(row.kaih)));
+                    const id = this._docIdClass(kelas);
+                    await this._cloudSetDoc('erapor_kaih', id, { tahun_ajaran: k.tahun_ajaran, semester: k.semester, jenjang: k.jenjang, kelas, data, updated_at: serverTimestamp() }, false);
+                    await this._updateProgressFlag(kelas, 'KAIH', any);
+                },
+                async saveMetaToCloud(kelas) {
+                    if (!this.cloudEnabled) return;
+                    if (!kelas) return;
+                    const k = this.cloudKey();
+                    const studentMeta = this.studentMeta?.[kelas] || {};
+                    const wali_kelas = this.waliKelasByClass?.[kelas] || null;
+                    const any = Object.values(studentMeta).some(row => row && this._isNonEmpty(row.nis_nisn)) || this._isNonEmpty(wali_kelas);
+                    const id = this._docIdClass(kelas);
+                    await this._cloudSetDoc('erapor_meta', id, { tahun_ajaran: k.tahun_ajaran, semester: k.semester, jenjang: k.jenjang, kelas, studentMeta, wali_kelas, updated_at: serverTimestamp() }, false);
+                    await this._updateProgressFlag(kelas, 'META', any);
+                    await this._updateProgressMeta(kelas);
+                },
                 generateContentString(tp) { let s = (tp.c ? tp.c.trim() + " " : "") + (tp.b ? tp.b.trim() + " " : "") + (tp.d ? tp.d.trim() : ""); return s.trim(); },
                 getMapelColSpan(mapel) { return this.getMapelColumns(mapel).length + 4; },
                 getMapelColumns(mapel) { const c=this.mapelConfigs[mapel]; if(!c)return[]; const cs=[]; c.forEach(lm=>{if(lm.judul) lm.tujuan.forEach((tp,i)=>{if(tp.b)cs.push({id:`tp_${lm.id}_${i+1}`,label:`TP${lm.id}.${i+1}`,title:`${tp.b}`})})}); return cs; },
@@ -792,18 +1107,28 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                 switchToLhbs() { this.currentTab = 'lhbs'; this.selectedClass = ''; },
 
                 getGrade(sid, key) { const c = this.selectedClass; const m = this.identitas.mapel; if (this.allGrades[c] && this.allGrades[c][m] && this.allGrades[c][m][sid]) return this.allGrades[c][m][sid][key] || ''; return ''; },
-                updateGrade(sid, key, val) { const c = this.selectedClass; const m = this.identitas.mapel; if (!this.allGrades[c]) this.allGrades[c] = {}; if (!this.allGrades[c][m]) this.allGrades[c][m] = {}; if (!this.allGrades[c][m][sid]) this.allGrades[c][m][sid] = {}; this.allGrades[c][m][sid][key] = val; },
-                getEkskulData(sid) { const c = this.selectedClass; if (!this.ekskulData[c]) this.ekskulData[c] = {}; if (!this.ekskulData[c][sid]) this.ekskulData[c][sid] = { nama_ekskul: '', deskripsi: '' }; return this.ekskulData[c][sid]; },
-                updateEkskul(sid, f, v) { const c = this.selectedClass; if (!this.ekskulData[c]) this.ekskulData[c] = {}; if (!this.ekskulData[c][sid]) this.ekskulData[c][sid] = { nama_ekskul: '', deskripsi: '' }; this.ekskulData[c][sid][f] = v; },
-                getKewalasan(sid) { const c = this.selectedClass; if (!this.kewalasanData[c]) this.kewalasanData[c] = {}; if (!this.kewalasanData[c][sid]) this.kewalasanData[c][sid] = { s: '', i: '', a: '', c1: '', c2: '', c3: '', c4: '' }; return this.kewalasanData[c][sid]; },
-                updateKewalasan(sid, f, v) { const c = this.selectedClass; if (!this.kewalasanData[c]) this.kewalasanData[c] = {}; if (!this.kewalasanData[c][sid]) this.kewalasanData[c][sid] = {}; this.kewalasanData[c][sid][f] = v; },
                 
-                // KAIH LOGIC
-                getKaih(sid) { 
-                    const c = this.selectedClass; 
-                    if (!this.kaihData[c]) this.kaihData[c] = {}; 
-                    if (!this.kaihData[c][sid]) this.kaihData[c][sid] = {};
-                    return this.kaihData[c][sid]; 
+                updateGrade(sid, key, val) {
+                    const c = this.selectedClass;
+                    const m = this.identitas?.mapel;
+                    if (!c || !m) return;
+
+                    if (!this.allGrades[c]) this.allGrades[c] = {};
+                    if (!this.allGrades[c][m]) this.allGrades[c][m] = {};
+                    if (!this.allGrades[c][m][sid]) this.allGrades[c][m][sid] = {};
+                    this.allGrades[c][m][sid][key] = val;
+
+                    // Local fallback (offline)
+                    localStorage.setItem("allGrades", JSON.stringify(this.allGrades));
+
+                    // Update progress (local + cloud)
+                    const any = this._countAnyNilaiFor(c, m) > 0;
+                    this.savedProgress[`${c}_${m}`] = any;
+                    localStorage.setItem("savedProgress", JSON.stringify(this.savedProgress));
+
+                    // Fast progress sync, and full autosave (debounced)
+                    this._schedule('progress', () => this._updateProgressFlag(c, m, any), 600);
+                    this._schedule('nilai', () => this.saveNilaiToCloud(c, m), 1500);
                 },
                 updateKaih(sid, key, val) { 
                     const c = this.selectedClass; 
@@ -870,6 +1195,11 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                             classesToFetch = [this.selectedClass];
                         }
 
+
+                        const loadMode = (this.currentTab === 'nilai') ? 'current' :
+                            (['rekap','rekap_akhir','lhbs','monitoring'].includes(this.currentTab) ? 'all' : 'none');
+                        await this.loadCloudForClasses(classesToFetch, loadMode);
+                        if (!this._cloudInitDone) await this.loadCloudProgress();
                         const qAbsen = query(collection(db, "data_absensi"), where("kelas", "in", classesToFetch));
                         const snapAbsen = await getDocs(qAbsen);
                         
@@ -967,15 +1297,30 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                         if (this.selectedClass && this.identitas.mapel) { this.savedProgress[`${this.selectedClass}_${this.identitas.mapel}`] = true; localStorage.setItem('cbt_saved_progress', JSON.stringify(this.savedProgress)); }
                         Swal.fire({ title: 'Alhamdulillah! 🤲', text: 'Selamat kamu sudah terbebas/sedikit terbebas dari tagihan wakakur :)', icon: 'success' });
                     } else { const dataTP = { identitas: this.identitas, lingkupMateri: this.lingkupMateri }; localStorage.setItem('cbt_input_tp', JSON.stringify(dataTP)); Swal.fire({ icon: 'success', title: 'Tersimpan!', timer: 1000, showConfirmButton: false }); }
+                    // Cloud save (force) supaya data antar komputer sinkron
+                    try {
+                        const c = this.selectedClass;
+                        if (this.currentTab === 'nilai') {
+                            this.saveNilaiToCloud(c, this.identitas?.mapel);
+                        } else if (this.currentTab === 'ekskul') {
+                            this.saveEkskulToCloud(c);
+                        } else if (this.currentTab === 'kewalasan') {
+                            this.saveKewalasanToCloud(c);
+                        } else if (this.currentTab === 'kaih') {
+                            this.saveKaihToCloud(c);
+                        } else if (this.currentTab === 'data_siswa') {
+                            this.saveMetaToCloud(c);
+                        }
+                    } catch (e) {
+                        console.error('ERROR handleSaveButton cloud save', e);
+                    }
+
                 },
-                hasData(cls, mapel) { return this.savedProgress[`${cls}_${mapel}`] === true; },
-                handleGridPaste(e, startRowIdx, targetKey, isEkskul=false, isKaih=false) {
-                    e.preventDefault(); const text = (e.clipboardData || window.clipboardData).getData('text'); const rows = text.split(/\r\n|\n|\r/).filter(r => r.trim() !== '');
-                    rows.forEach((val, offset) => { const targetRow = startRowIdx + offset; if (targetRow < this.studentList.length) { const sid = this.studentList[targetRow].id; 
-                        if(isEkskul) this.updateEkskul(sid, targetKey, val.trim()); 
-                        else if(isKaih) this.updateKaih(sid, targetKey, val.trim());
-                        else this.updateGrade(sid, targetKey, val.trim()); 
-                    } });
+                hasData(cls, key) {
+                    const cloud = this.cloudProgress?.[cls]?.flags?.[key];
+                    if (cloud === true) return true;
+                    if (cloud === false) return false;
+                    return this.savedProgress[`${cls}_${key}`] === true;
                 },
                 
                 exportRekapExcel() {
@@ -1069,11 +1414,9 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                             };
                         }).filter(Boolean);
 
-                        const payload = { 
-        tipe: this.currentTab,
-siswa: siswaPayload };
+                        const payload = { siswa: siswaPayload };
                         const combineParam = this.downloadMode === 'combine' ? 1 : 0;
-                        const endpoint = `${this.backendUrl}/api/rapor/${format}?tipe=${encodeURIComponent(this.currentTab)}&combine=${combineParam}`;
+                        const endpoint = `${this.backendUrl}/api/rapor/${format}?combine=${combineParam}`;
 
                         const response = await fetch(endpoint, {
                             method: 'POST',
