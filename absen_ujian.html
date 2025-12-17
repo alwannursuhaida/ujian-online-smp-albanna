@@ -5,12 +5,9 @@
     <title>Absensi & Arsip Ujian - SMP ALBANNA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- PDF Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <!-- Excel Library -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
@@ -20,7 +17,6 @@
 
     <div id="app" class="flex h-screen overflow-hidden">
         
-        <!-- SIDEBAR -->
         <div class="w-64 bg-slate-900 text-white flex flex-col h-full shadow-2xl z-10">
             <div class="p-6 text-center border-b border-slate-700 bg-slate-800">
                 <h1 class="font-bold text-xl tracking-wider">ABSENSI CBT</h1>
@@ -47,7 +43,6 @@
             <div class="p-4 border-t border-slate-800"><a href="index.html" class="w-full text-center text-xs text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 p-2 hover:bg-slate-800 rounded transition"><i class="fas fa-home"></i> KEMBALI KE MENU</a></div>
         </div>
 
-        <!-- MAIN CONTENT -->
         <div class="flex-1 flex flex-col h-full overflow-hidden bg-gray-50">
             <div class="bg-white p-4 shadow-sm border-b flex justify-between items-center px-8">
                 <h2 class="text-2xl font-bold text-slate-800 uppercase">{{ pageTitle }}</h2>
@@ -56,7 +51,6 @@
 
             <div class="flex-1 overflow-y-auto p-8">
 
-                <!-- 1. DASHBOARD -->
                 <div v-show="activeTab === 'dashboard'">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                         <div class="bg-white p-6 rounded-xl shadow-sm border flex flex-col items-center"><h3 class="font-bold text-gray-700 mb-4">Statistik Kehadiran (Live)</h3><div class="h-64 w-full relative"><canvas id="attendanceChart"></canvas></div></div>
@@ -68,7 +62,6 @@
                     </div>
                 </div>
 
-                <!-- 2. DATA SISWA -->
                 <div v-show="activeTab === 'data_siswa'">
                     <div class="bg-white p-6 rounded-xl shadow-sm border mb-6 flex justify-between items-center">
                         <div class="w-1/3"><label class="block text-sm font-bold text-gray-700 mb-2">Pilih Kelas Aktif</label><select v-model="selectedClass" class="w-full p-2 border rounded bg-gray-50 font-bold text-blue-900"><option v-for="c in kelasList" :value="c">{{ c }}</option></select></div>
@@ -90,7 +83,6 @@
                     </div>
                 </div>
 
-                <!-- 3. INPUT ABSENSI -->
                 <div v-show="activeTab === 'input_absen'">
                     <div class="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
                         <div class="flex gap-4 w-full">
@@ -104,7 +96,6 @@
                     </div>
                 </div>
 
-                <!-- 4. ARSIP ABSENSI -->
                 <div v-show="activeTab === 'arsip'">
                     <div class="bg-white p-6 rounded-xl shadow-sm border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
                         <div><h2 class="text-xl font-bold text-slate-800">Arsip Absensi</h2><p class="text-sm text-gray-500">Riwayat absensi tersimpan.</p></div>
@@ -120,18 +111,15 @@
                     </div>
                 </div>
 
-                <!-- 5. LAPORAN & SUSULAN (FILTER BARU & PDF UPDATE) -->
                 <div v-show="activeTab === 'susulan'">
                     <div class="bg-white p-6 rounded-xl shadow-sm border mb-6">
                         <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Filter Laporan</h3>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <!-- FILTER TANGGAL -->
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tanggal Data</label>
                                 <input type="date" v-model="filterReportDate" class="w-full p-2 border-2 border-blue-100 rounded text-sm font-bold text-blue-900">
                             </div>
                             
-                            <!-- FILTER KELAS -->
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Filter Kelas</label>
                                 <select v-model="filterReportClass" class="w-full p-2 border-2 border-blue-100 rounded text-sm font-bold text-blue-900">
@@ -140,7 +128,6 @@
                                 </select>
                             </div>
 
-                            <!-- TOMBOL AKSI -->
                             <div class="flex items-end gap-2">
                                 <div class="border-2 border-dashed border-gray-300 p-1 rounded cursor-pointer hover:bg-gray-50 w-10 h-10 flex items-center justify-center relative" title="Upload Logo">
                                     <input type="file" accept="image/*" @change="handleLogoUpload" class="absolute inset-0 opacity-0 cursor-pointer z-10">
@@ -186,7 +173,6 @@
             </div>
         </div>
 
-        <!-- MODAL EDIT ARSIP -->
         <div v-if="viewArchiveModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div class="bg-white w-full max-w-3xl h-[80vh] rounded-xl shadow-2xl flex flex-col overflow-hidden">
                 <div class="p-4 border-b flex justify-between items-center bg-slate-50"><div><h3 class="font-bold text-lg">Edit Arsip: {{ viewArchiveModal.kelas }}</h3><p class="text-xs text-gray-500">{{ formatDate(viewArchiveModal.tanggal) }}</p></div><button @click="viewArchiveModal = null" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button></div>
@@ -279,7 +265,27 @@
             },
             mounted() {
                 const q = query(collection(db, "data_absensi"));
-                onSnapshot(q, (snap) => { this.allStudents = snap.docs.map(d => ({ id: d.id, ...doc.data, ...d.data() })); this.isLoading = false; this.updateStats(); if(this.activeTab==='dashboard') this.renderChart(); }, () => this.isLoading = false);
+                // --- BAGIAN INI SUDAH DIPERBAIKI ---
+                onSnapshot(q, (snap) => { 
+                    this.allStudents = snap.docs.map(d => {
+                        const data = d.data();
+                        return { 
+                            id: d.id, 
+                            ...data 
+                        };
+                    });
+                    
+                    console.log("Data Siswa Berhasil Ditarik:", this.allStudents); // Cek Console sekarang!
+                    
+                    this.isLoading = false; 
+                    this.updateStats(); 
+                    if(this.activeTab==='dashboard') this.renderChart(); 
+                }, (error) => {
+                    console.error("Gagal mengambil data:", error);
+                    this.isLoading = false;
+                });
+                // ------------------------------------
+
                 const qArsip = query(collection(db, "history_absensi"), orderBy("timestamp", "desc"));
                 onSnapshot(qArsip, (snap) => { this.archives = snap.docs.map(d => ({ id: d.id, ...d.data() })); });
             },
