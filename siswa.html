@@ -8,26 +8,22 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- ✅ SUPABASE: Ganti Firebase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
         body { font-family: 'Montserrat', sans-serif; user-select: none; -webkit-user-select: none; }
         .animate-pop { animation: popIn 0.3s ease-out; }
         @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        
-        /* Scroll smooth */
         html { scroll-behavior: smooth; }
-        
-        /* Hide scrollbar for nav */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* WATERMARK ANTI-SCREENSHOT */
         .watermark {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;
             display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; opacity: 0.06; overflow: hidden;
         }
         .watermark-text { transform: rotate(-30deg); font-size: 18px; font-weight: bold; color: #000; margin: 50px; white-space: nowrap; }
-
-        /* Animasi Sidebar Navigasi */
         .slide-enter-active, .slide-leave-active { transition: transform 0.3s ease-in-out; }
         .slide-enter-from, .slide-leave-to { transform: translateX(100%); }
     </style>
@@ -36,7 +32,7 @@
 
     <div id="app" class="min-h-screen flex flex-col relative">
         
-        <!-- WATERMARK LAYER (HANYA MUNCUL SAAT UJIAN AKTIF) -->
+        <!-- WATERMARK LAYER -->
         <div v-if="isExamActive" class="watermark">
             <div v-for="n in 30" class="watermark-text">{{ student.nama }} - {{ student.kelas }} - DILARANG MENYEBARLUASKAN</div>
         </div>
@@ -62,7 +58,6 @@
                 </div>
 
                 <div class="space-y-4">
-                    <!-- 1. Kelas (Paling Atas) -->
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Kelas</label>
                         <select v-model="student.kelas" @change="fetchStudents" class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900">
@@ -73,22 +68,18 @@
                         </select>
                     </div>
 
-                    <!-- 2. Nama -->
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nama Lengkap</label>
                         <select v-model="student.nama" :disabled="!student.kelas || studentList.length === 0" class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900 disabled:bg-gray-200 disabled:text-gray-400">
                             <option value="" disabled>-- Pilih Nama Siswa --</option>
                             <option v-for="s in studentList" :key="s.id" :value="s.nama">{{ s.nama }}</option>
                         </select>
-                        <p v-if="isLoadingList" class="text-xs text-blue-500 mt-1 italic animate-pulse">
-                            Sedang memuat daftar siswa...
-                        </p>
+                        <p v-if="isLoadingList" class="text-xs text-blue-500 mt-1 italic animate-pulse">Sedang memuat daftar siswa...</p>
                         <p v-if="!isLoadingList && student.kelas && studentList.length === 0" class="text-xs text-red-500 mt-1 italic">
                             * Tidak ada siswa yang berstatus HADIR di kelas ini.
                         </p>
                     </div>
 
-                    <!-- 3. Mapel -->
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Mata Pelajaran</label>
                         <select v-model="selectedExamId" class="w-full p-3 border rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-900">
@@ -97,7 +88,6 @@
                                 {{ exam.config.mapel }} ({{ exam.config.durasi }} Menit)
                             </option>
                         </select>
-                        
                         <p v-if="availableExams.length === 0 && student.kelas" class="text-xs text-red-500 mt-2 italic bg-red-50 p-2 rounded border border-red-100">
                             <i class="fas fa-info-circle"></i> Tidak ada ujian aktif untuk kelas {{ student.kelas }}.<br>Hubungi pengawas jika soal belum dibuka.
                         </p>
@@ -151,11 +141,9 @@
                     <p class="text-xs text-gray-500 font-mono">{{ student.nama }} | {{ student.kelas }}</p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <!-- Tombol Toggle Navigasi -->
                     <button @click="showNav = !showNav" :class="['px-3 py-2 rounded border font-bold text-xs flex items-center gap-1 transition', showNav ? 'bg-blue-600 text-white border-blue-600' : 'bg-indigo-100 text-indigo-700 border-indigo-200 hover:bg-indigo-200']">
                         <i class="fas fa-th"></i> <span class="hidden md:inline">{{ showNav ? 'TUTUP NAV' : 'NO. SOAL' }}</span>
                     </button>
-                    <!-- Timer -->
                     <div :class="['px-4 py-2 rounded font-mono font-bold text-xl border-2', timerSeconds < 300 ? 'bg-red-50 text-red-600 border-red-200 animate-pulse' : 'bg-gray-100 text-gray-700 border-gray-200']">
                         {{ timerDisplay }}
                     </div>
@@ -164,7 +152,7 @@
 
             <div class="flex-1 flex overflow-hidden relative">
                 
-                <!-- AREA SOAL (Scrollable) -->
+                <!-- AREA SOAL -->
                 <div class="flex-1 overflow-y-auto p-4 pb-32 w-full" id="question-container">
                     <div class="max-w-4xl mx-auto">
                         <div v-for="(group, gIndex) in groupedQuestions" :key="gIndex" class="mb-8">
@@ -178,7 +166,6 @@
                                         <div class="bg-blue-100 text-blue-800 w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm shrink-0 border border-blue-200">
                                             {{ getDisplayNumber(q.originalIndex) }}
                                         </div>
-                                        <!-- Checkbox Ragu-ragu -->
                                         <label class="flex items-center gap-1 cursor-pointer select-none">
                                             <input type="checkbox" v-model="doubts[q.originalIndex]" class="w-4 h-4 text-yellow-500 rounded border-gray-300 focus:ring-yellow-500">
                                             <span class="text-xs font-bold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded border border-yellow-200 hover:bg-yellow-100 transition">RAGU-RAGU</span>
@@ -190,7 +177,6 @@
                                     <div v-if="q.image" class="mb-4"><img :src="q.image" class="max-h-64 rounded-lg border shadow-sm cursor-zoom-in" onclick="window.open(this.src)"></div>
                                     <p class="text-gray-800 font-medium mb-5 text-lg leading-relaxed whitespace-pre-wrap">{{ q.text }}</p>
                                     
-                                    <!-- Jawaban -->
                                     <div v-if="q.type === 'PG'" class="space-y-3">
                                         <label v-for="opt in ['A','B','C','D']" :class="['flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all relative overflow-hidden', answers[q.originalIndex] === opt ? 'bg-blue-50 border-blue-500 text-blue-900' : 'border-gray-100 hover:bg-gray-50']">
                                             <input type="radio" :name="'q'+q.originalIndex" :value="opt" v-model="answers[q.originalIndex]" class="hidden">
@@ -210,7 +196,6 @@
                         </div>
                         
                         <div class="mt-10 mb-20">
-                            <!-- TOMBOL SUBMIT (MUNCUL BERDASARKAN DURASI) -->
                             <div v-if="canSubmit">
                                 <button @click="submitExam" class="w-full bg-green-600 text-white py-5 rounded-xl font-bold text-xl hover:bg-green-700 shadow-lg flex items-center justify-center gap-3">
                                     <i class="fas fa-paper-plane"></i> KIRIM JAWABAN SAYA
@@ -221,15 +206,13 @@
                                 <p class="text-yellow-700 font-bold text-sm">
                                     <i class="fas fa-clock mr-1"></i> Tombol Kirim akan muncul setelah waktu minimal terpenuhi.
                                 </p>
-                                <p class="text-xs text-yellow-600 mt-1">
-                                    Sisa waktu tunggu minimal: {{ minTimeDisplay }}
-                                </p>
+                                <p class="text-xs text-yellow-600 mt-1">Sisa waktu tunggu minimal: {{ minTimeDisplay }}</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- PANEL NAVIGASI FLOATING (KANAN) -->
+                <!-- PANEL NAVIGASI FLOATING -->
                 <transition name="slide">
                     <div v-if="showNav" class="w-80 bg-white shadow-2xl border-l border-gray-200 flex flex-col fixed right-0 top-[76px] bottom-0 z-50 md:absolute md:top-0">
                         <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
@@ -244,7 +227,6 @@
                                     {{ idx + 1 }}
                                 </button>
                             </div>
-                            
                             <div class="mt-6 space-y-3 text-xs text-gray-600 font-medium border-t pt-4">
                                 <div class="flex items-center gap-2"><div class="w-4 h-4 bg-green-500 rounded border border-green-600"></div> Sudah Dijawab</div>
                                 <div class="flex items-center gap-2"><div class="w-4 h-4 bg-yellow-400 rounded border border-yellow-500"></div> Ragu-ragu</div>
@@ -253,11 +235,10 @@
                         </div>
                     </div>
                 </transition>
-
             </div>
         </div>
 
-        <!-- 3. HALAMAN TERBLOKIR (PERSISTENT) -->
+        <!-- 3. HALAMAN TERBLOKIR -->
         <div v-if="isLocked" class="min-h-screen bg-red-600 flex flex-col items-center justify-center text-white p-8 text-center z-50">
             <div class="bg-white p-8 rounded-full mb-6 shadow-xl animate-pulse"><i class="fas fa-lock fa-5x text-red-600"></i></div>
             <h1 class="text-4xl font-bold mb-2">UJIAN TERKUNCI!</h1>
@@ -280,63 +261,64 @@
 
     </div>
 
-    <script type="module">
-        import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <script>
+        // ================================================================
+        // ✅ SUPABASE CONFIG
+        // Ganti dua nilai di bawah dengan Project URL dan anon key kamu
+        // dari: Supabase Dashboard > Project Settings > API
+        // ================================================================
+        const SUPABASE_URL  = 'https://XXXX.supabase.co';
+        const SUPABASE_ANON = 'eyJ...';  // anon public key
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBivREr2y61OYTE0kLxRnkGtPCdLvHn_og",
-            authDomain: "cbt-albanna.firebaseapp.com",
-            projectId: "cbt-albanna",
-            storageBucket: "cbt-albanna.firebasestorage.app",
-            messagingSenderId: "740622197344",
-            appId: "1:740622197344:web:6112adf59edfbe496ed905"
-        };
+        const { createClient } = supabase;
+        const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-        const appFirebase = initializeApp(firebaseConfig);
-        const auth = getAuth(appFirebase);
-        const db = getFirestore(appFirebase);
+        // ================================================================
+        // VUE APP
+        // ================================================================
+        const { createApp } = Vue;
 
         createApp({
             data() {
                 return {
                     loadingMessage: 'Menghubungkan ke Server...',
                     isLoading: true,
-                    isLoadingList: false, // Loading dropdown
+                    isLoadingList: false,
                     showReloadOption: false,
                     student: { nama: '', kelas: '', mapel: '' },
-                    studentList: [], // Data nama dari absen
+                    studentList: [],
                     allExams: [], selectedExamId: '',
                     isExamActive: false, isLocked: false, isFinished: false, showWarningModal: false,
                     agreed: false,
                     groupedQuestions: [], answers: {}, doubts: {}, showNav: false,
                     timerSeconds: 0, elapsedSeconds: 0, timerInterval: null, submitTime: '',
-                    unlockListener: null, flatQuestionOrder: [], activeExam: null
+                    unlockChannel: null,   // ✅ Supabase Realtime channel (ganti unlockListener)
+                    flatQuestionOrder: [], activeExam: null
                 }
             },
             computed: {
                 availableExams() {
-                    if(!this.student.kelas) return [];
+                    if (!this.student.kelas) return [];
                     const grade = this.student.kelas.charAt(0);
-                    return this.allExams.filter(e => e.config.kelas == grade && e.isLocked === false);
+                    // ✅ is_locked (snake_case) sesuai kolom di Supabase
+                    return this.allExams.filter(e => e.config.kelas == grade && e.is_locked === false);
                 },
                 timerDisplay() {
-                    const m = Math.floor(this.timerSeconds/60); const s = this.timerSeconds%60;
-                    return `${m}:${s<10?'0'+s:s}`;
+                    const m = Math.floor(this.timerSeconds / 60);
+                    const s = this.timerSeconds % 60;
+                    return `${m}:${s < 10 ? '0' + s : s}`;
                 },
                 minTimeSeconds() {
                     if (!this.activeExam) return 0;
                     const dur = parseInt(this.activeExam.config.durasi);
-                    if (dur >= 90) return 60 * 60; // 60 mins
-                    if (dur >= 60) return 45 * 60; // 45 mins
-                    return (dur * 0.5) * 60; // 50% default
+                    if (dur >= 90) return 60 * 60;
+                    if (dur >= 60) return 45 * 60;
+                    return (dur * 0.5) * 60;
                 },
                 canSubmit() { return this.elapsedSeconds >= this.minTimeSeconds; },
                 minTimeDisplay() {
                     const rem = Math.max(0, this.minTimeSeconds - this.elapsedSeconds);
-                    const m = Math.floor(rem/60); const s = rem%60;
+                    const m = Math.floor(rem / 60); const s = rem % 60;
                     return `${m} menit ${s} detik`;
                 },
                 questionStatusList() {
@@ -344,109 +326,166 @@
                         const isDoubt = this.doubts[qOriginalIndex];
                         const answer = this.answers[qOriginalIndex];
                         const isAnswered = (answer !== null && answer !== '' && (!Array.isArray(answer) || answer.length > 0));
-                        let btnClass = 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200'; 
-                        if (isDoubt) btnClass = 'bg-yellow-400 text-white border-yellow-500 hover:bg-yellow-500'; 
+                        let btnClass = 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200';
+                        if (isDoubt) btnClass = 'bg-yellow-400 text-white border-yellow-500 hover:bg-yellow-500';
                         else if (isAnswered) btnClass = 'bg-green-500 text-white border-green-600 hover:bg-green-600';
                         return { originalIndex: qOriginalIndex, class: btnClass };
                     });
                 }
             },
             async mounted() {
-                // Auth Attempt with Fallback
-                try {
-                    await signInAnonymously(auth);
-                } catch (e) {
-                    console.warn("Autentikasi anonim gagal (Domain tidak terdaftar?). Melanjutkan dengan asumsi akses publik/offline.", e);
-                    // Jangan return, biarkan lanjut ke fetchExams
-                }
+                // ✅ Tidak perlu signInAnonymously — Supabase pakai anon key langsung
 
                 // Anti-Cheat
                 document.addEventListener('keyup', (e) => { if (e.key === 'PrintScreen') { navigator.clipboard.writeText(''); this.triggerLock("Screenshot"); } });
                 document.addEventListener('visibilitychange', () => { if (document.hidden && this.isExamActive) this.triggerLock("Pindah Tab"); });
-                ['copy','cut','paste','contextmenu'].forEach(e => document.addEventListener(e, ev => ev.preventDefault()));
+                ['copy', 'cut', 'paste', 'contextmenu'].forEach(e => document.addEventListener(e, ev => ev.preventDefault()));
 
-                // Resume
+                // Resume dari localStorage jika sebelumnya terkunci
                 const lockedData = localStorage.getItem('cbt_client_lock');
                 if (lockedData) {
                     const data = JSON.parse(lockedData);
-                    this.student = data.student; this.selectedExamId = data.examId; 
-                    this.answers = data.answers || {}; this.doubts = data.doubts || {};
+                    this.student = data.student;
+                    this.selectedExamId = data.examId;
+                    this.answers = data.answers || {};
+                    this.doubts = data.doubts || {};
                     this.timerSeconds = data.timerSeconds || 0;
-                    this.isLocked = true; this.isLoading = true;
-                    
-                    // Fetch Exams for context
+                    this.isLocked = true;
+                    this.isLoading = true;
+
                     await this.fetchExams();
                     this.activeExam = this.allExams.find(e => e.id === this.selectedExamId);
-                    if(this.activeExam) {
-                         this.buildQuestionContext();
-                         this.isLoading = false;
-                         this.listenForUnlock();
-                         return;
+                    if (this.activeExam) {
+                        this.buildQuestionContext();
+                        this.isLoading = false;
+                        this.listenForUnlock();
+                        return;
                     }
-                    this.isLoading = false; 
+                    this.isLoading = false;
                 } else {
-                     // Start Safety Timer for initial load
-                     setTimeout(() => {
-                         if (this.isLoading) this.showReloadOption = true;
-                     }, 10000); // Show reload after 10s
-                     await this.fetchExams();
+                    setTimeout(() => { if (this.isLoading) this.showReloadOption = true; }, 10000);
+                    await this.fetchExams();
                 }
 
                 window.history.pushState(null, null, window.location.href);
                 window.onpopstate = function () { window.history.go(1); };
-                window.onbeforeunload = function() { return "Ujian akan terblokir!"; };
+                window.onbeforeunload = function () { return "Ujian akan terblokir!"; };
             },
             methods: {
                 forceReload() { window.location.reload(); },
 
+                // ============================================================
+                // ✅ FETCH SOAL UJIAN
+                // Sebelum: getDocs(query(collection(db, "bank_soal")))
+                // Sesudah: db.from('bank_soal').select('*')
+                // ============================================================
                 async fetchExams() {
                     try {
-                        const q = query(collection(db, "bank_soal"));
-                        const snapshot = await getDocs(q);
-                        this.allExams = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        const { data, error } = await db
+                            .from('bank_soal')
+                            .select('*');
+
+                        if (error) throw error;
+
+                        // ✅ Supabase sudah return array langsung, tidak perlu .docs.map()
+                        this.allExams = data;
                         this.isLoading = false;
-                    } catch (e) { 
-                        console.error(e); 
+                    } catch (e) {
+                        console.error(e);
                         this.loadingMessage = "Gagal memuat soal.";
                         this.showReloadOption = true;
                     }
                 },
+
+                // ============================================================
+                // ✅ FETCH DAFTAR SISWA BERDASARKAN KELAS
+                // Sebelum: getDocs(query(collection(db, "data_absensi"), where("kelas","==",kelas)))
+                // Sesudah: db.from('data_absensi').select('*').eq('kelas', kelas).eq('status', 'H')
+                // ============================================================
                 async fetchStudents() {
-                    if(!this.student.kelas) return;
-                    this.isLoadingList = true; this.studentList = []; this.student.nama = ''; 
+                    if (!this.student.kelas) return;
+                    this.isLoadingList = true;
+                    this.studentList = [];
+                    this.student.nama = '';
                     try {
-                        const q = query(collection(db, "data_absensi"), where("kelas", "==", this.student.kelas));
-                        const snapshot = await getDocs(q);
-                        this.studentList = snapshot.docs
-                            .map(doc => doc.data())
-                            .filter(s => s.status === 'H') 
-                            .sort((a,b) => a.nama.localeCompare(b.nama));
-                    } catch(e) { console.error(e); } finally { this.isLoadingList = false; }
+                        const { data, error } = await db
+                            .from('data_absensi')
+                            .select('*')
+                            .eq('kelas', this.student.kelas)
+                            .eq('status', 'H')
+                            .order('nama', { ascending: true });
+
+                        if (error) throw error;
+
+                        // ✅ Filter status='H' dan order sudah dilakukan di query,
+                        //    tidak perlu .filter() dan .sort() manual seperti di Firebase
+                        this.studentList = data;
+                    } catch (e) {
+                        console.error(e);
+                    } finally {
+                        this.isLoadingList = false;
+                    }
                 },
 
-                shuffleArray(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } return array; },
-                
+                shuffleArray(array) {
+                    for (let i = array.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [array[i], array[j]] = [array[j], array[i]];
+                    }
+                    return array;
+                },
+
+                // ============================================================
+                // ✅ CEK LOGIN — cek sudah submit atau terblokir
+                // Sebelum: getDocs(query(collection(db, "jawaban_siswa"), where("examId","==",id)))
+                // Sesudah: db.from('jawaban_siswa').select('student').eq('exam_id', id)
+                // ============================================================
                 async checkLogin() {
-                    if(!this.student.nama || !this.student.kelas || !this.selectedExamId) return alert("Lengkapi data!");
+                    if (!this.student.nama || !this.student.kelas || !this.selectedExamId)
+                        return alert("Lengkapi data!");
+
                     this.isLoading = true;
                     try {
-                        const qSubmit = query(collection(db, "jawaban_siswa"), where("examId", "==", this.selectedExamId));
-                        const snapSubmit = await getDocs(qSubmit);
-                        if(snapSubmit.docs.some(doc => doc.data().student.nama.toUpperCase() === this.student.nama.toUpperCase())) throw new Error("Sudah Mengerjakan.");
+                        // Cek sudah submit
+                        const { data: jawabanData, error: jawabanError } = await db
+                            .from('jawaban_siswa')
+                            .select('student')
+                            .eq('exam_id', this.selectedExamId);
 
-                        const qBlock = query(collection(db, "blocked_students"), where("examId", "==", this.selectedExamId));
-                        const snapBlock = await getDocs(qBlock);
-                        if(snapBlock.docs.some(doc => doc.data().student.nama.toUpperCase() === this.student.nama.toUpperCase())) throw new Error("Nama Anda TERBLOKIR.");
+                        if (jawabanError) throw jawabanError;
 
-                        this.showWarningModal = true; 
-                    } catch (e) { alert(e.message); } finally { this.isLoading = false; }
+                        const sudahSubmit = jawabanData.some(
+                            row => row.student?.nama?.toUpperCase() === this.student.nama.toUpperCase()
+                        );
+                        if (sudahSubmit) throw new Error("Sudah Mengerjakan.");
+
+                        // Cek terblokir
+                        const { data: blockedData, error: blockedError } = await db
+                            .from('blocked_students')
+                            .select('student')
+                            .eq('exam_id', this.selectedExamId);
+
+                        if (blockedError) throw blockedError;
+
+                        const terblokir = blockedData.some(
+                            row => row.student?.nama?.toUpperCase() === this.student.nama.toUpperCase()
+                        );
+                        if (terblokir) throw new Error("Nama Anda TERBLOKIR.");
+
+                        this.showWarningModal = true;
+                    } catch (e) {
+                        alert(e.message);
+                    } finally {
+                        this.isLoading = false;
+                    }
                 },
 
                 buildQuestionContext() {
-                    if(!this.activeExam) return;
-                    const groups = {}; this.flatQuestionOrder = [];
+                    if (!this.activeExam) return;
+                    const groups = {};
+                    this.flatQuestionOrder = [];
                     this.activeExam.soal.forEach((q, idx) => {
-                        if(!groups[q.type]) groups[q.type] = { label: q.typeLabel, questions: [] };
+                        if (!groups[q.type]) groups[q.type] = { label: q.typeLabel, questions: [] };
                         groups[q.type].questions.push({ ...q, originalIndex: idx });
                     });
                     this.groupedQuestions = Object.values(groups).map(g => {
@@ -460,27 +499,26 @@
                     this.showWarningModal = false;
                     this.activeExam = this.allExams.find(e => e.id === this.selectedExamId);
                     this.student.mapel = this.activeExam.config.mapel;
-                    
                     this.buildQuestionContext();
-
-                    this.answers = {}; this.doubts = {};
-                    this.activeExam.soal.forEach((q, idx) => { 
-                        this.answers[idx] = (q.type==='PG_KOMPLEKS' ? [] : null); 
-                        this.doubts[idx] = false; 
+                    this.answers = {};
+                    this.doubts = {};
+                    this.activeExam.soal.forEach((q, idx) => {
+                        this.answers[idx] = (q.type === 'PG_KOMPLEKS' ? [] : null);
+                        this.doubts[idx] = false;
                     });
-
                     this.timerSeconds = parseInt(this.activeExam.config.durasi) * 60;
                     this.elapsedSeconds = 0;
                     this.startTimerInterval();
-
-                    const elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(()=>{});
-                    this.isExamActive = true; this.showNav = true; 
+                    const elem = document.documentElement;
+                    if (elem.requestFullscreen) elem.requestFullscreen().catch(() => {});
+                    this.isExamActive = true;
+                    this.showNav = true;
                 },
 
                 startTimerInterval() {
                     if (this.timerInterval) clearInterval(this.timerInterval);
                     this.timerInterval = setInterval(() => {
-                        if(this.timerSeconds > 0) {
+                        if (this.timerSeconds > 0) {
                             this.timerSeconds--;
                             this.elapsedSeconds++;
                         } else {
@@ -491,17 +529,28 @@
 
                 scrollToQuestion(idx) {
                     const el = document.getElementById('q-' + idx);
-                    if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); if (window.innerWidth < 768) this.showNav = false; }
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        if (window.innerWidth < 768) this.showNav = false;
+                    }
                 },
+
                 getDisplayNumber(idx) { return this.flatQuestionOrder.indexOf(idx) + 1; },
-                
+
+                // ============================================================
+                // ✅ TRIGGER LOCK — siswa terkunci (anti-cheat)
+                // Sebelum: addDoc(collection(db, "blocked_students"), { ... })
+                // Sesudah: db.from('blocked_students').insert({ ... })
+                // ============================================================
                 async triggerLock(reason) {
-                    if(this.isLocked) return;
-                    this.isExamActive = false; this.isLocked = true; clearInterval(this.timerInterval);
-                    
+                    if (this.isLocked) return;
+                    this.isExamActive = false;
+                    this.isLocked = true;
+                    clearInterval(this.timerInterval);
+
                     const lockState = {
-                        student: this.student, 
-                        examId: this.activeExam.id, 
+                        student: this.student,
+                        examId: this.activeExam.id,
                         mapel: this.activeExam.config.mapel,
                         answers: this.answers,
                         doubts: this.doubts,
@@ -510,49 +559,124 @@
                     localStorage.setItem('cbt_client_lock', JSON.stringify(lockState));
 
                     try {
-                        await addDoc(collection(db, "blocked_students"), {
-                            student: this.student, examId: this.activeExam.id, mapel: this.activeExam.config.mapel, reason: reason, timestamp: new Date().toISOString()
-                        });
+                        const { error } = await db
+                            .from('blocked_students')
+                            .insert({
+                                student: this.student,
+                                exam_id: this.activeExam.id,       // ✅ snake_case sesuai kolom Supabase
+                                mapel: this.activeExam.config.mapel,
+                                reason: reason,
+                                timestamp: new Date().toISOString()
+                            });
+
+                        if (error) throw error;
                         this.listenForUnlock();
-                    } catch(e) { console.error(e); }
+                    } catch (e) {
+                        console.error(e);
+                    }
                 },
 
+                // ============================================================
+                // ✅ LISTEN FOR UNLOCK — realtime via Supabase WebSocket
+                // Sebelum: onSnapshot(query(collection(db, "blocked_students"), ...))
+                //          → polling + callback tiap ada perubahan
+                // Sesudah: db.channel().on('postgres_changes', ...).subscribe()
+                //          → WebSocket push, 0 extra HTTP request
+                //
+                // Logic: dengarkan DELETE pada tabel blocked_students
+                //        jika row milik siswa ini dihapus → artinya di-unlock admin
+                // ============================================================
                 listenForUnlock() {
-                    const q = query(collection(db, "blocked_students"), where("examId", "==", this.selectedExamId));
-                    this.unlockListener = onSnapshot(q, (snapshot) => {
-                        const myBlock = snapshot.docs.find(doc => doc.data().student.nama.toUpperCase() === this.student.nama.toUpperCase());
-                        if (!myBlock) {
-                            alert("Blokir dibuka oleh Admin. Melanjutkan ujian...");
-                            localStorage.removeItem('cbt_client_lock');
-                            this.isLocked = false;
-                            this.isExamActive = true;
-                            this.startTimerInterval();
-                            const elem = document.documentElement;
-                            if (elem.requestFullscreen) elem.requestFullscreen().catch(()=>{});
-                        }
-                    });
+                    // Bersihkan channel lama jika ada
+                    if (this.unlockChannel) {
+                        db.removeChannel(this.unlockChannel);
+                    }
+
+                    const namaSiswa = this.student.nama.toUpperCase();
+
+                    this.unlockChannel = db
+                        .channel('unlock-' + this.selectedExamId)
+                        .on(
+                            'postgres_changes',
+                            {
+                                event: 'DELETE',
+                                schema: 'public',
+                                table: 'blocked_students',
+                                filter: `exam_id=eq.${this.selectedExamId}`
+                            },
+                            (payload) => {
+                                // payload.old = data row yang dihapus
+                                const deletedName = payload.old?.student?.nama?.toUpperCase();
+                                if (deletedName === namaSiswa) {
+                                    alert("Blokir dibuka oleh Admin. Melanjutkan ujian...");
+                                    localStorage.removeItem('cbt_client_lock');
+                                    this.isLocked = false;
+                                    this.isExamActive = true;
+                                    this.startTimerInterval();
+                                    const elem = document.documentElement;
+                                    if (elem.requestFullscreen) elem.requestFullscreen().catch(() => {});
+                                    // Bersihkan channel setelah unlock
+                                    db.removeChannel(this.unlockChannel);
+                                    this.unlockChannel = null;
+                                }
+                            }
+                        )
+                        .subscribe();
                 },
 
-                async submitExam(force=false) {
-                    if(!force) {
-                        for(let i=0; i<this.activeExam.soal.length; i++) { 
+                // ============================================================
+                // ✅ SUBMIT JAWABAN
+                // Sebelum: addDoc(collection(db, "jawaban_siswa"), { ... })
+                // Sesudah: db.from('jawaban_siswa').insert({ ... })
+                // Perubahan field: examId → exam_id (snake_case)
+                // ============================================================
+                async submitExam(force = false) {
+                    if (!force) {
+                        for (let i = 0; i < this.activeExam.soal.length; i++) {
                             const ans = this.answers[i];
                             const isDoubt = this.doubts[i];
-                            if(ans === null || ans === '' || (Array.isArray(ans) && ans.length===0)) return alert(`Soal No. ${this.getDisplayNumber(i)} belum dijawab!`);
-                            if (isDoubt) return alert(`Soal No. ${this.getDisplayNumber(i)} masih Ragu-ragu.`);
+                            if (ans === null || ans === '' || (Array.isArray(ans) && ans.length === 0))
+                                return alert(`Soal No. ${this.getDisplayNumber(i)} belum dijawab!`);
+                            if (isDoubt)
+                                return alert(`Soal No. ${this.getDisplayNumber(i)} masih Ragu-ragu.`);
                         }
-                        if(!confirm("Kirim Jawaban?")) return;
+                        if (!confirm("Kirim Jawaban?")) return;
                     }
-                    
+
                     this.isLoading = true;
                     try {
-                        await addDoc(collection(db, "jawaban_siswa"), { student: this.student, examId: this.activeExam.id, mapel: this.activeExam.config.mapel, answers: this.answers, timestamp: new Date().toISOString() });
-                        this.isExamActive = false; this.isFinished = true; this.submitTime = new Date().toLocaleTimeString();
+                        const { error } = await db
+                            .from('jawaban_siswa')
+                            .insert({
+                                student: this.student,
+                                exam_id: this.activeExam.id,       // ✅ exam_id (bukan examId)
+                                mapel: this.activeExam.config.mapel,
+                                answers: this.answers,
+                                timestamp: new Date().toISOString()
+                            });
+
+                        if (error) throw error;
+
+                        this.isExamActive = false;
+                        this.isFinished = true;
+                        this.submitTime = new Date().toLocaleTimeString();
                         if (document.exitFullscreen) document.exitFullscreen();
-                        window.onbeforeunload = null; localStorage.removeItem('cbt_client_lock'); 
+                        window.onbeforeunload = null;
+                        localStorage.removeItem('cbt_client_lock');
+
+                        // Bersihkan channel realtime jika masih aktif
+                        if (this.unlockChannel) {
+                            db.removeChannel(this.unlockChannel);
+                            this.unlockChannel = null;
+                        }
+
                         setTimeout(() => { window.location.reload(); }, 3000);
-                    } catch(e) { alert("Gagal kirim: " + e.message); this.isExamActive = true; } 
-                    finally { this.isLoading = false; }
+                    } catch (e) {
+                        alert("Gagal kirim: " + e.message);
+                        this.isExamActive = true;
+                    } finally {
+                        this.isLoading = false;
+                    }
                 }
             }
         }).mount('#app');
