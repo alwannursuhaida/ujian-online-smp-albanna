@@ -8,6 +8,10 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- ✅ SUPABASE: Ganti Firebase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
         body { font-family: 'Montserrat', sans-serif; }
         .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
@@ -47,7 +51,6 @@
                 </div>
 
                 <div class="space-y-4">
-                    <!-- 1. Pilih Kelas -->
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Kelas</label>
                         <select v-model="form.kelas" @change="fetchStudents" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-600 outline-none">
@@ -58,14 +61,12 @@
                         </select>
                     </div>
 
-                    <!-- 2. Pilih Nama -->
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nama Lengkap</label>
                         <select v-model="form.nama" :disabled="!form.kelas || studentList.length === 0" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-600 outline-none disabled:bg-gray-200 disabled:text-gray-400">
                             <option value="" disabled>-- Pilih Nama Siswa --</option>
                             <option v-for="s in studentList" :key="s.id" :value="s.nama">{{ s.nama }}</option>
                         </select>
-                        
                         <p v-if="isLoadingList" class="text-xs text-blue-500 mt-1 animate-pulse">
                             <i class="fas fa-spinner fa-spin"></i> Mengambil data siswa...
                         </p>
@@ -84,7 +85,7 @@
 
         <!-- 2. DASHBOARD SISWA -->
         <div v-else class="flex-1 max-w-4xl mx-auto w-full p-4 animate-fade-in">
-            
+
             <!-- Header Siswa -->
             <div class="bg-white p-6 rounded-xl shadow-sm border mb-6 flex justify-between items-center">
                 <div>
@@ -120,42 +121,33 @@
                     <tbody class="divide-y divide-gray-100">
                         <tr v-for="mapel in masterMapel" :key="mapel" class="hover:bg-gray-50">
                             <td class="p-4 font-bold text-gray-700">{{ mapel }}</td>
-                            
-                            <!-- KKTP -->
+
                             <td class="p-4 text-center text-xs font-bold text-gray-400 bg-gray-50 border-l border-r">
                                 {{ getKKM(mapel) }}
                             </td>
 
-                            <!-- NILAI (Hanya muncul jika sudah selesai dikoreksi) -->
                             <td class="p-4 text-center font-mono font-bold text-gray-600">
                                 <span v-if="getStudentScore(mapel) === 'WAITING'" class="text-xs text-orange-500 italic">Proses</span>
                                 <span v-else-if="getStudentScore(mapel) !== null">{{ getStudentScore(mapel) }}</span>
                                 <span v-else>-</span>
                             </td>
 
-                            <!-- STATUS -->
                             <td class="p-4 text-center">
-                                <!-- Belum Ada Data -->
                                 <div v-if="getStudentScore(mapel) === null" class="text-xs text-gray-400 italic">
                                     Belum Ada Data
                                 </div>
-                                
-                                <!-- Sedang Dikoreksi -->
                                 <div v-else-if="getStudentScore(mapel) === 'WAITING'">
                                     <span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-[10px] font-bold shadow-sm flex items-center justify-center gap-1 animate-pulse">
                                         <i class="fas fa-hourglass-half"></i> SEDANG DIKOREKSI
                                     </span>
                                 </div>
-                                
-                                <!-- Hasil Keluar -->
                                 <div v-else>
-                                    <!-- Cek Tuntas Remidi -->
+                                    <!-- ✅ isRemedialDone pakai is_remedial_done (snake_case) -->
                                     <div v-if="isRemedialDone(mapel)">
                                         <span class="bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-full text-xs font-bold shadow-sm flex items-center justify-center gap-1">
                                             <i class="fas fa-clipboard-check"></i> TUNTAS REMIDI
                                         </span>
                                     </div>
-                                    <!-- Belum Tuntas -->
                                     <div v-else>
                                         <span v-if="getStudentScore(mapel) >= getKKM(mapel)" class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm flex items-center justify-center gap-1">
                                             <i class="fas fa-check-circle"></i> LOLOS
@@ -173,7 +165,6 @@
 
             <!-- TAB 2: JADWAL REMIDI -->
             <div v-if="activeTab === 'jadwal'">
-                
                 <div class="mb-4 flex justify-between items-center">
                     <h3 class="font-bold text-gray-700">Jadwal Pelaksanaan Remidi</h3>
                     <button @click="enableAdminMode" :class="['text-xs px-3 py-1 rounded font-bold border transition', isAdminMode ? 'bg-red-100 text-red-600 border-red-200' : 'bg-white text-gray-400 border-gray-200 hover:border-blue-400 hover:text-blue-500']">
@@ -181,26 +172,38 @@
                     </button>
                 </div>
 
+                <!-- Form Tambah Jadwal (Admin Only) -->
                 <div v-if="isAdminMode" class="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-200">
                     <h4 class="text-xs font-bold text-blue-800 uppercase mb-2">Tambah Jadwal Baru</h4>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
-                        <select v-model="newSchedule.mapel" class="p-2 rounded border text-sm"><option value="" disabled>Pilih Mapel</option><option v-for="m in masterMapel" :value="m">{{m}}</option></select>
+                        <select v-model="newSchedule.mapel" class="p-2 rounded border text-sm">
+                            <option value="" disabled>Pilih Mapel</option>
+                            <option v-for="m in masterMapel" :value="m">{{m}}</option>
+                        </select>
                         <input v-model="newSchedule.hari" placeholder="Hari, Tanggal" class="p-2 rounded border text-sm">
                         <input v-model="newSchedule.waktu" placeholder="Waktu" class="p-2 rounded border text-sm">
-                        <button @click="addSchedule" class="bg-blue-600 text-white rounded font-bold text-sm hover:bg-blue-700">TAMBAH</button>
+                        <button @click="addSchedule" class="bg-blue-600 text-white rounded font-bold text-sm hover:bg-blue-700 px-4">TAMBAH</button>
                     </div>
                 </div>
 
                 <div class="grid gap-4">
                     <div v-if="scheduleList.length === 0" class="text-center text-gray-400 py-10 bg-white rounded-xl border border-dashed">
+                        <i class="fas fa-calendar-times fa-2x mb-2 text-gray-300"></i>
                         <p>Belum ada jadwal remidi yang dirilis.</p>
                     </div>
                     <div v-for="item in scheduleList" :key="item.id" class="bg-white p-4 rounded-xl shadow-sm border flex justify-between items-center hover:shadow-md transition">
                         <div class="flex gap-4 items-center">
-                            <div class="bg-blue-100 text-blue-800 w-12 h-12 rounded-lg flex items-center justify-center shrink-0"><i class="fas fa-calendar-day text-xl"></i></div>
-                            <div><h4 class="font-bold text-gray-800">{{ item.mapel }}</h4><p class="text-sm text-gray-500"><i class="far fa-clock mr-1"></i> {{ item.hari }} | {{ item.waktu }}</p></div>
+                            <div class="bg-blue-100 text-blue-800 w-12 h-12 rounded-lg flex items-center justify-center shrink-0">
+                                <i class="fas fa-calendar-day text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">{{ item.mapel }}</h4>
+                                <p class="text-sm text-gray-500"><i class="far fa-clock mr-1"></i> {{ item.hari }} | {{ item.waktu }}</p>
+                            </div>
                         </div>
-                        <button v-if="isAdminMode" @click="deleteSchedule(item.id)" class="text-red-400 hover:text-red-600 px-2"><i class="fas fa-trash"></i></button>
+                        <button v-if="isAdminMode" @click="deleteSchedule(item.id)" class="text-red-400 hover:text-red-600 px-2 transition">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -211,116 +214,291 @@
 
     </div>
 
-    <script type="module">
-        import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, addDoc, deleteDoc, doc, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <script>
+        // ================================================================
+        // ✅ SUPABASE CONFIG
+        // ================================================================
+        const SUPABASE_URL  = 'https://XXXX.supabase.co';
+        const SUPABASE_ANON = 'eyJ...';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBivREr2y61OYTE0kLxRnkGtPCdLvHn_og",
-            authDomain: "cbt-albanna.firebaseapp.com",
-            projectId: "cbt-albanna",
-            storageBucket: "cbt-albanna.firebasestorage.app",
-            messagingSenderId: "740622197344",
-            appId: "1:740622197344:web:6112adf59edfbe496ed905"
-        };
+        const { createClient } = supabase;
+        const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-        const appFirebase = initializeApp(firebaseConfig);
-        const db = getFirestore(appFirebase);
+        // ================================================================
+        // VUE APP
+        // ================================================================
+        const { createApp } = Vue;
 
         createApp({
             data() {
                 return {
                     isLoading: false, isLoadingList: false, isLoggedIn: false,
-                    activeTab: 'rapor', isAdminMode: false, form: { nama: '', kelas: '' },
-                    studentList: [], studentResults: [], bankSoalCache: {}, scheduleList: [], newSchedule: { mapel: '', hari: '', waktu: '' },
-                    
+                    activeTab: 'rapor', isAdminMode: false,
+                    form: { nama: '', kelas: '' },
+                    studentList: [],
+                    studentResults: [],
+                    bankSoalCache: {},
+                    scheduleList: [],
+                    newSchedule: { mapel: '', hari: '', waktu: '' },
                     masterMapel: ['AGAMA ISLAM', 'BAHASA ARAB', 'BAHASA BALI', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 'INFORMATIKA', 'IPA', 'IPS', 'KKA', 'MATEMATIKA', 'OLAHRAGA', 'PKN', 'SENI BUDAYA'],
-                    // Tipe Soal yang butuh koreksi manual
-                    manualTypes: ['URAIAN', 'ESAI', 'ISIAN']
+                    manualTypes: ['URAIAN', 'ESAI', 'ISIAN'],
+                    // ✅ Supabase Realtime channel untuk jadwal_remidi
+                    jadwalChannel: null
                 }
             },
-            mounted() {
-                const qSch = query(collection(db, "jadwal_remidi"), orderBy("mapel"));
-                onSnapshot(qSch, (snap) => { this.scheduleList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })); });
-                this.loadBankSoal();
+            async mounted() {
+                // ============================================================
+                // ✅ LOAD JADWAL + REALTIME
+                //
+                // Sebelum:
+                //   onSnapshot(query(collection(db,"jadwal_remidi"), orderBy("mapel")), snap => {
+                //     this.scheduleList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                //   });
+                //
+                // Sesudah: fetch awal via REST + subscribe WebSocket untuk update live.
+                // Jadwal remidi jarang berubah, tapi realtime tetap berguna agar
+                // siswa yang sedang buka halaman langsung melihat jadwal baru tanpa refresh.
+                // ============================================================
+
+                // Fetch awal
+                const { data, error } = await db
+                    .from('jadwal_remidi')
+                    .select('*')
+                    .order('mapel', { ascending: true });
+
+                if (!error) this.scheduleList = data;
+
+                // Subscribe realtime
+                this.jadwalChannel = db
+                    .channel('jadwal-remidi-realtime')
+                    .on(
+                        'postgres_changes',
+                        { event: '*', schema: 'public', table: 'jadwal_remidi' },
+                        (payload) => {
+                            const { eventType, new: newRow, old: oldRow } = payload;
+                            if (eventType === 'INSERT') {
+                                // Sisipkan urut abjad berdasarkan mapel
+                                this.scheduleList.push(newRow);
+                                this.scheduleList.sort((a, b) => a.mapel.localeCompare(b.mapel));
+                            } else if (eventType === 'UPDATE') {
+                                const idx = this.scheduleList.findIndex(s => s.id === newRow.id);
+                                if (idx !== -1) this.scheduleList.splice(idx, 1, newRow);
+                            } else if (eventType === 'DELETE') {
+                                this.scheduleList = this.scheduleList.filter(s => s.id !== oldRow.id);
+                            }
+                        }
+                    )
+                    .subscribe();
+
+                await this.loadBankSoal();
+            },
+            beforeUnmount() {
+                if (this.jadwalChannel) db.removeChannel(this.jadwalChannel);
             },
             methods: {
                 getKKM(mapel) {
-                    if(!mapel) return 75;
+                    if (!mapel) return 75;
                     const m = mapel.toUpperCase();
                     if (['MATEMATIKA', 'IPA', 'BAHASA BALI'].includes(m)) return 70;
-                    return 75; 
+                    return 75;
                 },
 
+                // ============================================================
+                // ✅ LOAD BANK SOAL (cache lokal)
+                // Sebelum: getDocs(query(collection(db,"bank_soal")))
+                // Sesudah: db.from('bank_soal').select('id, soal, config')
+                // ============================================================
                 async loadBankSoal() {
-                    const q = query(collection(db, "bank_soal"));
-                    const snap = await getDocs(q);
-                    snap.forEach(doc => { this.bankSoalCache[doc.id] = doc.data(); });
+                    const { data, error } = await db
+                        .from('bank_soal')
+                        .select('id, soal, config');
+
+                    if (!error && data) {
+                        data.forEach(s => { this.bankSoalCache[s.id] = s; });
+                    }
                 },
+
+                // ============================================================
+                // ✅ FETCH DAFTAR SISWA
+                // Sebelum: getDocs(query(collection(db,"data_absensi"), where("kelas","==",kelas)))
+                //          + manual .sort()
+                // Sesudah: db.from('data_absensi').select('*').eq('kelas', kelas).order('nama')
+                // ============================================================
                 async fetchStudents() {
-                    if(!this.form.kelas) return;
-                    this.isLoadingList = true; this.studentList = []; this.form.nama = ''; 
+                    if (!this.form.kelas) return;
+                    this.isLoadingList = true;
+                    this.studentList = [];
+                    this.form.nama = '';
                     try {
-                        const q = query(collection(db, "data_absensi"), where("kelas", "==", this.form.kelas));
-                        const snapshot = await getDocs(q);
-                        this.studentList = snapshot.docs.map(doc => doc.data()).sort((a,b) => a.nama.localeCompare(b.nama));
-                    } catch(e) { console.error(e); } finally { this.isLoadingList = false; }
+                        const { data, error } = await db
+                            .from('data_absensi')
+                            .select('*')
+                            .eq('kelas', this.form.kelas)
+                            .eq('status', 'H')
+                            .order('nama', { ascending: true });
+
+                        if (error) throw error;
+                        this.studentList = data;
+                    } catch(e) {
+                        console.error(e);
+                    } finally {
+                        this.isLoadingList = false;
+                    }
                 },
+
+                // ============================================================
+                // ✅ CEK STATUS NILAI SISWA
+                //
+                // Sebelum:
+                //   getDocs(query(collection(db,"jawaban_siswa"),
+                //     where("student.kelas","==", kelas)))
+                //   → Filter nama di client
+                //
+                // Catatan: Supabase tidak bisa filter nested JSONB via .eq()
+                // Solusi: fetch by kelas dari kolom yang ada (student->>'kelas'),
+                // lalu filter nama di client — sama seperti Firebase
+                //
+                // Alternatif lebih efisien jika data besar:
+                //   Tambah kolom flat `kelas` dan `nama` di tabel jawaban_siswa
+                // ============================================================
                 async checkStatus() {
-                    if(!this.form.nama || !this.form.kelas) return alert("Lengkapi identitas!");
+                    if (!this.form.nama || !this.form.kelas) return alert("Lengkapi identitas!");
                     this.isLoading = true;
                     try {
-                        const q = query(collection(db, "jawaban_siswa"), where("student.kelas", "==", this.form.kelas));
-                        const snap = await getDocs(q);
-                        this.studentResults = snap.docs.map(doc => doc.data()).filter(d => d.student.nama.trim().toUpperCase() === this.form.nama.trim().toUpperCase());
+                        // ✅ Filter by nested JSONB: student->>'kelas'
+                        // Gunakan filter() dengan sintaks PostgREST
+                        const { data, error } = await db
+                            .from('jawaban_siswa')
+                            .select('*')
+                            .filter('student->>kelas', 'eq', this.form.kelas);
+
+                        if (error) throw error;
+
+                        // ✅ Filter nama di client (case-insensitive)
+                        this.studentResults = data.filter(
+                            d => d.student.nama.trim().toUpperCase() === this.form.nama.trim().toUpperCase()
+                        );
                         this.isLoggedIn = true;
-                    } catch(e) { alert("Error: " + e.message); } finally { this.isLoading = false; }
+                    } catch(e) {
+                        alert("Error: " + e.message);
+                    } finally {
+                        this.isLoading = false;
+                    }
                 },
-                logout() { this.isLoggedIn = false; this.studentResults = []; this.form = { nama: '', kelas: '' }; this.isAdminMode = false; },
-                
-                getStudentResult(mapelName) { return this.studentResults.find(r => r.mapel === mapelName); },
+
+                logout() {
+                    this.isLoggedIn = false;
+                    this.studentResults = [];
+                    this.form = { nama: '', kelas: '' };
+                    this.isAdminMode = false;
+                },
+
+                getStudentResult(mapelName) {
+                    return this.studentResults.find(r => r.mapel === mapelName);
+                },
+
+                // ✅ is_remedial_done (snake_case)
                 isRemedialDone(mapelName) {
                     const result = this.getStudentResult(mapelName);
-                    return result && result.isRemedialDone === true;
+                    return result && result.is_remedial_done === true;
                 },
 
-                // --- KALKULASI NILAI (UPDATED: CHECK MANUAL CORRECTION) ---
+                // ============================================================
+                // ✅ KALKULASI NILAI
+                // Perubahan field:
+                //   isRemedialDone → is_remedial_done
+                //   examId         → exam_id
+                //   manualScores   → manual_scores
+                // ============================================================
                 getStudentScore(mapelName) {
                     const result = this.getStudentResult(mapelName);
-                    if (!result) return null; // Belum Ujian
+                    if (!result) return null;
 
-                    // 1. Cek Tuntas Remidi (Prioritas)
-                    if (result.isRemedialDone) return this.getKKM(mapelName);
+                    // ✅ is_remedial_done (snake_case)
+                    if (result.is_remedial_done) return this.getKKM(mapelName);
 
-                    const exam = this.bankSoalCache[result.examId];
-                    if (!exam) return 0; 
+                    // ✅ exam_id (snake_case)
+                    const exam = this.bankSoalCache[result.exam_id];
+                    if (!exam) return 0;
 
-                    // 2. CEK STATUS KOREKSI
+                    // Cek status koreksi manual
                     const hasManual = exam.soal.some(q => this.manualTypes.includes(q.type));
                     if (hasManual) {
-                        // Jika belum ada object manualScores ATAU ada butir manual yang belum dinilai
-                        if (!result.manualScores) return 'WAITING';
-                        const isIncomplete = exam.soal.some((q, idx) => 
-                            this.manualTypes.includes(q.type) && result.manualScores[idx] === undefined
+                        // ✅ manual_scores (snake_case)
+                        if (!result.manual_scores) return 'WAITING';
+                        const isIncomplete = exam.soal.some((q, idx) =>
+                            this.manualTypes.includes(q.type) && result.manual_scores[idx] === undefined
                         );
                         if (isIncomplete) return 'WAITING';
                     }
 
-                    // 3. Hitung Nilai (Jika sudah lengkap)
+                    // Hitung nilai akhir
                     let score = 0;
                     exam.soal.forEach((q, idx) => {
-                        if (['PG', 'BS'].includes(q.type) && result.answers[idx] === q.answer) score += parseInt(q.poin);
-                        if (this.manualTypes.includes(q.type) && result.manualScores && result.manualScores[idx] !== undefined) {
-                            score += parseInt(result.manualScores[idx]);
+                        if (['PG', 'BS'].includes(q.type) && result.answers[idx] === q.answer) {
+                            score += parseInt(q.poin);
+                        }
+                        // ✅ manual_scores (snake_case)
+                        if (this.manualTypes.includes(q.type) && result.manual_scores?.[idx] !== undefined) {
+                            score += parseInt(result.manual_scores[idx]);
                         }
                     });
                     return score;
                 },
 
-                enableAdminMode() { if(this.isAdminMode) { this.isAdminMode = false; } else { const pass = prompt("Password Admin:"); if(pass === 'admin123') this.isAdminMode = true; else alert("Salah!"); } },
-                async addSchedule() { if(!this.newSchedule.mapel) return; await addDoc(collection(db, "jadwal_remidi"), this.newSchedule); alert("Tersimpan"); },
-                async deleteSchedule(id) { if(confirm("Hapus?")) await deleteDoc(doc(db, "jadwal_remidi", id)); }
+                enableAdminMode() {
+                    if (this.isAdminMode) {
+                        this.isAdminMode = false;
+                    } else {
+                        const pass = prompt("Password Admin:");
+                        if (pass === 'admin123') this.isAdminMode = true;
+                        else if (pass !== null) alert("Password salah!");
+                    }
+                },
+
+                // ============================================================
+                // ✅ TAMBAH JADWAL REMIDI
+                // Sebelum: addDoc(collection(db,"jadwal_remidi"), this.newSchedule)
+                // Sesudah: db.from('jadwal_remidi').insert({ ... })
+                // Tidak perlu update scheduleList manual — realtime INSERT menanganinya
+                // ============================================================
+                async addSchedule() {
+                    if (!this.newSchedule.mapel || !this.newSchedule.hari || !this.newSchedule.waktu)
+                        return alert("Lengkapi semua kolom jadwal!");
+
+                    const { error } = await db
+                        .from('jadwal_remidi')
+                        .insert({
+                            mapel:      this.newSchedule.mapel,
+                            hari:       this.newSchedule.hari,
+                            waktu:      this.newSchedule.waktu,
+                            created_at: new Date().toISOString()
+                        });
+
+                    if (error) return alert("Gagal simpan: " + error.message);
+
+                    // Reset form
+                    this.newSchedule = { mapel: '', hari: '', waktu: '' };
+                    // ✅ Tidak perlu update scheduleList — realtime INSERT menanganinya
+                },
+
+                // ============================================================
+                // ✅ HAPUS JADWAL REMIDI
+                // Sebelum: deleteDoc(doc(db,"jadwal_remidi", id))
+                // Sesudah: db.from('jadwal_remidi').delete().eq('id', id)
+                // Tidak perlu update scheduleList manual — realtime DELETE menanganinya
+                // ============================================================
+                async deleteSchedule(id) {
+                    if (confirm("Hapus jadwal ini?")) {
+                        const { error } = await db
+                            .from('jadwal_remidi')
+                            .delete()
+                            .eq('id', id);
+
+                        if (error) alert("Gagal hapus: " + error.message);
+                        // ✅ Tidak perlu filter scheduleList — realtime DELETE menanganinya
+                    }
+                }
             }
         }).mount('#app');
     </script>
