@@ -2,266 +2,630 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal CBT - SMP ALBANNA</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Portal CBT — SMP ALBANNA</title>
+
+    <!-- Satu font saja: Plus Jakarta Sans (modern, pendidikan, ringan) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Vue 3 (CDN ringan) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
     <style>
-        body { font-family: 'Montserrat', sans-serif; }
-        .btn-card { transition: all 0.3s ease; display: block; text-decoration: none; cursor: pointer; }
-        .btn-card:hover { transform: translateY(-5px); }
-        .menu-grid { position: relative; z-index: 20; }
+        /* ================================================================
+           DESIGN TOKENS
+           Palet: Deep Navy + Electric Teal + Warm White
+           Tidak pakai Tailwind — CSS murni = lebih ringan di HP
+        ================================================================ */
+        :root {
+            --navy:     #0d1b2a;
+            --navy-2:   #1b2d42;
+            --navy-3:   #243347;
+            --teal:     #0caadc;
+            --teal-dim: #0891c2;
+            --teal-glow:#0caadc26;
+            --cream:    #f5f7fa;
+            --white:    #ffffff;
+            --text-1:   #0d1b2a;
+            --text-2:   #3d5166;
+            --text-3:   #7a8fa6;
+            --border:   #e4eaf0;
+            --radius-sm: 10px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --shadow-sm: 0 1px 4px rgba(13,27,42,.06), 0 2px 12px rgba(13,27,42,.04);
+            --shadow-md: 0 4px 20px rgba(13,27,42,.10);
+            --shadow-lg: 0 8px 40px rgba(13,27,42,.14);
+            --font: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: var(--font);
+            background: var(--cream);
+            color: var(--text-1);
+            min-height: 100dvh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ================================================================
+           LOGIN PAGE
+        ================================================================ */
+        .login-wrap {
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+            background: var(--navy);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Background decoration — pure CSS, no image */
+        .login-wrap::before {
+            content: '';
+            position: absolute;
+            top: -120px; right: -120px;
+            width: 380px; height: 380px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(12,170,220,.18) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .login-wrap::after {
+            content: '';
+            position: absolute;
+            bottom: -80px; left: -80px;
+            width: 280px; height: 280px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(12,170,220,.10) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .login-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 36px 28px 32px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            z-index: 1;
+            animation: fadeUp .5s ease both;
+        }
+
+        .login-brand {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .login-icon {
+            width: 64px; height: 64px;
+            background: var(--navy);
+            border-radius: var(--radius-md);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px;
+            box-shadow: 0 4px 20px rgba(12,170,220,.3);
+        }
+        .login-icon svg { width: 30px; height: 30px; fill: var(--teal); }
+        .login-brand h1 { font-size: 1.4rem; font-weight: 800; color: var(--navy); letter-spacing: -.3px; }
+        .login-brand p  { font-size: .75rem; color: var(--text-3); margin-top: 4px; font-weight: 500; letter-spacing: .5px; }
+
+        .field { margin-bottom: 16px; }
+        .field label { display: block; font-size: .7rem; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
+        .field-input {
+            position: relative;
+        }
+        .field-input svg {
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            width: 16px; height: 16px; fill: var(--text-3); pointer-events: none;
+        }
+        .field-input input {
+            width: 100%;
+            padding: 13px 14px 13px 40px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: var(--font);
+            font-size: .9rem;
+            font-weight: 500;
+            color: var(--text-1);
+            background: var(--cream);
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .field-input input:focus {
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px var(--teal-glow);
+            background: var(--white);
+        }
+
+        .btn-login {
+            width: 100%;
+            margin-top: 8px;
+            padding: 14px;
+            background: var(--navy);
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: var(--font);
+            font-size: .9rem;
+            font-weight: 700;
+            letter-spacing: .3px;
+            cursor: pointer;
+            transition: background .2s, transform .15s, box-shadow .2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-login:hover { background: var(--navy-3); box-shadow: var(--shadow-md); }
+        .btn-login:active { transform: scale(.98); }
+
+        .login-note {
+            text-align: center;
+            font-size: .72rem;
+            color: var(--text-3);
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* ================================================================
+           DASHBOARD
+        ================================================================ */
+        .dash-wrap { min-height: 100dvh; display: flex; flex-direction: column; }
+
+        /* Sticky header */
+        .topbar {
+            position: sticky; top: 0; z-index: 100;
+            background: var(--navy);
+            padding: 14px 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 12px rgba(13,27,42,.25);
+        }
+        .topbar-left { display: flex; align-items: center; gap: 12px; }
+        .topbar-logo {
+            width: 38px; height: 38px;
+            background: var(--teal);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .topbar-logo svg { width: 20px; height: 20px; fill: var(--white); }
+        .topbar-title { font-size: 1rem; font-weight: 800; color: var(--white); letter-spacing: -.2px; }
+        .topbar-sub   { font-size: .7rem; color: rgba(255,255,255,.55); font-weight: 500; margin-top: 1px; }
+
+        .btn-logout {
+            padding: 8px 14px;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.12);
+            color: rgba(255,255,255,.7);
+            border-radius: 8px;
+            font-family: var(--font);
+            font-size: .72rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .2s, color .2s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .btn-logout:hover { background: rgba(220,38,38,.75); color: var(--white); border-color: transparent; }
+
+        /* Greeting section */
+        .dash-greet {
+            padding: 28px 20px 0;
+            max-width: 680px;
+            margin: 0 auto;
+            width: 100%;
+            animation: fadeUp .4s .1s ease both;
+        }
+        .greet-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--teal-glow);
+            color: var(--teal-dim);
+            border: 1px solid rgba(12,170,220,.2);
+            border-radius: 100px;
+            padding: 4px 12px;
+            font-size: .7rem; font-weight: 700; letter-spacing: .4px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .greet-chip span { width: 6px; height: 6px; background: var(--teal); border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
+        .dash-greet h2 { font-size: 1.35rem; font-weight: 800; color: var(--text-1); letter-spacing: -.3px; }
+        .dash-greet p  { font-size: .82rem; color: var(--text-3); margin-top: 4px; font-weight: 500; }
+
+        /* Section label */
+        .section-label {
+            font-size: .65rem; font-weight: 800; color: var(--text-3);
+            letter-spacing: 1.2px; text-transform: uppercase;
+            padding: 24px 20px 10px;
+            max-width: 680px; margin: 0 auto; width: 100%;
+        }
+
+        /* Menu grid */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 0 20px 8px;
+            max-width: 680px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .menu-grid.full { grid-template-columns: 1fr; }
+
+        /* Menu card */
+        .menu-card {
+            display: flex;
+            flex-direction: column;
+            background: var(--white);
+            border-radius: var(--radius-md);
+            padding: 18px 16px;
+            text-decoration: none;
+            color: var(--text-1);
+            border: 1.5px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            transition: transform .2s, box-shadow .2s, border-color .2s;
+            position: relative;
+            overflow: hidden;
+            animation: fadeUp .4s ease both;
+            -webkit-tap-highlight-color: transparent;
+            cursor: pointer;
+        }
+        .menu-card:active { transform: scale(.97); }
+        @media (hover: hover) {
+            .menu-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--card-accent, var(--teal)); }
+        }
+
+        /* Accent line top */
+        .menu-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--card-accent, var(--teal));
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+        }
+
+        .card-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 14px;
+            background: color-mix(in srgb, var(--card-accent, var(--teal)) 12%, transparent);
+            flex-shrink: 0;
+        }
+        .card-icon svg { width: 20px; height: 20px; fill: var(--card-accent, var(--teal)); }
+
+        .card-badge {
+            position: absolute; top: 14px; right: 14px;
+            font-size: .6rem; font-weight: 800;
+            letter-spacing: .5px; text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 100px;
+            background: color-mix(in srgb, var(--card-accent, var(--teal)) 10%, transparent);
+            color: var(--card-accent, var(--teal));
+        }
+
+        .card-title {
+            font-size: .88rem; font-weight: 700;
+            color: var(--text-1); line-height: 1.3;
+            margin-bottom: 6px;
+        }
+        .card-desc {
+            font-size: .72rem; font-weight: 500;
+            color: var(--text-3); line-height: 1.5;
+            margin-top: auto;
+        }
+
+        /* Special card: Admin (dark) */
+        .menu-card.card-dark {
+            background: var(--navy);
+            border-color: var(--navy-3);
+        }
+        .menu-card.card-dark .card-title { color: var(--white); }
+        .menu-card.card-dark .card-desc  { color: rgba(255,255,255,.4); }
+        .menu-card.card-dark .card-badge { background: rgba(220,38,38,.15); color: #f87171; }
+
+        /* Wide card (spans 2 cols) */
+        .menu-card.card-wide {
+            grid-column: 1 / -1;
+            flex-direction: row;
+            align-items: center;
+            gap: 16px;
+        }
+        .menu-card.card-wide .card-icon { margin-bottom: 0; flex-shrink: 0; width: 48px; height: 48px; }
+        .menu-card.card-wide .card-icon svg { width: 24px; height: 24px; }
+        .menu-card.card-wide .card-body { flex: 1; }
+        .menu-card.card-wide .card-title { margin-bottom: 3px; }
+        .menu-card.card-wide::after {
+            content: '→';
+            font-size: 1.1rem; color: var(--card-accent, var(--teal));
+            margin-left: auto; flex-shrink: 0;
+        }
+
+        /* Footer */
+        .dash-footer {
+            text-align: center;
+            padding: 28px 20px 36px;
+            font-size: .7rem;
+            color: var(--text-3);
+            font-weight: 500;
+        }
+
+        /* ================================================================
+           ANIMATIONS (CSS-only, ringan)
+        ================================================================ */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .3; }
+        }
+
+        /* Stagger animasi tiap card */
+        .menu-card:nth-child(1)  { animation-delay: .05s; }
+        .menu-card:nth-child(2)  { animation-delay: .10s; }
+        .menu-card:nth-child(3)  { animation-delay: .15s; }
+        .menu-card:nth-child(4)  { animation-delay: .20s; }
+        .menu-card:nth-child(5)  { animation-delay: .25s; }
+        .menu-card:nth-child(6)  { animation-delay: .30s; }
+        .menu-card:nth-child(7)  { animation-delay: .35s; }
+        .menu-card:nth-child(8)  { animation-delay: .40s; }
+        .menu-card:nth-child(9)  { animation-delay: .45s; }
+
+        /* ================================================================
+           RESPONSIVE — desktop sedikit lebih lega
+        ================================================================ */
+        @media (min-width: 520px) {
+            .login-card { padding: 44px 40px 40px; }
+            .menu-grid  { grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+            .menu-card.card-wide { grid-column: span 1; flex-direction: column; }
+            .menu-card.card-wide::after { display: none; }
+            .menu-card.card-wide .card-icon { margin-bottom: 14px; }
+        }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body>
+<div id="app">
 
-    <div id="app" class="min-h-screen flex flex-col">
-
-        <!-- 1. HALAMAN LOGIN -->
-        <div v-if="!currentUser" class="flex-1 flex flex-col items-center justify-center p-4">
-            <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border-t-8 border-blue-900">
-                <div class="text-center mb-8">
-                    <div class="bg-blue-100 text-blue-900 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-chalkboard-teacher fa-3x"></i>
-                    </div>
-                    <h1 class="text-2xl font-bold text-blue-900">PORTAL GURU</h1>
-                    <p class="text-sm text-gray-500">SMP ALBANNA CBT SYSTEM</p>
+    <!-- ===================================================
+         1. HALAMAN LOGIN
+    =================================================== -->
+    <div v-if="!currentUser" class="login-wrap">
+        <div class="login-card">
+            <div class="login-brand">
+                <div class="login-icon">
+                    <!-- Graduation cap icon (inline SVG, tidak butuh FontAwesome) -->
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18V17l7 4 7-4v-3.82l-7 3.82-7-3.82z"/>
+                    </svg>
                 </div>
+                <h1>PORTAL GURU</h1>
+                <p>SMP ALBANNA · CBT SYSTEM</p>
+            </div>
 
-                <form @submit.prevent="handleLogin" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Username</label>
-                        <div class="relative">
-                            <i class="fas fa-user absolute left-3 top-3 text-gray-400"></i>
-                            <input v-model="loginForm.username" type="text" class="w-full pl-10 p-2 border rounded focus:ring-2 focus:ring-blue-900 outline-none" placeholder="Contoh: guru01">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
-                        <div class="relative">
-                            <i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i>
-                            <input v-model="loginForm.password" type="password" class="w-full pl-10 p-2 border rounded focus:ring-2 focus:ring-blue-900 outline-none" placeholder="Password">
-                        </div>
-                    </div>
-                    <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg font-bold hover:bg-blue-800 shadow-lg transition flex items-center justify-center gap-2">
-                        MASUK <i class="fas fa-sign-in-alt"></i>
-                    </button>
-                </form>
-
-                <div class="mt-6 text-xs text-center text-gray-400 border-t pt-4">
-                    <p>Gunakan akun yang telah didaftarkan oleh Admin IT.</p>
+            <div class="field">
+                <label>Username</label>
+                <div class="field-input">
+                    <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                    <input v-model="loginForm.username" type="text" placeholder="Contoh: guru01" autocomplete="username" @keyup.enter="handleLogin">
                 </div>
             </div>
+            <div class="field">
+                <label>Password</label>
+                <div class="field-input">
+                    <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                    <input v-model="loginForm.password" type="password" placeholder="Password" autocomplete="current-password" @keyup.enter="handleLogin">
+                </div>
+            </div>
+
+            <button class="btn-login" @click="handleLogin">
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor"><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/></svg>
+                MASUK
+            </button>
+
+            <p class="login-note">Gunakan akun yang telah didaftarkan oleh Admin IT.</p>
         </div>
-
-        <!-- 2. DASHBOARD MENU UTAMA -->
-        <div v-else class="flex flex-col min-h-screen">
-            
-            <!-- Navbar -->
-            <nav class="bg-blue-900 text-white p-4 shadow-lg sticky top-0 z-50">
-                <div class="max-w-6xl mx-auto flex justify-between items-center">
-                    <div class="flex items-center gap-3">
-                        <div class="bg-white text-blue-900 p-2 rounded-lg">
-                            <i class="fas fa-graduation-cap fa-lg"></i>
-                        </div>
-                        <div>
-                            <h1 class="font-bold text-xl leading-none">CBT SYSTEM</h1>
-                            <p class="text-xs text-blue-200">Halo, {{ currentUser.name }}</p>
-                        </div>
-                    </div>
-                    <button @click="logout" class="text-sm bg-red-600 hover:bg-red-700 px-4 py-2 rounded transition font-bold flex items-center gap-2 shadow">
-                        <i class="fas fa-sign-out-alt"></i> LOGOUT
-                    </button>
-                </div>
-            </nav>
-
-            <!-- Main Content -->
-            <main class="flex-1 max-w-6xl mx-auto w-full p-6 relative z-10">
-                
-                <div class="text-center mb-10 mt-6">
-                    <h2 class="text-3xl font-bold text-gray-800">Dashboard Aplikasi</h2>
-                    <p class="text-gray-600 mt-2">Pilih menu di bawah ini untuk memulai pekerjaan Anda.</p>
-                </div>
-
-                <!-- GRID MENU -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 menu-grid">
-                    
-                    <!-- 1. PERENCANAAN PEMBELAJARAN -->
-                    <a href="perencanaan.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-cyan-500 hover:shadow-xl group flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-cyan-100 text-cyan-600 p-3 rounded-lg group-hover:bg-cyan-600 group-hover:text-white transition">
-                                <i class="fas fa-pen-nib fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">ADMINISTRASI</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-cyan-600">Perencanaan Ajar</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Generator RPP/Modul Ajar yang Mindful, Meaningful, & Joyful.</p>
-                    </a>
-
-                    <!-- 2. INPUT NILAI E-RAPOR (BARU) -->
-                    <a href="input.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-indigo-500 hover:shadow-xl group flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-indigo-100 text-indigo-600 p-3 rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition">
-                                <i class="fas fa-edit fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">E-RAPOR</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-indigo-600">Input Nilai E-Rapor</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Penyusunan TP (Metode ABCD) dan Input Nilai Rapor Siswa.</p>
-                    </a>
-
-                    <!-- 3. KISI-KISI -->
-                    <a href="guru.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-purple-500 hover:shadow-xl group relative flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-purple-100 text-purple-600 p-3 rounded-lg group-hover:bg-purple-600 group-hover:text-white transition">
-                                <i class="fas fa-list-alt fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">ADMINISTRASI</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-purple-600">Generator Kisi-Kisi</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Buat dokumen kisi-kisi soal ujian standar secara otomatis (PDF).</p>
-                    </a>
-
-                    <!-- 4. SOAL GENERATOR -->
-                    <a href="soal.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-blue-500 hover:shadow-xl group flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-blue-100 text-blue-600 p-3 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition">
-                                <i class="fas fa-file-signature fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">BANK SOAL</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600">Input Soal (Upload)</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Input butir soal, kunci jawaban, dan upload ke server ujian online.</p>
-                    </a>
-
-                    <!-- 5. HASIL UJIAN -->
-                    <a href="jawaban.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-orange-500 hover:shadow-xl group flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-orange-100 text-orange-600 p-3 rounded-lg group-hover:bg-orange-600 group-hover:text-white transition">
-                                <i class="fas fa-chart-pie fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">LAPORAN</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-orange-600">Rekap Nilai & Analisis</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Lihat hasil ujian siswa, analisis butir soal, dan unduh Excel.</p>
-                    </a>
-
-                    <!-- 6. ABSENSI & SUSULAN -->
-                    <a href="absen_ujian.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-indigo-500 hover:shadow-xl group flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-indigo-100 text-indigo-600 p-3 rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition">
-                                <i class="fas fa-calendar-check fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">ADMINISTRASI</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-indigo-600">Absensi & Susulan</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Input kehadiran harian dan kelola jadwal siswa ujian susulan.</p>
-                    </a>
-
-                    <!-- 7. ADMINISTRASI (BERITA ACARA) -->
-                    <a href="administrasi.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-teal-500 hover:shadow-xl group flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-teal-100 text-teal-600 p-3 rounded-lg group-hover:bg-teal-600 group-hover:text-white transition">
-                                <i class="fas fa-file-contract fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">ADMINISTRASI</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-teal-600">Berita Acara Ujian</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Buat dokumen Berita Acara Pelaksanaan Ujian secara digital.</p>
-                    </a>
-
-                    <!-- 8. ADMIN PANEL (IT) -->
-                    <a href="admin.html" class="btn-card bg-slate-800 p-6 rounded-xl shadow-md border-l-8 border-slate-600 hover:shadow-xl group flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-slate-700 text-white p-3 rounded-lg group-hover:bg-slate-600 transition">
-                                <i class="fas fa-server fa-2x"></i>
-                            </div>
-                            <span class="bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded">RESTRICTED</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-white mb-2">Admin Panel</h3>
-                        <p class="text-sm text-slate-400 mt-auto">Monitoring server, buka blokir siswa, dan manajemen database.</p>
-                    </a>
-
-                    <!-- 9. PORTAL REMIDI (SISWA) -->
-                    <a href="remidi.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-pink-500 hover:shadow-xl group flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-pink-100 text-pink-600 p-3 rounded-lg group-hover:bg-pink-600 group-hover:text-white transition">
-                                <i class="fas fa-clipboard-check fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">SISWA</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-pink-600">Cek Kelulusan & Remidi</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Cek status kelulusan mapel dan jadwal ujian remidi.</p>
-                    </a>
-                    
-                    <!-- 10. UJIAN SISWA (LINK) -->
-                    <a href="siswa.html" class="btn-card bg-white p-6 rounded-xl shadow-md border-l-8 border-green-500 hover:shadow-xl group flex flex-col opacity-80 hover:opacity-100">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="bg-green-100 text-green-600 p-3 rounded-lg group-hover:bg-green-600 group-hover:text-white transition">
-                                <i class="fas fa-laptop-code fa-2x"></i>
-                            </div>
-                            <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded">CLIENT</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-green-600">Halaman Ujian Siswa</h3>
-                        <p class="text-sm text-gray-500 mt-auto">Tampilan layar ujian untuk peserta didik (Client Side).</p>
-                    </a>
-
-                </div>
-            </main>
-
-            <footer class="bg-gray-800 text-gray-400 text-center p-4 text-xs mt-10">
-                <p>&copy; 2025 SMP ALBANNA - Computer Based Test System. All rights reserved.</p>
-            </footer>
-        </div>
-
     </div>
 
-    <script>
-        const { createApp } = Vue;
+    <!-- ===================================================
+         2. DASHBOARD
+    =================================================== -->
+    <div v-else class="dash-wrap">
 
-        // 1. GENERATE AKUN (guru01 - guru30)
-        const generatedUsers = [];
-        for (let i = 1; i <= 30; i++) {
-            const num = i < 10 ? '0' + i : i;
-            generatedUsers.push({ username: `guru${num}`, password: 'albanna', name: `Guru Mapel ${num}` });
-        }
-        generatedUsers.push({ username: 'admin', password: 'admin123', name: 'Administrator IT' });
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <div class="topbar-logo">
+                    <svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18V17l7 4 7-4v-3.82l-7 3.82-7-3.82z"/></svg>
+                </div>
+                <div>
+                    <div class="topbar-title">CBT SYSTEM</div>
+                    <div class="topbar-sub">Halo, {{ currentUser.name }}</div>
+                </div>
+            </div>
+            <button class="btn-logout" @click="logout">
+                <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+                Keluar
+            </button>
+        </header>
 
-        createApp({
-            data() {
-                return {
-                    currentUser: null,
-                    loginForm: { username: '', password: '' }
+        <!-- Greeting -->
+        <div class="dash-greet">
+            <div class="greet-chip"><span></span> Online</div>
+            <h2>Dashboard Aplikasi</h2>
+            <p>Pilih menu untuk memulai pekerjaan Anda.</p>
+        </div>
+
+        <!-- Section: Guru Mapel -->
+        <div class="section-label">Guru Mapel</div>
+        <div class="menu-grid">
+
+            <a href="input.html" class="menu-card" style="--card-accent:#6366f1">
+                <div class="card-badge">E-Rapor</div>
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                </div>
+                <div class="card-title">Input Nilai E-Rapor</div>
+                <div class="card-desc">Penyusunan TP (ABCD) dan input nilai rapor siswa.</div>
+            </a>
+
+            <a href="guru.html" class="menu-card" style="--card-accent:#8b5cf6">
+                <div class="card-badge">Admin</div>
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                </div>
+                <div class="card-title">Generator Kisi-Kisi</div>
+                <div class="card-desc">Buat dokumen kisi-kisi soal ujian standar (PDF).</div>
+            </a>
+
+            <a href="soal.html" class="menu-card" style="--card-accent:#0ea5e9">
+                <div class="card-badge">Soal</div>
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                </div>
+                <div class="card-title">Generator Soal</div>
+                <div class="card-desc">Susun paket soal ujian multi-tipe lengkap.</div>
+            </a>
+
+            <a href="jawaban.html" class="menu-card" style="--card-accent:#f59e0b">
+                <div class="card-badge">Laporan</div>
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+                </div>
+                <div class="card-title">Rekap & Analisis</div>
+                <div class="card-desc">Nilai siswa, koreksi manual, dan unduh Excel.</div>
+            </a>
+
+        </div>
+
+        <!-- Section: Administrasi -->
+        <div class="section-label">Administrasi</div>
+        <div class="menu-grid">
+
+            <a href="perencanaan.html" class="menu-card" style="--card-accent:#14b8a6">
+                <div class="card-badge">Admin</div>
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24"><path d="M21 6.5l-4-4-1.41 1.41 4 4L21 6.5zM2.99 17.01L2 22l4.99-1-4-3.99zM17 7.99L7 18H3v-4L13.01 3.99l3.99 4z"/></svg>
+                </div>
+                <div class="card-title">Perencanaan Ajar</div>
+                <div class="card-desc">Generator RPP/Modul Ajar Mindful & Joyful.</div>
+            </a>
+
+            <a href="absen_ujian.html" class="menu-card" style="--card-accent:#22c55e">
+                <div class="card-badge">Admin</div>
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
+                </div>
+                <div class="card-title">Absensi & Susulan</div>
+                <div class="card-desc">Kehadiran harian dan jadwal ujian susulan.</div>
+            </a>
+
+            <a href="administrasi.html" class="menu-card" style="--card-accent:#06b6d4">
+                <div class="card-badge">Admin</div>
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 14H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                </div>
+                <div class="card-title">Berita Acara</div>
+                <div class="card-desc">Dokumen berita acara pelaksanaan ujian.</div>
+            </a>
+
+        </div>
+
+        <!-- Section: Akses Siswa -->
+        <div class="section-label">Akses Siswa</div>
+        <div class="menu-grid">
+
+            <a href="siswa.html" class="menu-card card-wide" style="--card-accent:#10b981">
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/></svg>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">Halaman Ujian Siswa</div>
+                    <div class="card-desc">Tampilan CBT langsung untuk peserta didik.</div>
+                </div>
+            </a>
+
+            <a href="remidi.html" class="menu-card card-wide" style="--card-accent:#ec4899">
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">Cek Kelulusan & Remidi</div>
+                    <div class="card-desc">Status nilai dan jadwal ujian remediasi siswa.</div>
+                </div>
+            </a>
+
+        </div>
+
+        <!-- Section: Admin IT -->
+        <div class="section-label">Sistem</div>
+        <div class="menu-grid">
+            <a href="admin.html" class="menu-card card-wide card-dark" style="--card-accent:#ef4444">
+                <div class="card-icon" style="background:rgba(239,68,68,.15)">
+                    <svg viewBox="0 0 24 24" style="fill:#ef4444"><path d="M20 3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h3l-1 1v2h12v-2l-1-1h3c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 13H4V5h16v11z"/></svg>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">Admin Panel</div>
+                    <div class="card-desc">Monitoring server, buka blokir siswa, dan manajemen database.</div>
+                </div>
+                <div class="card-badge" style="position:static;margin-left:auto;flex-shrink:0;">RESTRICTED</div>
+            </a>
+        </div>
+
+        <div class="dash-footer">
+            &copy; 2025 SMP ALBANNA — Computer Based Test System
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const { createApp } = Vue;
+
+    // Akun guru01–guru30 + admin
+    const users = [];
+    for (let i = 1; i <= 30; i++) {
+        const n = i < 10 ? '0' + i : '' + i;
+        users.push({ username: `guru${n}`, password: 'albanna', name: `Guru Mapel ${n}` });
+    }
+    users.push({ username: 'admin', password: 'admin123', name: 'Administrator IT' });
+
+    createApp({
+        data() {
+            return {
+                currentUser: null,
+                loginForm: { username: '', password: '' }
+            }
+        },
+        mounted() {
+            const s = sessionStorage.getItem('cbt_user_session');
+            if (s) this.currentUser = JSON.parse(s);
+        },
+        methods: {
+            handleLogin() {
+                const { username, password } = this.loginForm;
+                const user = users.find(u => u.username === username.trim() && u.password === password);
+                if (user) {
+                    this.currentUser = user;
+                    sessionStorage.setItem('cbt_user_session', JSON.stringify(user));
+                    this.loginForm = { username: '', password: '' };
+                } else {
+                    alert("Username atau password salah!");
                 }
             },
-            mounted() {
-                const storedUser = sessionStorage.getItem('cbt_user_session');
-                if (storedUser) {
-                    this.currentUser = JSON.parse(storedUser);
-                }
-            },
-            methods: {
-                handleLogin() {
-                    const { username, password } = this.loginForm;
-                    const user = generatedUsers.find(u => u.username === username && u.password === password);
-                    if (user) {
-                        this.currentUser = user;
-                        sessionStorage.setItem('cbt_user_session', JSON.stringify(user));
-                        this.loginForm = { username: '', password: '' };
-                    } else {
-                        alert("Username atau Password salah!");
-                    }
-                },
-                logout() {
-                    if(confirm("Yakin ingin keluar dari akun ini?")) {
-                        this.currentUser = null;
-                        sessionStorage.removeItem('cbt_user_session');
-                    }
+            logout() {
+                if (confirm("Yakin ingin keluar?")) {
+                    this.currentUser = null;
+                    sessionStorage.removeItem('cbt_user_session');
                 }
             }
-        }).mount('#app');
-    </script>
+        }
+    }).mount('#app');
+</script>
 </body>
 </html>
