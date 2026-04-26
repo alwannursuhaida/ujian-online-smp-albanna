@@ -67,7 +67,7 @@
                 <button @click="switchToKaih" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'kaih' ? 'bg-cyan-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-star w-5"></i> Input 7 KAIH</button>
 
                 <button @click="switchToDataSiswa" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'data_siswa' ? 'bg-slate-700 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']">
-                    <i class="fas fa-address-book w-5"></i> Data Siswa, Guru, &amp; Wali Kelas
+                    <i class="fas fa-address-book w-5"></i> Data Siswa &amp; Walas
                 </button>
 
                 
@@ -77,7 +77,7 @@
                 <button @click="switchToRekapAkhir" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'rekap_akhir' ? 'bg-purple-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-file-invoice w-5"></i> LHBTS</button>
                 <button @click="switchToLhbs" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', currentTab === 'lhbs' ? 'bg-pink-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400']"><i class="fas fa-print w-5"></i> Cetak LHBS</button>
             </nav>
-            <div class="p-4 border-t border-slate-800"><a href="index.html" class="w-full text-center text-xs text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 p-2 hover:bg-slate-800 rounded transition"><i class="fas fa-home"></i> KEMBALI KE MENU</a></div>
+            <div class="p-4 border-t border-slate-800"><a href="#" class="w-full text-center text-xs text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 p-2 hover:bg-slate-800 rounded transition"><i class="fas fa-home"></i> KEMBALI KE MENU</a></div>
         </div>
 
         <!-- MAIN CONTENT -->
@@ -132,9 +132,9 @@
                 <transition name="fade"><div v-if="currentTab === 'tp'"><div class="mb-6 flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-200 w-fit"><span class="font-bold text-indigo-900 text-sm">{{ identitas.mapel }}</span><span class="text-gray-400">|</span><span class="font-bold text-indigo-900 text-sm">Jenjang {{ identitas.jenjang }}</span></div><div v-for="(lm, lmIndex) in lingkupMateri" :key="lm.id" class="mb-8 bg-white rounded-xl shadow border border-slate-200 overflow-hidden"><div class="bg-slate-100 p-4 border-b flex items-center gap-4 cursor-pointer" @click="lm.isOpen = !lm.isOpen"><div class="bg-indigo-600 text-white w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm">{{ lmIndex + 1 }}</div><div class="flex-1" @click.stop><input v-model="lm.judul" class="w-full p-2 bg-transparent border-b-2 border-slate-300 focus:border-indigo-600 outline-none font-bold" :placeholder="'Lingkup Materi ' + (lmIndex + 1)"></div><i :class="['fas text-slate-400', lm.isOpen ? 'fa-chevron-up' : 'fa-chevron-down']"></i></div><div v-show="lm.isOpen" class="p-6 space-y-6 bg-slate-50/30"><div v-for="(tp, tpIndex) in lm.tujuan" :key="tpIndex" class="relative group border-b border-slate-100 pb-4"><h4 class="font-bold text-xs text-slate-500 mb-2">TP {{ lmIndex + 1 }}.{{ tpIndex + 1 }}</h4><div class="grid grid-cols-1 md:grid-cols-12 gap-2 mb-2"><div class="md:col-span-1"><input v-model="tp.a" readonly class="w-full p-2 border rounded bg-gray-100 text-center text-xs font-bold"></div><div class="md:col-span-5"><textarea v-model="tp.b" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Behavior (KKO + Materi)"></textarea></div><div class="md:col-span-3"><textarea v-model="tp.c" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Condition (Melalui...)"></textarea></div><div class="md:col-span-3"><textarea v-model="tp.d" rows="1" class="input-abcd w-full p-2 border rounded text-xs" placeholder="Degree (Kriteria)"></textarea></div></div><div class="bg-indigo-50 p-2 rounded border border-indigo-100 flex items-center gap-2"><i class="fas fa-magic text-indigo-400 text-xs"></i><p class="text-xs text-indigo-900 italic font-medium">"{{ generateSentence(tp) }}"</p></div></div></div></div></div></transition>
 
                 <!-- 3. INPUT NILAI -->
-                <transition name="fade"><div v-if="currentTab === 'nilai'"><div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4"><div class="w-full md:w-1/3"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pilih Kelas</label><select v-model="selectedClass" @change="fetchStudentsAndScores" class="w-full p-2 border-2 border-blue-200 rounded font-bold text-blue-900"><option value="" disabled>-- Pilih Kelas --</option><option v-for="c in filteredClasses" :value="c">{{ c }}</option></select></div><div class="text-right text-xs text-gray-500"><p><strong>Mapel:</strong> {{ identitas.mapel }}</p><p class="text-green-600 font-bold" v-if="lastSavedGrade">Tersimpan: {{ lastSavedGrade }}</p></div></div><div class="bg-white rounded-xl shadow border overflow-hidden relative"><div v-if="!selectedClass" class="p-10 text-center text-gray-400"><i class="fas fa-arrow-up fa-2x mb-2"></i><br>Pilih kelas dulu.</div><div v-else-if="isLoadingStudents" class="p-10 text-center text-blue-500"><i class="fas fa-circle-notch fa-spin fa-2x"></i></div><div v-else class="overflow-x-auto"><table class="w-full text-left border-collapse excel-table text-sm"><thead><tr class="bg-slate-800 text-white"><th class="p-3 w-10 text-center sticky-col bg-slate-800" rowspan="2">No</th><th class="p-3 w-64 sticky-col-2 bg-slate-800 left-10" rowspan="2">Nama Siswa</th><template v-for="lm in activeLMs" :key="lm.id"><th :colspan="lm.tpCount + 2" class="p-2 text-center text-xs font-bold header-lm text-slate-800">{{ lm.judul || 'LM ' + lm.id }}</th></template><th colspan="2" class="p-2 text-center text-xs font-bold header-asas text-orange-800">ASAS</th><th colspan="3" class="p-2 text-center text-xs font-bold header-avg text-green-800">RATA-RATA</th><th rowspan="2" class="p-2 text-center text-xs font-bold header-rapor">Nilai Akhir (Rapor)</th></tr><tr class="bg-slate-100 text-slate-600"><template v-for="lm in activeLMs" :key="lm.id"><template v-for="(tp, idx) in lm.tujuan" :key="lm.id + '_' + idx"><th class="p-2 text-center text-[10px] w-16 border-l" :title="generateSentence(tp)">TP {{ lm.id }}.{{ idx+1 }}</th></template><th class="p-2 text-center text-[10px] w-14 bg-blue-50 font-bold border-l-2">LM Tes</th><th class="p-2 text-center text-[10px] w-14 bg-blue-50 font-bold">LM Non</th></template><th class="p-2 text-center text-[10px] w-16 bg-orange-50 font-bold">Tes</th><th class="p-2 text-center text-[10px] w-16 bg-orange-50 font-bold">Non</th><th class="p-2 text-center text-[10px] w-12 bg-green-50 font-bold">TP</th><th class="p-2 text-center text-[10px] w-12 bg-green-50 font-bold">LM</th><th class="p-2 text-center text-[10px] w-12 bg-green-50 font-bold">ASAS</th></tr></thead><tbody class="bg-white"><tr v-for="(s, sIdx) in studentList" :key="s.id" class="hover:bg-blue-50"><td class="text-center bg-gray-50 text-gray-500 select-none sticky-col left-0">{{ sIdx + 1 }}</td><td class="px-3 py-2 font-bold text-gray-700 select-none whitespace-nowrap sticky-col-2 bg-white left-10">{{ s.nama }}</td><template v-for="lm in activeLMs" :key="lm.id"><template v-for="(tp, idx) in lm.tujuan" :key="lm.id + '_' + idx"><td class="p-0"><input type="text" :class="['excel-input', getValidationClass(getGrade(s.id, `tp_${lm.id}_${idx+1}` ))]" :value="getGrade(s.id, `tp_${lm.id}_${idx+1}` )" @input="updateGrade(s.id, `tp_${lm.id}_${idx+1}`, $event.target.value)" @paste="handleGridPaste($event, sIdx, `tp_${lm.id}_${idx+1}`)"></td></template><td class="p-0 bg-blue-50/20 border-l-2"><input type="text" :class="['excel-input font-bold text-blue-700', getValidationClass(getGrade(s.id, `lm_${lm.id}_tes`))]" :value="getGrade(s.id, `lm_${lm.id}_tes`)" @input="updateGrade(s.id, `lm_${lm.id}_tes`, $event.target.value)"></td><td class="p-0 bg-blue-50/20"><input type="text" :class="['excel-input font-bold text-blue-700', getValidationClass(getGrade(s.id, `lm_${lm.id}_nontes`))]" :value="getGrade(s.id, `lm_${lm.id}_nontes`)" @input="updateGrade(s.id, `lm_${lm.id}_nontes`, $event.target.value)"></td></template><td class="p-0 bg-orange-50/30 border-l-2"><input type="text" class="excel-input font-bold text-orange-700 bg-orange-100 cursor-not-allowed" :value="s.asasTesScore" readonly></td><td class="p-0 bg-orange-50/30"><input type="text" :class="['excel-input font-bold text-orange-700', getValidationClass(getGrade(s.id, 'asas_nontes'))]" :value="getGrade(s.id, 'asas_nontes')" @input="updateGrade(s.id, 'asas_nontes', $event.target.value)"></td><td class="p-0 bg-green-50/30 text-center font-bold text-green-800 border-l-2">{{ calculateRataTP(s.id) }}</td><td class="p-0 bg-green-50/30 text-center font-bold text-green-800">{{ calculateRataLM(s.id) }}</td><td class="p-0 bg-green-50/30 text-center font-bold text-green-800">{{ calculateRataASAS(s.id, s.asasTesScore) }}</td><td class="p-0 bg-blue-100 text-center font-extrabold text-blue-900 border-l-2">{{ calculateNilaiRapor(s.id, s.asasTesScore) }}</td></tr></tbody></table></div></div></div></transition>
+                <transition name="fade"><div v-if="currentTab === 'nilai'"><div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4"><div class="w-full md:w-1/3"><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pilih Kelas</label><select v-model="selectedClass" @change="fetchStudentsAndScores" class="w-full p-2 border-2 border-blue-200 rounded font-bold text-blue-900"><option value="" disabled>-- Pilih Kelas --</option><option v-for="c in filteredClasses" :value="c">{{ c }}</option></select></div><div class="text-right text-xs text-gray-500"><p><strong>Mapel:</strong> {{ identitas.mapel }}</p><p class="text-green-600 font-bold" v-if="lastSavedGrade">Tersimpan: {{ lastSavedGrade }}</p></div></div><div class="bg-white rounded-xl shadow border overflow-hidden relative"><div v-if="!selectedClass" class="p-10 text-center text-gray-400"><i class="fas fa-arrow-up fa-2x mb-2"></i><br>Pilih kelas dulu.</div><div v-else-if="isLoadingStudents" class="p-10 text-center text-blue-500"><i class="fas fa-circle-notch fa-spin fa-2x"></i></div><div v-else class="overflow-x-auto"><table class="w-full text-left border-collapse excel-table text-sm"><thead><tr class="bg-slate-800 text-white"><th class="p-3 w-10 text-center sticky-col bg-slate-800" rowspan="2">No</th><th class="p-3 w-64 sticky-col-2 bg-slate-800 left-10" rowspan="2">Nama Siswa</th><template v-for="lm in activeLMs" :key="lm.id"><th :colspan="lm.tpCount + 2" class="p-2 text-center text-xs font-bold header-lm text-slate-800">{{ lm.judul || 'LM ' + lm.id }}</th></template><th colspan="2" class="p-2 text-center text-xs font-bold header-asas text-orange-800">ASAS</th><th colspan="3" class="p-2 text-center text-xs font-bold header-avg text-green-800">RATA-RATA</th><th rowspan="2" class="p-2 text-center text-xs font-bold header-rapor">Nilai Akhir (Rapor)</th></tr><tr class="bg-slate-100 text-slate-600"><template v-for="lm in activeLMs" :key="lm.id"><template v-for="(tp, idx) in lm.tujuan" :key="lm.id + '_' + idx"><th class="p-2 text-center text-[10px] w-16 border-l" :title="generateSentence(tp)">TP {{ lm.id }}.{{ idx+1 }}</th></template><th class="p-2 text-center text-[10px] w-14 bg-blue-50 font-bold border-l-2">LM Tes</th><th class="p-2 text-center text-[10px] w-14 bg-blue-50 font-bold">LM Non</th></template><th class="p-2 text-center text-[10px] w-16 bg-orange-50 font-bold">Tes</th><th class="p-2 text-center text-[10px] w-16 bg-orange-50 font-bold">Non</th><th class="p-2 text-center text-[10px] w-12 bg-green-50 font-bold">TP</th><th class="p-2 text-center text-[10px] w-12 bg-green-50 font-bold">LM</th><th class="p-2 text-center text-[10px] w-12 bg-green-50 font-bold">ASAS</th></tr></thead><tbody class="bg-white"><tr v-for="(s, sIdx) in studentList" :key="s.id" class="hover:bg-blue-50"><td class="text-center bg-gray-50 text-gray-500 select-none sticky-col left-0">{{ sIdx + 1 }}</td><td class="px-3 py-2 font-bold text-gray-700 select-none whitespace-nowrap sticky-col-2 bg-white left-10">{{ s.nama }}</td><template v-for="lm in activeLMs" :key="lm.id"><template v-for="(tp, idx) in lm.tujuan" :key="lm.id + '_' + idx"><td class="p-0"><input type="text" :class="['excel-input', getValidationClass(getGrade(s.id, `tp_${lm.id}_${idx+1}` ))]" :value="getGrade(s.id, `tp_${lm.id}_${idx+1}` )" @input="updateGrade(s.id, `tp_${lm.id}_${idx+1}`, $event.target.value)"></td></template><td class="p-0 bg-blue-50/20 border-l-2"><input type="text" :class="['excel-input font-bold text-blue-700', getValidationClass(getGrade(s.id, `lm_${lm.id}_tes`))]" :value="getGrade(s.id, `lm_${lm.id}_tes`)" @input="updateGrade(s.id, `lm_${lm.id}_tes`, $event.target.value)"></td><td class="p-0 bg-blue-50/20"><input type="text" :class="['excel-input font-bold text-blue-700', getValidationClass(getGrade(s.id, `lm_${lm.id}_nontes`))]" :value="getGrade(s.id, `lm_${lm.id}_nontes`)" @input="updateGrade(s.id, `lm_${lm.id}_nontes`, $event.target.value)"></td></template><td class="p-0 bg-orange-50/30 border-l-2"><input type="text" class="excel-input font-bold text-orange-700 bg-orange-100 cursor-not-allowed" :value="s.asasTesScore" readonly></td><td class="p-0 bg-orange-50/30"><input type="text" :class="['excel-input font-bold text-orange-700', getValidationClass(getGrade(s.id, 'asas_nontes'))]" :value="getGrade(s.id, 'asas_nontes')" @input="updateGrade(s.id, 'asas_nontes', $event.target.value)"></td><td class="p-0 bg-green-50/30 text-center font-bold text-green-800 border-l-2">{{ calculateRataTP(s.id) }}</td><td class="p-0 bg-green-50/30 text-center font-bold text-green-800">{{ calculateRataLM(s.id) }}</td><td class="p-0 bg-green-50/30 text-center font-bold text-green-800">{{ calculateRataASAS(s.id, s.asasTesScore) }}</td><td class="p-0 bg-blue-100 text-center font-extrabold text-blue-900 border-l-2">{{ calculateNilaiRapor(s.id, s.asasTesScore) }}</td></tr></tbody></table></div></div></div></transition>
 
-                <!-- 4. EKSKUL (RESTORED) -->
+                <!-- 4. EKSKUL -->
                 <transition name="fade">
                     <div v-if="currentTab === 'ekskul'">
                         <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -154,11 +154,11 @@
                                             <td class="text-center bg-gray-50 text-gray-500 select-none sticky-col left-0">{{ sIdx + 1 }}</td>
                                             <td class="px-3 py-2 font-bold text-gray-700 select-none whitespace-nowrap sticky-col-2 bg-white left-10">{{ s.nama }}</td>
                                             <td class="p-0 border-l bg-orange-50/50"><input type="text" class="excel-input text-left font-bold text-orange-900 bg-transparent cursor-not-allowed" value="PRAMUKA" readonly></td>
-                                            <td class="p-0 bg-orange-50/50"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek1_desc" @input="updateEkskul(s.id, 'ek1_desc', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'ek1_desc', true)" placeholder="Sangat Baik..."></td>
-                                            <td class="p-0 border-l"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek2_nama" @input="updateEkskul(s.id, 'ek2_nama', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'ek2_nama', true)" placeholder="Nama Ekskul"></td>
-                                            <td class="p-0"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek2_desc" @input="updateEkskul(s.id, 'ek2_desc', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'ek2_desc', true)" placeholder="Predikat..."></td>
-                                            <td class="p-0 border-l"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek3_nama" @input="updateEkskul(s.id, 'ek3_nama', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'ek3_nama', true)" placeholder="Nama Ekskul"></td>
-                                            <td class="p-0"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek3_desc" @input="updateEkskul(s.id, 'ek3_desc', $event.target.value)" @paste="handleGridPaste($event, sIdx, 'ek3_desc', true)" placeholder="Predikat..."></td>
+                                            <td class="p-0 bg-orange-50/50"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek1_desc" @input="updateEkskul(s.id, 'ek1_desc', $event.target.value)" placeholder="Sangat Baik..."></td>
+                                            <td class="p-0 border-l"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek2_nama" @input="updateEkskul(s.id, 'ek2_nama', $event.target.value)" placeholder="Nama Ekskul"></td>
+                                            <td class="p-0"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek2_desc" @input="updateEkskul(s.id, 'ek2_desc', $event.target.value)" placeholder="Predikat..."></td>
+                                            <td class="p-0 border-l"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek3_nama" @input="updateEkskul(s.id, 'ek3_nama', $event.target.value)" placeholder="Nama Ekskul"></td>
+                                            <td class="p-0"><input type="text" class="excel-input text-left" v-model="getEkskulData(s.id).ek3_desc" @input="updateEkskul(s.id, 'ek3_desc', $event.target.value)" placeholder="Predikat..."></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -167,7 +167,7 @@
                     </div>
                 </transition>
 
-                <!-- 5. MENU KEWALASAN (RESTORED) -->
+                <!-- 5. MENU KEWALASAN -->
                 <transition name="fade">
                     <div v-if="currentTab === 'kewalasan'">
                         <div class="bg-white p-6 rounded-xl shadow border mb-6">
@@ -225,7 +225,7 @@
                     </div>
                 </transition>
 
-                <!-- 6. MENU 7 KAIH (RESTORED) -->
+                <!-- 6. MENU 7 KAIH -->
                 <transition name="fade">
                     <div v-if="currentTab === 'kaih'">
                         <div class="bg-white p-6 rounded-xl shadow border mb-6">
@@ -281,7 +281,6 @@
                                                         class="excel-input" 
                                                         v-model="getKaih(s.id)[`${aspect.id}_${n}`]"
                                                         @input="updateKaih(s.id, `${aspect.id}_${n}`, $event.target.value)"
-                                                        @paste="handleGridPaste($event, sIdx, `${aspect.id}_${n}`, false, true)"
                                                         placeholder="0"
                                                     >
                                                 </td>
@@ -389,7 +388,7 @@
                     </div>
                 </transition>
 
-<!-- 7. MONITORING (RESTORED) -->
+                <!-- 7. MONITORING -->
                 <transition name="fade">
                     <div v-if="currentTab === 'monitoring'">
                         <div class="bg-white p-6 rounded-xl shadow border">
@@ -425,7 +424,7 @@
                     </div>
                 </transition>
 
-                <!-- 9. LHBTS (REKAP AKHIR RENAMED) -->
+                <!-- 9. LHBTS -->
                 <transition name="fade">
                     <div v-if="currentTab === 'rekap_akhir'">
                         <div class="bg-white p-4 rounded-xl shadow border mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -441,7 +440,7 @@
                                 </div>
                             </div>
                             
-                            <!-- TOMBOL DOWNLOAD BACKEND DI MENU REKAP AKHIR (LHBTS) -->
+                            <!-- TOMBOL DOWNLOAD BACKEND DI MENU REKAP AKHIR -->
                             <div class="flex gap-2 items-center">
                                 <div class="flex flex-col">
                                     <label class="text-[10px] text-gray-500 font-bold">MODE UNDUH</label>
@@ -555,14 +554,15 @@
         // ================================================================
         // ✅ SUPABASE CONFIG
         // ================================================================
-        const SUPABASE_URL  = 'https://XXXX.supabase.co';
-        const SUPABASE_ANON = 'eyJ...';
+        const SUPABASE_URL  = 'https://qvpcfgrcynzcbmdoipcj.supabase.co'; // GANTI DENGAN URL ASLI ANDA
+        const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2cGNmZ3JjeW56Y2JtZG9pcGNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMzc4OTYsImV4cCI6MjA5MjcxMzg5Nn0.XWDvnZjFyvW1WlfVNlAKYCh7111ecQ739njS6KngD6U';                   // GANTI DENGAN KUNCI ASLI ANDA
 
         const { createClient } = supabase;
         const db = createClient(SUPABASE_URL, SUPABASE_ANON);
     </script>
     <script>
-
+        const { createApp } = Vue;
+        
         createApp({
             data() {
                 return {
@@ -591,7 +591,6 @@
                     classesMap: { '7': ['7A','7B','7C','7D','7E','7F'], '8': ['8A','8B','8C','8D','8E','8F'], '9': ['9A','9B','9C','9D','9E'] },
 
                     // --- BACKEND CONFIG ---
-                    // PENTING: GANTI URL INI SETELAH DEPLOY DI RENDER
                     studentMeta: {},
                     waliKelasByClass: {},
 
@@ -732,13 +731,9 @@
                 if (savedWaliKelas) this.waliKelasByClass = JSON.parse(savedWaliKelas);
 
                 this.loadBankSoal();
-                    // Cloud bootstrap
-                    this.loadCloudProgress();
+                this.loadCloudProgress();
             },
             methods: {
-                // =========================
-                // CLOUD SYNC (Firestore)
-                // =========================
                 cloudKey() {
                     const tahun = (this.identitas?.tahun_ajaran || '').trim() || '2024/2025';
                     const sem = (this.identitas?.semester || '').trim() || '1 (Ganjil)';
@@ -785,46 +780,31 @@
                     }
                     return { filled, total };
                 },
-                // ============================================================
-                // ✅ _cloudSetDoc → Supabase upsert by doc_id
-                // Firestore setDoc(merge:true) = partial update jika doc ada, insert jika tidak
-                // Supabase: upsert({ ...data, doc_id }, { onConflict: 'doc_id' })
-                // Semua tabel erapor_* punya kolom doc_id TEXT UNIQUE (lihat schema)
-                // ============================================================
+
+                // PERBAIKAN 1: MENAMBAH KURUNG KURAWAL DAN MENYEMPURNAKAN LOGIKA SUPABASE
                 async _cloudSetDoc(colName, docId, data, merge=true) {
                     if (!this.cloudEnabled) return;
                     try {
                         const payload = { ...data, doc_id: docId, updated_at: new Date().toISOString() };
-                        // hapus serverTimestamp() bawaan Firebase — Supabase pakai ISO string
-                        delete payload.updated_at; // hapus dulu...
-                        payload.updated_at = new Date().toISOString(); // ...lalu isi ulang
-                        const { error } = await db
-                            .from(colName)
-                            .upsert(payload, { onConflict: 'doc_id' });
+                        delete payload.updated_at; // hapus dulu
+                        payload.updated_at = new Date().toISOString(); // lalu isi ulang (menghindari reference aneh)
+                        const { error } = await db.from(colName).upsert(payload, { onConflict: 'doc_id' });
                         if (error) throw error;
                     } catch (e) {
                         console.error(`ERROR CLOUD upsert ${colName}/${docId}`, e);
                     }
                 },
+                
                 async _cloudDeleteDoc(colName, docId) {
                     if (!this.cloudEnabled) return;
                     try {
-                        const { error } = await db
-                            .from(colName)
-                            .delete()
-                            .eq('doc_id', docId);
+                        const { error } = await db.from(colName).delete().eq('doc_id', docId);
                         if (error) throw error;
                     } catch (e) {
                         console.error(`ERROR CLOUD delete ${colName}/${docId}`, e);
                     }
                 },
-                // ============================================================
-                // ✅ loadCloudProgress
-                // Sebelum: getDocs(query(collection(db,'erapor_progress'),
-                //            where('tahun_ajaran','==',x), where('semester','==',x), where('jenjang','==',x)))
-                // Sesudah: db.from('erapor_progress').select('*')
-                //            .eq('tahun_ajaran',x).eq('semester',x).eq('jenjang',x)
-                // ============================================================
+
                 async loadCloudProgress() {
                     if (!this.cloudEnabled) return;
                     this.cloudStatus = 'loading';
@@ -858,6 +838,8 @@
                         this.cloudStatus = 'error';
                     }
                 },
+
+                // PERBAIKAN 2: KURUNG KURAWAL PADA _updateProgressFlag DIBENAHI
                 async _updateProgressFlag(kelas, key, value) {
                     if (!this.cloudEnabled) return;
                     const k = this.cloudKey();
@@ -868,8 +850,12 @@
                         jenjang: k.jenjang,
                         kelas,
                         flags: { [key]: !!value },
-                        updated_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    };
+                    await this._cloudSetDoc('erapor_progress', id, payload);
                 },
+
+                // PERBAIKAN 3: KURUNG KURAWAL PADA _updateProgressMeta DIBENAHI
                 async _updateProgressMeta(kelas) {
                     if (!this.cloudEnabled) return;
                     const k = this.cloudKey();
@@ -884,10 +870,16 @@
                         nis_filled: stats.filled,
                         nis_total: stats.total,
                         wali_kelas: wali,
-                        updated_at: new Date().toISOString(),
-                    this.cloudProgress[kelas].nis_total = stats.total;
-                    this.cloudProgress[kelas].wali_kelas = wali;
+                        updated_at: new Date().toISOString()
+                    };
+                    await this._cloudSetDoc('erapor_progress', id, payload);
+                    
+                    if (this.cloudProgress[kelas]) {
+                        this.cloudProgress[kelas].nis_total = stats.total;
+                        this.cloudProgress[kelas].wali_kelas = wali;
+                    }
                 },
+
                 _schedule(type, fn, delay=1500) {
                     try {
                         if (!this._autosaveTimers) this._autosaveTimers = { nilai: null, ekskul: null, kewalasan: null, kaih: null, meta: null, progress: null };
@@ -897,12 +889,7 @@
                         console.error('ERROR schedule', e);
                     }
                 },
-                // ============================================================
-                // ✅ loadCloudForClasses
-                // Sebelum: getDoc(doc(db, 'erapor_meta', id)) per kelas (5 tabel × N kelas)
-                // Sesudah: db.from(...).select('*').in('doc_id', [id1, id2, ...])
-                //   → Batch 1 request per tabel, bukan N request
-                // ============================================================
+
                 async loadCloudForClasses(classes, loadNilaiMode='none') {
                     if (!this.cloudEnabled) return;
                     const k = this.cloudKey();
@@ -951,7 +938,6 @@
                             if (loadNilaiMode === 'current') {
                                 const mapel = this.identitas?.mapel;
                                 if (mapel) {
-                                    // ✅ Batch: ambil semua kelas sekaligus, filter by doc_id
                                     const nilaiDocIds = kelasList.map(kelas => this._docIdNilai(kelas, mapel));
                                     const { data } = await db.from('erapor_nilai').select('*').in('doc_id', nilaiDocIds);
                                     (data || []).forEach(row => {
@@ -960,7 +946,6 @@
                                     });
                                 }
                             } else if (loadNilaiMode === 'all') {
-                                // ✅ Fetch semua nilai untuk semua kelas sekaligus
                                 const { data } = await db
                                     .from('erapor_nilai')
                                     .select('*')
@@ -976,6 +961,8 @@
                         } catch (e) { console.error('ERROR CLOUD load nilai', e); }
                     }
                 },
+
+                // PERBAIKAN 4: KURUNG KURAWAL PADA saveNilaiToCloud DIBENAHI
                 async saveNilaiToCloud(kelas, mapel) {
                     if (!this.cloudEnabled) return;
                     if (!kelas || !mapel) return;
@@ -983,6 +970,7 @@
                     const data = (this.allGrades?.[kelas]?.[mapel]) || {};
                     const any = this._countAnyNilaiFor(kelas, mapel) > 0;
                     const id = this._docIdNilai(kelas, mapel);
+                    
                     const payload = {
                         tahun_ajaran: k.tahun_ajaran,
                         semester: k.semester,
@@ -990,9 +978,13 @@
                         kelas,
                         mapel,
                         data,
-                        updated_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    };
+                    
+                    await this._cloudSetDoc('erapor_nilai', id, payload);
                     await this._updateProgressFlag(kelas, mapel, any);
                 },
+
                 async saveEkskulToCloud(kelas) {
                     if (!this.cloudEnabled) return;
                     if (!kelas) return;
@@ -1032,7 +1024,6 @@
                     const wali_kelas = this.waliKelasByClass?.[kelas] || null;
                     const any = Object.values(studentMeta).some(row => row && this._isNonEmpty(row.nis_nisn)) || this._isNonEmpty(wali_kelas);
                     const id = this._docIdClass(kelas);
-                    // ✅ studentMeta → student_meta (snake_case sesuai kolom erapor_meta di Supabase)
                     await this._cloudSetDoc('erapor_meta', id, { tahun_ajaran: k.tahun_ajaran, semester: k.semester, jenjang: k.jenjang, kelas, student_meta: studentMeta, wali_kelas, updated_at: new Date().toISOString() }, false);
                     await this._updateProgressFlag(kelas, 'META', any);
                     await this._updateProgressMeta(kelas);
@@ -1069,7 +1060,6 @@
                 switchToKaih() { if (!this.identitas.jenjang) return Swal.fire('Pilih Jenjang', '', 'warning'); this.currentTab = 'kaih'; this.selectedClass = ''; },
                 
                 switchToDataSiswa() { 
-                    // Menu untuk input NIS/NISN dan Wali Kelas (dipakai saat cetak)
                     this.currentTab = 'data_siswa'; 
                     this.selectedClass = ''; 
                 },
@@ -1101,7 +1091,7 @@
                     const meta = this.getStudentMetaByClass(kelas, sid);
                     return (meta && meta.nis_nisn && meta.nis_nisn.trim() !== '') ? meta.nis_nisn.trim() : '-';
                 },
-switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
+                switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                 switchToRekapAkhir() { this.currentTab = 'rekap_akhir'; this.selectedClass = ''; },
                 switchToLhbs() { this.currentTab = 'lhbs'; this.selectedClass = ''; },
 
@@ -1117,15 +1107,12 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                     if (!this.allGrades[c][m][sid]) this.allGrades[c][m][sid] = {};
                     this.allGrades[c][m][sid][key] = val;
 
-                    // Local fallback (offline)
                     localStorage.setItem("allGrades", JSON.stringify(this.allGrades));
 
-                    // Update progress (local + cloud)
                     const any = this._countAnyNilaiFor(c, m) > 0;
                     this.savedProgress[`${c}_${m}`] = any;
                     localStorage.setItem("savedProgress", JSON.stringify(this.savedProgress));
 
-                    // Fast progress sync, and full autosave (debounced)
                     this._schedule('progress', () => this._updateProgressFlag(c, m, any), 600);
                     this._schedule('nilai', () => this.saveNilaiToCloud(c, m), 1500);
                 },
@@ -1178,16 +1165,10 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                     return `Ananda ${name} ${predikat} dalam ${best.name}.`;
                 },
 
-                // ============================================================
-                // ✅ loadBankSoal
-                // Sebelum: getDocs(query(collection(db,"bank_soal")))
-                // Sesudah: db.from('bank_soal').select('id, soal, config')
-                // ============================================================
                 async loadBankSoal() {
                     const { data, error } = await db.from('bank_soal').select('id, soal, config');
                     if (!error && data) data.forEach(s => { this.bankSoalCache[s.id] = s; });
                 },
-                // ✅ exam_id, manual_scores (snake_case)
                 getRealScoreFromDoc(docData) { const exam = this.bankSoalCache[docData.exam_id]; if (!exam) return 0; let score = 0; exam.soal.forEach((q, idx) => { if (['PG', 'BS'].includes(q.type) && docData.answers[idx] === q.answer) score += parseInt(q.poin); if (['URAIAN', 'ESAI', 'ISIAN'].includes(q.type) && docData.manual_scores && docData.manual_scores[idx] !== undefined) { score += parseInt(docData.manual_scores[idx]); } }); return score; },
                 
                 async fetchStudentsAndScores() {
@@ -1203,16 +1184,11 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                             classesToFetch = [this.selectedClass];
                         }
 
-
                         const loadMode = (this.currentTab === 'nilai') ? 'current' :
                             (['rekap','rekap_akhir','lhbs','monitoring'].includes(this.currentTab) ? 'all' : 'none');
                         await this.loadCloudForClasses(classesToFetch, loadMode);
                         if (!this._cloudInitDone) await this.loadCloudProgress();
-                        // ============================================================
-                        // ✅ Fetch data_absensi
-                        // Sebelum: getDocs(query(..., where("kelas","in", classesToFetch)))
-                        // Sesudah: db.from('data_absensi').select('*').in('kelas', classesToFetch)
-                        // ============================================================
+                        
                         const { data: absenData } = await db
                             .from('data_absensi')
                             .select('*')
@@ -1233,14 +1209,6 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                         });
 
                         if (this.currentTab === 'nilai') {
-                            // ============================================================
-                            // ✅ Fetch jawaban_siswa
-                            // Sebelum: where("student.kelas","in", classesToFetch)
-                            //          → Firebase support nested field filter
-                            // Sesudah: filter('student->>kelas','in', JSON string array)
-                            //          → PostgREST tidak support 'in' pada nested JSONB
-                            // Solusi: fetch by mapel saja, filter kelas di client
-                            // ============================================================
                             const { data: jawabanData } = await db
                                 .from('jawaban_siswa')
                                 .select('student, mapel, answers, manual_scores, is_remedial_done, exam_id')
@@ -1250,7 +1218,6 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                                 .forEach(d => {
                                     const sName = d.student.nama;
                                     if (uniqueMap.has(sName)) {
-                                        // ✅ is_remedial_done (snake_case)
                                         const score = this.getRealScoreFromDoc(d);
                                         const finalScore = d.is_remedial_done ? 75 : score;
                                         uniqueMap.get(sName).asasTesScore = finalScore;
@@ -1277,8 +1244,6 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                             if (!this.kaihData[s.kelas]) this.kaihData[s.kelas] = {};
                             if (!this.kaihData[s.kelas][s.id]) this.kaihData[s.kelas][s.id] = {};
 
-
-                            // Meta data siswa (NIS/NISN) & Wali Kelas per kelas
                             if (!this.studentMeta[s.kelas]) this.studentMeta[s.kelas] = {};
                             if (!this.studentMeta[s.kelas][s.id]) this.studentMeta[s.kelas][s.id] = { nis_nisn: '-' };
                             if (this.waliKelasByClass[s.kelas] === undefined) this.waliKelasByClass[s.kelas] = '';
@@ -1295,7 +1260,6 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                 async fetchStudentsForRekap() { await this.fetchStudentsAndScores(); },
                 async fetchStudents() { await this.fetchStudentsAndScores(); },
 
-                // --- CALCS ---
                 calculateRataTP(sid) { let sum=0, c=0; this.activeTPs.forEach(tp => { const v=this.getGrade(sid, tp.uniqueId); if(v!=='' && parseFloat(v)>0){sum+=parseFloat(v); c++;} }); return c>0 ? Math.ceil(sum/c) : 0; },
                 calculateRataLM(sid) { let sum=0, c=0; this.activeLMs.forEach(lm => { const t=this.getGrade(sid, `lm_${lm.id}_tes`); const nt=this.getGrade(sid, `lm_${lm.id}_nontes`); if(t!=='' && parseFloat(t)>0){sum+=parseFloat(t); c++;} if(nt!=='' && parseFloat(nt)>0){sum+=parseFloat(nt); c++;} }); return c>0 ? Math.ceil(sum/c) : 0; },
                 calculateRataASAS(sid, asasTesScore) { let sum=0, c=0; if(asasTesScore > 0) { sum += parseFloat(asasTesScore); c++; } const nonTesRaw = this.getGrade(sid, 'asas_nontes'); if (nonTesRaw !== '' && parseFloat(nonTesRaw) > 0) { sum += parseFloat(nonTesRaw); c++; } return c > 0 ? Math.ceil(sum / c) : 0; },
@@ -1305,15 +1269,14 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                 getValidationClass(val) { return this.isValidScore(val) ? '' : 'input-error'; },
                 generateSentence(tp) { let s = (tp.c ? tp.c.trim() + ", " : "") + tp.a + (tp.b ? " dapat " + tp.b.trim() : "") + (tp.d ? " " + tp.d.trim() : ""); return s.replace(/\s+/g, ' ').trim() + "."; },
                 toggleSection(i) { this.lingkupMateri[i].isOpen = !this.lingkupMateri[i].isOpen; },
+                
                 handleSaveButton() {
                     if (this.currentTab === 'data_siswa') {
                         localStorage.setItem('cbt_student_meta', JSON.stringify(this.studentMeta));
                         localStorage.setItem('cbt_wali_kelas_by_class', JSON.stringify(this.waliKelasByClass));
                         Swal.fire({ icon: 'success', title: 'Data Siswa & Wali Kelas Tersimpan!', timer: 1200, showConfirmButton: false });
-                        return;
                     }
-
-                    if (this.currentTab === 'ekskul') { localStorage.setItem('cbt_ekskul_data', JSON.stringify(this.ekskulData)); Swal.fire({ icon: 'success', title: 'Data Ekskul Tersimpan!', timer: 1000, showConfirmButton: false }); }
+                    else if (this.currentTab === 'ekskul') { localStorage.setItem('cbt_ekskul_data', JSON.stringify(this.ekskulData)); Swal.fire({ icon: 'success', title: 'Data Ekskul Tersimpan!', timer: 1000, showConfirmButton: false }); }
                     else if (this.currentTab === 'kewalasan') { const dataWalas = { config: this.kewalasanConfig, data: this.kewalasanData }; localStorage.setItem('cbt_kewalasan_data', JSON.stringify(dataWalas)); Swal.fire({ icon: 'success', title: 'Data Kewalasan Tersimpan!', timer: 1000, showConfirmButton: false }); }
                     else if (this.currentTab === 'kaih') { localStorage.setItem('cbt_kaih_data', JSON.stringify(this.kaihData)); Swal.fire({ icon: 'success', title: 'Data 7 KAIH Tersimpan!', timer: 1000, showConfirmButton: false }); }
                     else if(this.currentTab === 'nilai') {
@@ -1324,7 +1287,7 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                         if (this.selectedClass && this.identitas.mapel) { this.savedProgress[`${this.selectedClass}_${this.identitas.mapel}`] = true; localStorage.setItem('cbt_saved_progress', JSON.stringify(this.savedProgress)); }
                         Swal.fire({ title: 'Alhamdulillah! 🤲', text: 'Selamat kamu sudah terbebas/sedikit terbebas dari tagihan wakakur :)', icon: 'success' });
                     } else { const dataTP = { identitas: this.identitas, lingkupMateri: this.lingkupMateri }; localStorage.setItem('cbt_input_tp', JSON.stringify(dataTP)); Swal.fire({ icon: 'success', title: 'Tersimpan!', timer: 1000, showConfirmButton: false }); }
-                    // Cloud save (force) supaya data antar komputer sinkron
+                    
                     try {
                         const c = this.selectedClass;
                         if (this.currentTab === 'nilai') {
@@ -1383,13 +1346,11 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Rapor Akhir"); XLSX.writeFile(wb, `Leger_Rapor_${this.rekapJenjang}_${this.selectedClass}.xlsx`);
                 },
 
-                // --- INTEGRASI BACKEND ---
                 async generateRaporBackend(format) {
                     if(this.rekapAkhirTableData.length === 0) return Swal.fire('Data Kosong', 'Pilih kelas terlebih dahulu.', 'warning');
                     this.isProcessingDownload = true;
                     
                     try {
-                        // Mapping Data ke Format API
                         const siswaPayload = this.studentList.map((s, index) => {
                             const studentRow = this.rekapAkhirTableData.find(r => r.id === s.id);
                             if (!studentRow) return null;
@@ -1408,7 +1369,6 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                                     na: parseFloat(dataNilai.nilai) || 0,
                                     deskripsi_kuat: (dataNilai.desc1 && dataNilai.desc1 !== '-') ? dataNilai.desc1 : '-',
                                     deskripsi_lemah: (dataNilai.desc2 && dataNilai.desc2 !== '-') ? dataNilai.desc2 : '-',
-                                    // Backward compatibility
                                     deskripsi: fullDesc || "-"
                                 };
                             });
@@ -1419,12 +1379,10 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                                 nis_nisn: this.getNisNisnForStudent(s.kelas, s.id),
                                 nama_sekolah: "SMP ALBANNA",
                                 alamat_sekolah: "Jl. Tukad Yeh Ho III No. 16",
-                                kelas: s.kelas, // Menggunakan kelas asli siswa
+                                kelas: s.kelas,
                                 fase: "D",
                                 semester: this.identitas.semester || "1 (Ganjil)",
                                 tahun_ajaran: this.identitas.tahun_ajaran || "2024/2025",
-
-                                // Data tambahan untuk Template2 (LHBS)
                                 nama_wali_kelas: this.getWaliKelasByClass(s.kelas) || "-",
                                 ekskul: [
                                     { nama: "PRAMUKA", deskripsi: (this.ekskulData[s.kelas]?.[s.id]?.ek1_desc || "-") },
@@ -1436,7 +1394,6 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                                     izin: parseInt(this.kewalasanData[s.kelas]?.[s.id]?.i || 0),
                                     alpha: parseInt(this.kewalasanData[s.kelas]?.[s.id]?.a || 0)
                                 },
-
                                 mapel: listMapel
                             };
                         }).filter(Boolean);
