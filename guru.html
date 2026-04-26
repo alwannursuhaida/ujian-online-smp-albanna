@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Kisi-Kisi Guru - SMP ALBANNA</title>
     
-    <!-- FAVICON -->
     <link rel="icon" href="logo.png" type="image/png">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,7 +16,10 @@
     
     <!-- Excel Library -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
-    
+
+    <!-- ✅ SUPABASE: Ganti Firebase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>body { font-family: 'Montserrat', sans-serif; }</style>
@@ -37,22 +39,39 @@
             <nav class="flex-1 p-4 space-y-2">
                 <button @click="switchTab('input')" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'input' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']"><i class="fas fa-plus-circle w-5"></i> Input Kisi-Kisi</button>
                 <button @click="switchTab('my_data')" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'my_data' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']"><i class="fas fa-folder-open w-5"></i> Kisi-Kisi Saya</button>
-                <button @click="switchTab('monitoring')" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'monitoring' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']"><i class="fas fa-chart-bar w-5"></i> Monitoring</button>
+                <button @click="switchTab('monitoring')" :class="['w-full text-left px-4 py-3 rounded transition flex items-center gap-3', activeTab === 'monitoring' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-300']">
+                    <i class="fas fa-chart-bar w-5"></i> Monitoring
+                    <!-- ✅ Indikator realtime aktif -->
+                    <span v-if="realtimeActive" class="ml-auto w-2 h-2 bg-green-400 rounded-full animate-pulse" title="Realtime aktif"></span>
+                </button>
             </nav>
-            <div class="p-4 border-t border-slate-800"><a href="index.html" class="w-full text-center text-xs text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 p-2 hover:bg-slate-800 rounded transition"><i class="fas fa-home"></i> MENU UTAMA</a></div>
+            <div class="p-4 border-t border-slate-800">
+                <a href="index.html" class="w-full text-center text-xs text-gray-400 hover:text-white font-bold flex items-center justify-center gap-2 p-2 hover:bg-slate-800 rounded transition">
+                    <i class="fas fa-home"></i> MENU UTAMA
+                </a>
+            </div>
         </div>
 
         <!-- MAIN CONTENT -->
         <div class="flex-1 flex flex-col h-full overflow-hidden bg-gray-50">
             <!-- TOP BAR -->
             <div class="bg-white p-4 shadow-sm border-b flex justify-between items-center px-8">
-                <h2 class="text-2xl font-bold text-slate-800"><span v-if="activeTab === 'input'">{{ editingId ? 'Edit Kisi-Kisi' : 'Input Kisi-Kisi Baru' }}</span><span v-else-if="activeTab === 'my_data'">Arsip Kisi-Kisi Saya</span><span v-else>Monitoring Pengumpulan</span></h2>
-                <div v-if="isLoading" class="flex items-center gap-2 text-blue-600 font-bold animate-pulse"><i class="fas fa-circle-notch fa-spin"></i> Memproses...</div>
-                <div v-if="lastSaved && !isLoading && activeTab === 'input'" class="text-xs text-green-600 font-bold flex items-center gap-1"><i class="fas fa-check"></i> Draft: {{ lastSaved }}</div>
+                <h2 class="text-2xl font-bold text-slate-800">
+                    <span v-if="activeTab === 'input'">{{ editingId ? 'Edit Kisi-Kisi' : 'Input Kisi-Kisi Baru' }}</span>
+                    <span v-else-if="activeTab === 'my_data'">Arsip Kisi-Kisi Saya</span>
+                    <span v-else>Monitoring Pengumpulan</span>
+                </h2>
+                <div v-if="isLoading" class="flex items-center gap-2 text-blue-600 font-bold animate-pulse">
+                    <i class="fas fa-circle-notch fa-spin"></i> Memproses...
+                </div>
+                <div v-if="lastSaved && !isLoading && activeTab === 'input'" class="text-xs text-green-600 font-bold flex items-center gap-1">
+                    <i class="fas fa-check"></i> Draft: {{ lastSaved }}
+                </div>
             </div>
 
             <!-- CONTENT AREA -->
             <div class="flex-1 overflow-y-auto p-8">
+
                 <!-- TAB 1: INPUT -->
                 <div v-if="activeTab === 'input'">
                     <div v-if="editingId" class="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-6 flex justify-between items-center shadow-sm">
@@ -64,11 +83,9 @@
                     <div v-if="step === 1" class="bg-white p-8 rounded-lg shadow-lg max-w-3xl mx-auto border-t-8 border-blue-900 relative">
                         <div class="text-center mb-8"><h2 class="text-xl font-bold text-gray-700">Langkah 1: Identitas Dokumen</h2></div>
                         <div class="space-y-4">
-                            <!-- INFO LOGO -->
                             <div class="bg-blue-50 p-4 rounded text-center border border-blue-100 text-blue-800 text-sm">
                                 <i class="fas fa-magic mr-2"></i> Menggunakan Kop Otomatis (Server).
                             </div>
-
                             <div class="grid grid-cols-2 gap-4">
                                 <div><label class="block text-sm font-bold mb-2 text-gray-700">Mata Pelajaran</label><select v-model="selectedMapel" class="w-full p-3 border rounded focus:ring-2 focus:ring-blue-900"><option value="" disabled>-- Pilih --</option><option v-for="m in mapelList" :value="m">{{ m }}</option></select></div>
                                 <div><label class="block text-sm font-bold mb-2 text-gray-700">Nama Guru</label><input v-model="namaGuru" class="w-full p-3 border rounded" placeholder="Nama Lengkap & Gelar"></div>
@@ -88,13 +105,10 @@
                     <div v-if="step === 2">
                         <div class="sticky top-0 z-40 bg-white p-4 shadow mb-6 rounded flex flex-col md:flex-row justify-between items-center border-l-4 border-blue-900 gap-4">
                             <div><h2 class="font-bold text-lg text-blue-900">{{ selectedMapel }} (Kelas {{ kelas }})</h2><span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Total: {{ soalList.length }} Soal</span></div>
-                            
-                            <!-- TOMBOL EXCEL -->
                             <div class="flex gap-2">
                                 <button @click="downloadExcelTemplate" class="bg-green-600 text-white px-3 py-2 rounded text-xs font-bold hover:bg-green-700 shadow flex items-center gap-1"><i class="fas fa-file-excel"></i> Template</button>
                                 <label class="bg-blue-500 text-white px-3 py-2 rounded text-xs font-bold hover:bg-blue-600 shadow cursor-pointer flex items-center gap-1"><i class="fas fa-upload"></i> Upload Excel<input type="file" accept=".xlsx, .xls" class="hidden" @change="handleExcelUpload"></label>
                             </div>
-
                             <button @click="step = 1" class="text-sm text-gray-500 hover:text-blue-900 font-bold"><i class="fas fa-arrow-left"></i> Edit Info</button>
                         </div>
 
@@ -120,12 +134,22 @@
 
                 <!-- TAB 2: KISI-KISI SAYA -->
                 <div v-if="activeTab === 'my_data'">
-                    <div class="flex justify-between items-center mb-6"><h2 class="text-xl font-bold text-gray-700">Arsip Kisi-Kisi Saya</h2><button @click="loadMyData" class="text-blue-600 hover:text-blue-800 text-sm font-bold"><i class="fas fa-sync"></i> Refresh</button></div>
-                    <div v-if="myKisiKisi.length === 0 && !isLoading" class="text-center text-gray-400 mt-20"><i class="fas fa-folder-open fa-4x mb-4"></i><p>Belum ada data kisi-kisi yang tersimpan.</p></div>
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-700">Arsip Kisi-Kisi Saya</h2>
+                        <button @click="loadMyData" class="text-blue-600 hover:text-blue-800 text-sm font-bold"><i class="fas fa-sync"></i> Refresh</button>
+                    </div>
+                    <div v-if="myKisiKisi.length === 0 && !isLoading" class="text-center text-gray-400 mt-20">
+                        <i class="fas fa-folder-open fa-4x mb-4"></i><p>Belum ada data kisi-kisi yang tersimpan.</p>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div v-for="item in myKisiKisi" :key="item.id" class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition flex flex-col relative group">
-                            <div class="flex justify-between items-start mb-2"><span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">Kelas {{ item.config.kelas }}</span><span class="text-[10px] text-gray-400">{{ formatDate(item.timestamp) }}</span></div>
-                            <h3 class="font-bold text-lg text-slate-800 mb-1">{{ item.config.mapel }}</h3><p class="text-sm text-gray-500 mb-4">{{ item.soalList.length }} Butir Soal</p>
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">Kelas {{ item.config.kelas }}</span>
+                                <span class="text-[10px] text-gray-400">{{ formatDate(item.timestamp) }}</span>
+                            </div>
+                            <h3 class="font-bold text-lg text-slate-800 mb-1">{{ item.config.mapel }}</h3>
+                            <!-- ✅ soal_list (snake_case) sesuai kolom Supabase -->
+                            <p class="text-sm text-gray-500 mb-4">{{ item.soal_list.length }} Butir Soal</p>
                             <div class="mt-auto pt-4 border-t flex justify-between gap-2">
                                 <button @click="viewItem(item)" class="flex-1 bg-gray-50 text-gray-600 py-2 rounded text-xs font-bold hover:bg-gray-200 transition"><i class="fas fa-eye"></i> Lihat</button>
                                 <button @click="editItem(item)" class="flex-1 bg-yellow-50 text-yellow-600 py-2 rounded text-xs font-bold hover:bg-yellow-100 transition"><i class="fas fa-pen"></i> Edit</button>
@@ -138,11 +162,30 @@
 
                 <!-- TAB 3: MONITORING -->
                 <div v-if="activeTab === 'monitoring'">
-                    <h2 class="text-xl font-bold text-gray-700 mb-6">Status Pengumpulan (Seluruh Guru)</h2>
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-700">Status Pengumpulan (Seluruh Guru)</h2>
+                        <!-- ✅ Status koneksi realtime -->
+                        <div class="flex items-center gap-2 text-xs font-bold" :class="realtimeActive ? 'text-green-600' : 'text-gray-400'">
+                            <span :class="['w-2 h-2 rounded-full', realtimeActive ? 'bg-green-500 animate-pulse' : 'bg-gray-300']"></span>
+                            {{ realtimeActive ? 'Live' : 'Tidak tersambung' }}
+                        </div>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div v-for="grade in ['7', '8', '9']" :key="grade" class="bg-white rounded-xl shadow-sm border overflow-hidden">
                             <div class="bg-slate-800 text-white p-4 text-center"><h3 class="text-xl font-bold">KELAS {{ grade }}</h3></div>
-                            <div class="p-0"><table class="w-full text-sm"><tbody class="divide-y divide-gray-100"><tr v-for="mapel in masterMapel" :key="mapel" class="hover:bg-gray-50"><td class="p-3 pl-4 font-medium text-gray-700">{{ mapel }}</td><td class="p-3 pr-4 text-right"><div v-if="checkAvailability(grade, mapel)" class="text-green-600 font-bold flex items-center justify-end gap-2"><span class="text-xs bg-green-100 px-2 py-0.5 rounded">Ada</span> <i class="fas fa-check-circle"></i></div><div v-else class="text-red-300 flex items-center justify-end gap-2"><i class="fas fa-times-circle"></i></div></td></tr></tbody></table></div>
+                            <div class="p-0">
+                                <table class="w-full text-sm">
+                                    <tbody class="divide-y divide-gray-100">
+                                        <tr v-for="mapel in masterMapel" :key="mapel" class="hover:bg-gray-50">
+                                            <td class="p-3 pl-4 font-medium text-gray-700">{{ mapel }}</td>
+                                            <td class="p-3 pr-4 text-right">
+                                                <div v-if="checkAvailability(grade, mapel)" class="text-green-600 font-bold flex items-center justify-end gap-2"><span class="text-xs bg-green-100 px-2 py-0.5 rounded">Ada</span> <i class="fas fa-check-circle"></i></div>
+                                                <div v-else class="text-red-300 flex items-center justify-end gap-2"><i class="fas fa-times-circle"></i></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -152,63 +195,111 @@
 
         <!-- MODAL VIEW DETAIL -->
         <div v-if="modalItem" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white w-full max-w-3xl h-[80vh] rounded-xl shadow-2xl flex flex-col overflow-hidden"><div class="p-4 border-b flex justify-between items-center bg-slate-50"><h3 class="font-bold text-lg">{{ modalItem.config.mapel }} - Kelas {{ modalItem.config.kelas }}</h3><button @click="modalItem = null" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button></div><div class="flex-1 overflow-y-auto p-6"><table class="w-full text-sm border-collapse border"><thead class="bg-blue-900 text-white"><tr><th class="border p-2 w-10">No</th><th class="border p-2">TP</th><th class="border p-2">Level</th><th class="border p-2">Indikator</th><th class="border p-2">Bentuk</th></tr></thead><tbody><tr v-for="(s, i) in modalItem.soalList" :key="i"><td class="border p-2 text-center">{{ i+1 }}</td><td class="border p-2">{{ s.kd }}</td><td class="border p-2">{{ s.level }}</td><td class="border p-2">{{ s.indikator }}</td><td class="border p-2">{{ s.bentuk }}</td></tr></tbody></table></div><div class="p-4 border-t text-right"><button @click="regeneratePDF(modalItem)" class="bg-red-600 text-white px-4 py-2 rounded font-bold hover:bg-red-700 text-sm"><i class="fas fa-print mr-2"></i> Cetak PDF</button></div></div>
+            <div class="bg-white w-full max-w-3xl h-[80vh] rounded-xl shadow-2xl flex flex-col overflow-hidden">
+                <div class="p-4 border-b flex justify-between items-center bg-slate-50">
+                    <h3 class="font-bold text-lg">{{ modalItem.config.mapel }} - Kelas {{ modalItem.config.kelas }}</h3>
+                    <button @click="modalItem = null" class="text-gray-400 hover:text-red-500"><i class="fas fa-times fa-lg"></i></button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-6">
+                    <table class="w-full text-sm border-collapse border">
+                        <thead class="bg-blue-900 text-white">
+                            <tr><th class="border p-2 w-10">No</th><th class="border p-2">TP</th><th class="border p-2">Level</th><th class="border p-2">Indikator</th><th class="border p-2">Bentuk</th></tr>
+                        </thead>
+                        <tbody>
+                            <!-- ✅ soal_list (snake_case) sesuai kolom Supabase -->
+                            <tr v-for="(s, i) in modalItem.soal_list" :key="i">
+                                <td class="border p-2 text-center">{{ i+1 }}</td><td class="border p-2">{{ s.kd }}</td><td class="border p-2">{{ s.level }}</td><td class="border p-2">{{ s.indikator }}</td><td class="border p-2">{{ s.bentuk }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="p-4 border-t text-right">
+                    <button @click="regeneratePDF(modalItem)" class="bg-red-600 text-white px-4 py-2 rounded font-bold hover:bg-red-700 text-sm"><i class="fas fa-print mr-2"></i> Cetak PDF</button>
+                </div>
+            </div>
         </div>
 
     </div>
 
-    <script type="module">
-        import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <script>
+        // ================================================================
+        // ✅ SUPABASE CONFIG
+        // Isi dengan Project URL dan anon key dari:
+        // Supabase Dashboard > Project Settings > API
+        // ================================================================
+        const SUPABASE_URL  = 'https://XXXX.supabase.co';
+        const SUPABASE_ANON = 'eyJ...';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBivREr2y61OYTE0kLxRnkGtPCdLvHn_og",
-            authDomain: "cbt-albanna.firebaseapp.com",
-            projectId: "cbt-albanna",
-            storageBucket: "cbt-albanna.firebasestorage.app",
-            messagingSenderId: "740622197344",
-            appId: "1:740622197344:web:6112adf59edfbe496ed905"
-        };
+        const { createClient } = supabase;
+        const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-        const appFirebase = initializeApp(firebaseConfig);
-        const db = getFirestore(appFirebase);
+        // ================================================================
+        // VUE APP
+        // ================================================================
+        const { createApp } = Vue;
 
         createApp({
             data() {
                 return {
-                    currentUser: null, storageKey: '', activeTab: 'input', step: 1, isLoading: false, lastSaved: null,
+                    currentUser: null,
+                    storageKey: '',
+                    activeTab: 'input',
+                    step: 1,
+                    isLoading: false,
+                    lastSaved: null,
                     selectedMapel: '', namaGuru: '', kelas: '', semester: '',
                     sidebarLogo: null,
                     mapelList: ['AGAMA ISLAM', 'BAHASA ARAB', 'BAHASA BALI', 'BAHASA INDONESIA', 'BAHASA INGGRIS', 'INFORMATIKA', 'IPA', 'IPS', 'KKA', 'MATEMATIKA', 'OLAHRAGA', 'PKN', 'SENI BUDAYA'],
                     masterMapel: ['MATEMATIKA', 'IPA', 'BAHASA INGGRIS', 'BAHASA INDONESIA', 'BAHASA BALI', 'SENI BUDAYA', 'BAHASA ARAB', 'PJOK', 'IPS', 'AGAMA ISLAM', 'INFORMATIKA', 'PKN', 'KKA'],
-                    sekolah: { logoBase64: null, logoPreview: null },
                     soalList: [{ kd: '', level: '', indikator: '', bentuk: '' }],
-                    myKisiKisi: [], allKisiKisi: [], modalItem: null, editingId: null
+                    myKisiKisi: [],
+                    allKisiKisi: [],     // dipakai untuk monitoring
+                    modalItem: null,
+                    editingId: null,
+                    // ✅ State realtime channel
+                    monitoringChannel: null,
+                    realtimeActive: false,
                 }
             },
             mounted() {
                 const session = sessionStorage.getItem('cbt_user_session');
-                if (!session) { try{window.location.href = 'index.html';}catch(e){this.currentUser={name:'Dev'};} return; }
+                if (!session) {
+                    try { window.location.href = 'index.html'; } catch(e) { this.currentUser = { name: 'Dev', username: 'dev' }; }
+                    return;
+                }
                 this.currentUser = JSON.parse(session);
                 this.storageKey = `guru_kisi_draft_${this.currentUser.username}`;
-                
-                this.loadSidebarImage(); // LOAD KOP
 
+                this.loadSidebarImage();
+
+                // Resume draft dari localStorage
                 const draft = localStorage.getItem(this.storageKey);
-                if(draft && !this.editingId) {
+                if (draft && !this.editingId) {
                     try {
                         const p = JSON.parse(draft);
-                        this.selectedMapel = p.selectedMapel||''; this.namaGuru = p.namaGuru||''; this.kelas = p.kelas||''; this.semester = p.semester||''; 
-                        this.soalList = p.soalList||[{ kd: '', level: '', indikator: '', bentuk: '' }];
+                        this.selectedMapel = p.selectedMapel || '';
+                        this.namaGuru     = p.namaGuru     || '';
+                        this.kelas        = p.kelas        || '';
+                        this.semester     = p.semester     || '';
+                        this.soalList     = p.soalList     || [{ kd: '', level: '', indikator: '', bentuk: '' }];
                     } catch(e) {}
                 }
-                this.loadMyData(); this.loadMonitoringData();
+
+                this.loadMyData();
+                // ✅ Mulai monitoring realtime sejak awal supaya data siap saat guru buka tab
+                this.startMonitoringRealtime();
+            },
+            // ✅ Bersihkan channel saat komponen di-destroy (navigasi keluar)
+            beforeUnmount() {
+                this.stopMonitoringRealtime();
             },
             watch: {
-                soalList: { handler() { this.saveDraft() }, deep: true },
-                selectedMapel() { this.saveDraft() }, namaGuru() { this.saveDraft() },
-                kelas() { this.saveDraft() }, semester() { this.saveDraft() }, step() { this.saveDraft() }
+                soalList:     { handler() { this.saveDraft() }, deep: true },
+                selectedMapel() { this.saveDraft() },
+                namaGuru()    { this.saveDraft() },
+                kelas()       { this.saveDraft() },
+                semester()    { this.saveDraft() },
+                step()        { this.saveDraft() }
             },
             methods: {
                 async loadSidebarImage() {
@@ -222,88 +313,138 @@
                 },
 
                 saveDraft() {
-                    if(this.editingId) return;
-                    const data = { selectedMapel:this.selectedMapel, namaGuru:this.namaGuru, kelas:this.kelas, semester:this.semester, soalList:this.soalList, step:this.step };
+                    if (this.editingId) return;
+                    const data = {
+                        selectedMapel: this.selectedMapel, namaGuru: this.namaGuru,
+                        kelas: this.kelas, semester: this.semester,
+                        soalList: this.soalList, step: this.step
+                    };
                     localStorage.setItem(this.storageKey, JSON.stringify(data));
                     this.lastSaved = new Date().toLocaleTimeString();
                 },
+
                 resetData() {
-                    if(confirm("Reset data?")) {
+                    if (confirm("Reset data?")) {
                         localStorage.removeItem(this.storageKey);
-                        this.selectedMapel=''; this.namaGuru=''; this.kelas=''; this.semester=''; this.soalList=[{kd:'',level:'',indikator:'',bentuk:''}]; this.step=1;
-                        if(!this.editingId) localStorage.removeItem(this.storageKey);
+                        this.selectedMapel = ''; this.namaGuru = ''; this.kelas = ''; this.semester = '';
+                        this.soalList = [{ kd: '', level: '', indikator: '', bentuk: '' }];
+                        this.step = 1;
                     }
                 },
+
                 lanjutKeKisiKisi() {
                     if (!this.namaGuru || !this.kelas || !this.selectedMapel) return alert("Lengkapi Identitas!");
                     this.step = 2; window.scrollTo(0, 0);
                 },
-                handleLogoUpload() {}, // Disabled
-                tambahSoal() { this.soalList.push({ kd: '', level: '', indikator: '', bentuk: '' }); setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 100); },
-                hapusSoal(i) { if(this.soalList.length > 1) this.soalList.splice(i, 1); },
-                
-                // EXCEL TEMPLATE DOWNLOAD
+
+                handleLogoUpload() {},
+                tambahSoal() {
+                    this.soalList.push({ kd: '', level: '', indikator: '', bentuk: '' });
+                    setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 100);
+                },
+                hapusSoal(i) { if (this.soalList.length > 1) this.soalList.splice(i, 1); },
+
                 downloadExcelTemplate() {
                     const ws = XLSX.utils.aoa_to_sheet([["No", "Tujuan Pembelajaran (TP)", "Level Kognitif", "Indikator Soal", "Bentuk Soal"]]);
-                    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Template"); XLSX.writeFile(wb, "Template_Kisi_Kisi.xlsx");
-                },
-                
-                // EXCEL UPLOAD
-                handleExcelUpload(e) {
-                    const file = e.target.files[0]; if(!file) return;
-                    const reader = new FileReader();
-                    reader.onload = (ev) => {
-                        const data = new Uint8Array(ev.target.result); const workbook = XLSX.read(data, {type: 'array'});
-                        const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
-                        const newSoal = [];
-                        json.slice(1).forEach(r => { if(r[1]) newSoal.push({ kd: r[1]||'', level: r[2]||'L1 - C1', indikator: r[3]||'', bentuk: r[4]||'Pilihan Ganda' }); });
-                        if(newSoal.length > 0) { this.soalList = newSoal; alert(`Dimuat ${newSoal.length} soal!`); }
-                    }; reader.readAsArrayBuffer(file);
+                    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Template");
+                    XLSX.writeFile(wb, "Template_Kisi_Kisi.xlsx");
                 },
 
+                handleExcelUpload(e) {
+                    const file = e.target.files[0]; if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const data = new Uint8Array(ev.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+                        const newSoal = [];
+                        json.slice(1).forEach(r => { if (r[1]) newSoal.push({ kd: r[1]||'', level: r[2]||'L1 - C1', indikator: r[3]||'', bentuk: r[4]||'Pilihan Ganda' }); });
+                        if (newSoal.length > 0) { this.soalList = newSoal; alert(`Dimuat ${newSoal.length} soal!`); }
+                    };
+                    reader.readAsArrayBuffer(file);
+                },
+
+                // ============================================================
+                // ✅ SIMPAN / UPDATE KISI-KISI
+                //
+                // Sebelum:
+                //   if (editingId) updateDoc(doc(db,"bank_kisi_kisi", id), data)
+                //   else           addDoc(collection(db,"bank_kisi_kisi"), data)
+                //
+                // Sesudah:
+                //   if (editingId) db.from('bank_kisi_kisi').update(data).eq('id', id)
+                //   else           db.from('bank_kisi_kisi').insert(data)
+                //
+                // Perubahan field: soalList → soal_list, uploadedBy → uploaded_by
+                // ============================================================
                 async saveAndDownload() {
-                    for(let s of this.soalList) { if(!s.kd || !s.level || !s.indikator || !s.bentuk) return alert("Lengkapi semua butir soal!"); }
+                    for (let s of this.soalList) {
+                        if (!s.kd || !s.level || !s.indikator || !s.bentuk)
+                            return alert("Lengkapi semua butir soal!");
+                    }
                     this.isLoading = true;
                     try {
                         const dataToSave = {
-                            config: { mapel: this.selectedMapel, kelas: this.kelas, semester: this.semester, guru: this.namaGuru },
-                            soalList: this.soalList,
-                            uploadedBy: this.currentUser.username,
-                            timestamp: new Date().toISOString()
+                            config:      { mapel: this.selectedMapel, kelas: this.kelas, semester: this.semester, guru: this.namaGuru },
+                            soal_list:   this.soalList,        // ✅ snake_case
+                            uploaded_by: this.currentUser.username, // ✅ snake_case
+                            timestamp:   new Date().toISOString()
                         };
-                        if (this.editingId) { await updateDoc(doc(db, "bank_kisi_kisi", this.editingId), dataToSave); alert("✅ Data Diperbarui!"); } 
-                        else { await addDoc(collection(db, "bank_kisi_kisi"), dataToSave); alert("✅ Data Disimpan!"); }
-                        this.generatePDF(dataToSave);
+
+                        if (this.editingId) {
+                            // ✅ UPDATE: .update().eq('id', id)
+                            const { error } = await db
+                                .from('bank_kisi_kisi')
+                                .update(dataToSave)
+                                .eq('id', this.editingId);
+                            if (error) throw error;
+                            alert("✅ Data Diperbarui!");
+                        } else {
+                            // ✅ INSERT: .insert()
+                            const { error } = await db
+                                .from('bank_kisi_kisi')
+                                .insert(dataToSave);
+                            if (error) throw error;
+                            alert("✅ Data Disimpan!");
+                        }
+
+                        // generatePDF butuh field soalList (camelCase) — adapter lokal
+                        this.generatePDF({
+                            config:   dataToSave.config,
+                            soalList: dataToSave.soal_list   // adapter untuk PDF generator
+                        });
+
                         localStorage.removeItem(this.storageKey);
-                        this.editingId = null; this.resetData();
-                    } catch(e) { alert("Gagal: " + e.message); } finally { this.isLoading = false; }
+                        this.editingId = null;
+                        this.resetData();
+                    } catch(e) {
+                        alert("Gagal: " + e.message);
+                    } finally {
+                        this.isLoading = false;
+                    }
                 },
 
                 generatePDF(data) {
+                    // data harus berformat { config, soalList } — konsisten dengan generatePDF asli
                     try {
                         const { jsPDF } = window.jspdf;
                         const doc = new jsPDF();
-                        const pageWidth = doc.internal.pageSize.getWidth();
-                        const pageHeight = doc.internal.pageSize.getHeight();
+                        const pageWidth  = doc.internal.pageSize.getWidth();
 
-                        // 1. SIDEBAR KOP (FIXED: 0,0 45.9x297)
                         const drawSidebar = () => { if (this.sidebarLogo) doc.addImage(this.sidebarLogo, 'PNG', 0, 0, 45.9, 297); };
+                        const contentX = 50;
+                        drawSidebar();
 
-                        const contentX = 50; // Margin Konten
-                        drawSidebar(); // Page 1
-
-                        // JUDUL
                         let y = 30;
                         doc.setFont("helvetica", "bold"); doc.setFontSize(12);
-                        doc.text(`KISI-KISI ${data.config.mapel.toUpperCase()}`, (pageWidth + contentX)/2 - 10, y, {align:'center'});
-                        
+                        doc.text(`KISI-KISI ${data.config.mapel.toUpperCase()}`, (pageWidth + contentX)/2 - 10, y, { align: 'center' });
+
                         y += 15;
                         doc.setFont("helvetica", "normal"); doc.setFontSize(10);
                         doc.text(`Mata Pelajaran: ${data.config.mapel}`, contentX, y);
                         doc.text(`Kelas / Semester: ${data.config.kelas} / ${data.config.semester}`, contentX, y+5);
                         doc.text(`Guru Pengampu: ${data.config.guru}`, contentX, y+10);
 
-                        // TABEL (BLUE HEADER)
                         doc.autoTable({
                             startY: y + 20,
                             margin: { left: contentX, right: 15 },
@@ -313,50 +454,180 @@
                             headStyles: { fillColor: [30, 58, 138], textColor: [255, 255, 255], fontStyle: 'bold' },
                             styles: { fontSize: 9, cellPadding: 2 },
                             columnStyles: { 0: { cellWidth: 10 }, 2: { cellWidth: 20 }, 4: { cellWidth: 25 } },
-                            didDrawPage: function (data) { if (data.pageNumber > 1) drawSidebar(); } // Repeat Sidebar
+                            didDrawPage: function () { drawSidebar(); }
                         });
 
-                        // TTD
                         let finalY = doc.lastAutoTable.finalY + 15;
                         if (finalY > 250) { doc.addPage(); finalY = 20; drawSidebar(); }
                         const ttdX = pageWidth - 50;
-                        doc.text(`Denpasar, ${new Date().toLocaleDateString('id-ID')}`, ttdX, finalY, {align:'center'});
-                        doc.text("Guru Mata Pelajaran,", ttdX, finalY+5, {align:'center'});
+                        doc.text(`Denpasar, ${new Date().toLocaleDateString('id-ID')}`, ttdX, finalY, { align: 'center' });
+                        doc.text("Guru Mata Pelajaran,", ttdX, finalY+5, { align: 'center' });
                         doc.setFont("helvetica", "bold");
-                        doc.text(`( ${data.config.guru} )`, ttdX, finalY+30, {align:'center'});
-
+                        doc.text(`( ${data.config.guru} )`, ttdX, finalY+30, { align: 'center' });
                         doc.save(`Kisi-Kisi_${data.config.mapel}_${data.config.kelas}.pdf`);
                     } catch (err) { console.error(err); alert("Error PDF"); }
                 },
 
+                // ============================================================
+                // ✅ LOAD DATA KISI-KISI MILIK GURU INI
+                //
+                // Sebelum: getDocs(query(collection(db,"bank_kisi_kisi"),
+                //            where("uploadedBy","==", username)))
+                //
+                // Sesudah: db.from('bank_kisi_kisi').select('*')
+                //            .eq('uploaded_by', username)
+                //            .order('timestamp', { ascending: false })
+                // ============================================================
                 async loadMyData() {
                     this.isLoading = true;
                     try {
-                        const q = query(collection(db, "bank_kisi_kisi"), where("uploadedBy", "==", this.currentUser.username));
-                        const snap = await getDocs(q);
-                        this.myKisiKisi = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                    } catch(e) { console.error(e); } finally { this.isLoading = false; }
-                },
-                async loadMonitoringData() { onSnapshot(query(collection(db, "bank_kisi_kisi")), (snap) => { this.allKisiKisi = snap.docs.map(d => d.data()); }); },
-                viewItem(item) { this.modalItem = item; },
-                regeneratePDF(item) { this.generatePDF(item); },
-                formatDate(iso) { return new Date(iso).toLocaleDateString('id-ID'); },
-                checkAvailability(grade, mapel) { return this.allKisiKisi.some(k => k.config.kelas == grade && k.config.mapel === mapel); },
-                
-                editItem(item) {
-                    this.editingId = item.id; this.selectedMapel = item.config.mapel; this.namaGuru = item.config.guru;
-                    this.kelas = item.config.kelas; this.semester = item.config.semester;
-                    this.soalList = JSON.parse(JSON.stringify(item.soalList));
-                    this.activeTab = 'input'; this.step = 1;
-                },
-                cancelEdit() { this.editingId = null; this.resetData(); },
-                async deleteItem(id) {
-                    if(confirm("Hapus permanen?")) {
-                        this.isLoading = true;
-                        try { await deleteDoc(doc(db, "bank_kisi_kisi", id)); this.loadMyData(); } catch(e) { alert(e.message); } finally { this.isLoading = false; }
+                        const { data, error } = await db
+                            .from('bank_kisi_kisi')
+                            .select('*')
+                            .eq('uploaded_by', this.currentUser.username)
+                            .order('timestamp', { ascending: false });
+
+                        if (error) throw error;
+                        // ✅ Tidak perlu .docs.map() atau manual sort — sudah dihandle query
+                        this.myKisiKisi = data;
+                    } catch(e) {
+                        console.error(e);
+                    } finally {
+                        this.isLoading = false;
                     }
                 },
-                switchTab(tab) { this.activeTab = tab; if(tab === 'my_data') this.loadMyData(); if(tab === 'monitoring') this.loadMonitoringData(); }
+
+                // ============================================================
+                // ✅ MONITORING REALTIME — PENGGANTI onSnapshot
+                //
+                // Sebelum:
+                //   onSnapshot(query(collection(db, "bank_kisi_kisi")), (snap) => {
+                //     this.allKisiKisi = snap.docs.map(d => d.data());
+                //   });
+                //   → Firebase membuat WebSocket baru setiap kali dipanggil
+                //   → Jika guru buka-tutup tab monitoring berulang, channel numpuk
+                //
+                // Sesudah: 1 channel permanen yang dibuat saat mounted().
+                //   INSERT/UPDATE/DELETE pada bank_kisi_kisi → update allKisiKisi lokal
+                //   tanpa fetch ulang ke server — sangat efisien.
+                // ============================================================
+                async startMonitoringRealtime() {
+                    // Load data awal sekali saja via REST
+                    const { data, error } = await db
+                        .from('bank_kisi_kisi')
+                        .select('id, config, soal_list, uploaded_by, timestamp');
+
+                    if (!error) this.allKisiKisi = data;
+
+                    // Mulai listen perubahan via WebSocket
+                    this.monitoringChannel = db
+                        .channel('monitoring-kisi-kisi')
+                        .on(
+                            'postgres_changes',
+                            { event: '*', schema: 'public', table: 'bank_kisi_kisi' },
+                            (payload) => {
+                                const { eventType, new: newRow, old: oldRow } = payload;
+
+                                if (eventType === 'INSERT') {
+                                    // Tambahkan ke daftar tanpa fetch ulang
+                                    this.allKisiKisi.push(newRow);
+                                    // Jika ini milik guru ini, tambah ke myKisiKisi juga
+                                    if (newRow.uploaded_by === this.currentUser?.username) {
+                                        this.myKisiKisi.unshift(newRow);
+                                    }
+                                } else if (eventType === 'UPDATE') {
+                                    // Ganti row yang berubah secara in-place
+                                    const idxAll = this.allKisiKisi.findIndex(k => k.id === newRow.id);
+                                    if (idxAll !== -1) this.allKisiKisi.splice(idxAll, 1, newRow);
+
+                                    const idxMy = this.myKisiKisi.findIndex(k => k.id === newRow.id);
+                                    if (idxMy !== -1) this.myKisiKisi.splice(idxMy, 1, newRow);
+                                } else if (eventType === 'DELETE') {
+                                    // Hapus dari kedua list
+                                    this.allKisiKisi = this.allKisiKisi.filter(k => k.id !== oldRow.id);
+                                    this.myKisiKisi  = this.myKisiKisi.filter(k => k.id !== oldRow.id);
+                                }
+                            }
+                        )
+                        .subscribe((status) => {
+                            // ✅ Tampilkan status koneksi di UI
+                            this.realtimeActive = (status === 'SUBSCRIBED');
+                        });
+                },
+
+                stopMonitoringRealtime() {
+                    if (this.monitoringChannel) {
+                        db.removeChannel(this.monitoringChannel);
+                        this.monitoringChannel = null;
+                        this.realtimeActive = false;
+                    }
+                },
+
+                viewItem(item) { this.modalItem = item; },
+
+                // ✅ Adapter: regeneratePDF perlu soalList (camelCase) untuk generatePDF
+                regeneratePDF(item) {
+                    this.generatePDF({
+                        config:   item.config,
+                        soalList: item.soal_list   // adapter
+                    });
+                },
+
+                formatDate(iso) { return new Date(iso).toLocaleDateString('id-ID'); },
+
+                // ✅ allKisiKisi sekarang pakai soal_list — checkAvailability tetap sama logikanya
+                checkAvailability(grade, mapel) {
+                    return this.allKisiKisi.some(k => k.config.kelas == grade && k.config.mapel === mapel);
+                },
+
+                editItem(item) {
+                    this.editingId    = item.id;
+                    this.selectedMapel = item.config.mapel;
+                    this.namaGuru     = item.config.guru;
+                    this.kelas        = item.config.kelas;
+                    this.semester     = item.config.semester;
+                    // ✅ soal_list (dari Supabase) → clone untuk editing
+                    this.soalList     = JSON.parse(JSON.stringify(item.soal_list));
+                    this.activeTab    = 'input';
+                    this.step         = 1;
+                },
+
+                cancelEdit() { this.editingId = null; this.resetData(); },
+
+                // ============================================================
+                // ✅ HAPUS KISI-KISI
+                //
+                // Sebelum: deleteDoc(doc(db, "bank_kisi_kisi", id))
+                // Sesudah: db.from('bank_kisi_kisi').delete().eq('id', id)
+                //
+                // Catatan: Tidak perlu loadMyData() manual setelah delete —
+                // channel realtime akan otomatis memperbarui myKisiKisi via
+                // eventType === 'DELETE' di startMonitoringRealtime()
+                // ============================================================
+                async deleteItem(id) {
+                    if (confirm("Hapus permanen?")) {
+                        this.isLoading = true;
+                        try {
+                            const { error } = await db
+                                .from('bank_kisi_kisi')
+                                .delete()
+                                .eq('id', id);
+                            if (error) throw error;
+                            // ✅ Tidak perlu loadMyData() — realtime channel menangani update UI
+                        } catch(e) {
+                            alert(e.message);
+                        } finally {
+                            this.isLoading = false;
+                        }
+                    }
+                },
+
+                switchTab(tab) {
+                    this.activeTab = tab;
+                    // ✅ loadMyData hanya dipanggil manual di my_data
+                    //    monitoring tidak perlu load — data sudah live dari startMonitoringRealtime()
+                    if (tab === 'my_data') this.loadMyData();
+                }
             }
         }).mount('#app');
     </script>
