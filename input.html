@@ -549,21 +549,19 @@
         </div>
     </div>
 
-    <script type="module">
-        import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, getDoc, setDoc, doc, query, where, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <!-- ✅ SUPABASE: Ganti Firebase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // ================================================================
+        // ✅ SUPABASE CONFIG
+        // ================================================================
+        const SUPABASE_URL  = 'https://XXXX.supabase.co';
+        const SUPABASE_ANON = 'eyJ...';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBivREr2y61OYTE0kLxRnkGtPCdLvHn_og",
-            authDomain: "cbt-albanna.firebaseapp.com",
-            projectId: "cbt-albanna",
-            storageBucket: "cbt-albanna.firebasestorage.app",
-            messagingSenderId: "740622197344",
-            appId: "1:740622197344:web:6112adf59edfbe496ed905"
-        };
-        const appFirebase = initializeApp(firebaseConfig);
-        const db = getFirestore(appFirebase);
+        const { createClient } = supabase;
+        const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+    </script>
+    <script>
 
         createApp({
             data() {
@@ -787,38 +785,68 @@
                     }
                     return { filled, total };
                 },
+                // ============================================================
+                // ✅ _cloudSetDoc → Supabase upsert by doc_id
+                // Firestore setDoc(merge:true) = partial update jika doc ada, insert jika tidak
+                // Supabase: upsert({ ...data, doc_id }, { onConflict: 'doc_id' })
+                // Semua tabel erapor_* punya kolom doc_id TEXT UNIQUE (lihat schema)
+                // ============================================================
                 async _cloudSetDoc(colName, docId, data, merge=true) {
                     if (!this.cloudEnabled) return;
                     try {
-                        await setDoc(doc(db, colName, docId), data, { merge });
+                        const payload = { ...data, doc_id: docId, updated_at: new Date().toISOString() };
+                        // hapus serverTimestamp() bawaan Firebase — Supabase pakai ISO string
+                        delete payload.updated_at; // hapus dulu...
+                        payload.updated_at = new Date().toISOString(); // ...lalu isi ulang
+                        const { error } = await db
+                            .from(colName)
+                            .upsert(payload, { onConflict: 'doc_id' });
+                        if (error) throw error;
                     } catch (e) {
-                        console.error(`ERROR CLOUD setDoc ${colName}/${docId}`, e);
+                        console.error(`ERROR CLOUD upsert ${colName}/${docId}`, e);
                     }
                 },
                 async _cloudDeleteDoc(colName, docId) {
                     if (!this.cloudEnabled) return;
                     try {
-                        await deleteDoc(doc(db, colName, docId));
+                        const { error } = await db
+                            .from(colName)
+                            .delete()
+                            .eq('doc_id', docId);
+                        if (error) throw error;
                     } catch (e) {
-                        console.error(`ERROR CLOUD deleteDoc ${colName}/${docId}`, e);
+                        console.error(`ERROR CLOUD delete ${colName}/${docId}`, e);
                     }
                 },
+                // ============================================================
+                // ✅ loadCloudProgress
+                // Sebelum: getDocs(query(collection(db,'erapor_progress'),
+                //            where('tahun_ajaran','==',x), where('semester','==',x), where('jenjang','==',x)))
+                // Sesudah: db.from('erapor_progress').select('*')
+                //            .eq('tahun_ajaran',x).eq('semester',x).eq('jenjang',x)
+                // ============================================================
                 async loadCloudProgress() {
                     if (!this.cloudEnabled) return;
                     this.cloudStatus = 'loading';
                     const k = this.cloudKey();
                     try {
-                        const qRef = query(collection(db, 'erapor_progress'), where('tahun_ajaran', '==', k.tahun_ajaran), where('semester', '==', k.semester), where('jenjang', '==', k.jenjang));
-                        const snap = await getDocs(qRef);
+                        const { data, error } = await db
+                            .from('erapor_progress')
+                            .select('*')
+                            .eq('tahun_ajaran', k.tahun_ajaran)
+                            .eq('semester', k.semester)
+                            .eq('jenjang', k.jenjang);
+
+                        if (error) throw error;
+
                         const map = {};
-                        snap.forEach(d => {
-                            const data = d.data() || {};
-                            const kelas = data.kelas || (d.id.split('__').slice(-1)[0]);
+                        (data || []).forEach(row => {
+                            const kelas = row.kelas || (row.doc_id?.split('__').slice(-1)[0]);
                             map[kelas] = {
-                                flags: data.flags || {},
-                                nis_filled: data.nis_filled ?? null,
-                                nis_total: data.nis_total ?? null,
-                                wali_kelas: data.wali_kelas || null
+                                flags:      row.flags      || {},
+                                nis_filled: row.nis_filled ?? null,
+                                nis_total:  row.nis_total  ?? null,
+                                wali_kelas: row.wali_kelas || null
                             };
                         });
                         this.cloudProgress = map;
@@ -840,12 +868,7 @@
                         jenjang: k.jenjang,
                         kelas,
                         flags: { [key]: !!value },
-                        updated_at: serverTimestamp(),
-                    };
-                    await this._cloudSetDoc('erapor_progress', id, payload, true);
-                    if (!this.cloudProgress[kelas]) this.cloudProgress[kelas] = { flags: {} };
-                    if (!this.cloudProgress[kelas].flags) this.cloudProgress[kelas].flags = {};
-                    this.cloudProgress[kelas].flags[key] = !!value;
+                        updated_at: new Date().toISOString(),
                 },
                 async _updateProgressMeta(kelas) {
                     if (!this.cloudEnabled) return;
@@ -861,11 +884,7 @@
                         nis_filled: stats.filled,
                         nis_total: stats.total,
                         wali_kelas: wali,
-                        updated_at: serverTimestamp(),
-                    };
-                    await this._cloudSetDoc('erapor_progress', id, payload, true);
-                    if (!this.cloudProgress[kelas]) this.cloudProgress[kelas] = { flags: {} };
-                    this.cloudProgress[kelas].nis_filled = stats.filled;
+                        updated_at: new Date().toISOString(),
                     this.cloudProgress[kelas].nis_total = stats.total;
                     this.cloudProgress[kelas].wali_kelas = wali;
                 },
@@ -878,102 +897,83 @@
                         console.error('ERROR schedule', e);
                     }
                 },
+                // ============================================================
+                // ✅ loadCloudForClasses
+                // Sebelum: getDoc(doc(db, 'erapor_meta', id)) per kelas (5 tabel × N kelas)
+                // Sesudah: db.from(...).select('*').in('doc_id', [id1, id2, ...])
+                //   → Batch 1 request per tabel, bukan N request
+                // ============================================================
                 async loadCloudForClasses(classes, loadNilaiMode='none') {
                     if (!this.cloudEnabled) return;
                     const k = this.cloudKey();
                     const kelasList = (classes || []).filter(Boolean);
                     if (kelasList.length === 0) return;
-                    // META (NIS/NISN + wali kelas)
+
+                    const classDocIds  = kelasList.map(kelas => this._docIdClass(kelas));
+
+                    // META
                     try {
-                        for (const kelas of kelasList) {
-                            const id = this._docIdClass(kelas);
-                            const metaRef = doc(db, 'erapor_meta', id);
-                            const metaSnap = await getDoc(metaRef);
-                            if (metaSnap.exists()) {
-                                const d = metaSnap.data() || {};
-                                if (d.studentMeta) this.studentMeta[kelas] = d.studentMeta;
-                                if (d.wali_kelas) this.waliKelasByClass[kelas] = d.wali_kelas;
-                            }
-                        }
-                    } catch (e) {
-                        console.error('ERROR CLOUD load meta', e);
-                    }
+                        const { data } = await db.from('erapor_meta').select('*').in('doc_id', classDocIds);
+                        (data || []).forEach(row => {
+                            if (row.student_meta) this.studentMeta[row.kelas] = row.student_meta;
+                            if (row.wali_kelas)   this.waliKelasByClass[row.kelas] = row.wali_kelas;
+                        });
+                    } catch (e) { console.error('ERROR CLOUD load meta', e); }
+
                     // EKSKUL
                     try {
-                        for (const kelas of kelasList) {
-                            const id = this._docIdClass(kelas);
-                            const ref = doc(db, 'erapor_ekskul', id);
-                            const snap = await getDoc(ref);
-                            if (snap.exists()) {
-                                const d = snap.data() || {};
-                                if (d.data) this.ekskulData[kelas] = d.data;
-                            }
-                        }
-                    } catch (e) {
-                        console.error('ERROR CLOUD load ekskul', e);
-                    }
+                        const { data } = await db.from('erapor_ekskul').select('*').in('doc_id', classDocIds);
+                        (data || []).forEach(row => {
+                            if (row.data) this.ekskulData[row.kelas] = row.data;
+                        });
+                    } catch (e) { console.error('ERROR CLOUD load ekskul', e); }
+
                     // KEWALASAN
                     try {
-                        for (const kelas of kelasList) {
-                            const id = this._docIdClass(kelas);
-                            const ref = doc(db, 'erapor_kewalasan', id);
-                            const snap = await getDoc(ref);
-                            if (snap.exists()) {
-                                const d = snap.data() || {};
-                                if (d.data) this.kewalasanData[kelas] = d.data;
-                                if (d.config) this.kewalasanConfig[kelas] = d.config;
-                            }
-                        }
-                    } catch (e) {
-                        console.error('ERROR CLOUD load kewalasan', e);
-                    }
+                        const { data } = await db.from('erapor_kewalasan').select('*').in('doc_id', classDocIds);
+                        (data || []).forEach(row => {
+                            if (row.data)   this.kewalasanData[row.kelas]   = row.data;
+                            if (row.config) this.kewalasanConfig[row.kelas] = row.config;
+                        });
+                    } catch (e) { console.error('ERROR CLOUD load kewalasan', e); }
+
                     // KAIH
                     try {
-                        for (const kelas of kelasList) {
-                            const id = this._docIdClass(kelas);
-                            const ref = doc(db, 'erapor_kaih', id);
-                            const snap = await getDoc(ref);
-                            if (snap.exists()) {
-                                const d = snap.data() || {};
-                                if (d.data) this.kaihData[kelas] = d.data;
-                            }
-                        }
-                    } catch (e) {
-                        console.error('ERROR CLOUD load kaih', e);
-                    }
+                        const { data } = await db.from('erapor_kaih').select('*').in('doc_id', classDocIds);
+                        (data || []).forEach(row => {
+                            if (row.data) this.kaihData[row.kelas] = row.data;
+                        });
+                    } catch (e) { console.error('ERROR CLOUD load kaih', e); }
+
                     // NILAI
                     if (loadNilaiMode !== 'none') {
                         try {
                             if (loadNilaiMode === 'current') {
                                 const mapel = this.identitas?.mapel;
                                 if (mapel) {
-                                    for (const kelas of kelasList) {
-                                        const id = this._docIdNilai(kelas, mapel);
-                                        const ref = doc(db, 'erapor_nilai', id);
-                                        const snap = await getDoc(ref);
-                                        if (snap.exists()) {
-                                            const d = snap.data() || {};
-                                            if (!this.allGrades[kelas]) this.allGrades[kelas] = {};
-                                            this.allGrades[kelas][mapel] = d.data || {};
-                                        }
-                                    }
-                                }
-                            } else if (loadNilaiMode === 'all') {
-                                for (const kelas of kelasList) {
-                                    const qN = query(collection(db, 'erapor_nilai'), where('tahun_ajaran', '==', k.tahun_ajaran), where('semester', '==', k.semester), where('kelas', '==', kelas));
-                                    const snap = await getDocs(qN);
-                                    snap.forEach(d => {
-                                        const rec = d.data() || {};
-                                        const mapel = rec.mapel;
-                                        if (!mapel) return;
-                                        if (!this.allGrades[kelas]) this.allGrades[kelas] = {};
-                                        this.allGrades[kelas][mapel] = rec.data || {};
+                                    // ✅ Batch: ambil semua kelas sekaligus, filter by doc_id
+                                    const nilaiDocIds = kelasList.map(kelas => this._docIdNilai(kelas, mapel));
+                                    const { data } = await db.from('erapor_nilai').select('*').in('doc_id', nilaiDocIds);
+                                    (data || []).forEach(row => {
+                                        if (!this.allGrades[row.kelas]) this.allGrades[row.kelas] = {};
+                                        this.allGrades[row.kelas][row.mapel] = row.data || {};
                                     });
                                 }
+                            } else if (loadNilaiMode === 'all') {
+                                // ✅ Fetch semua nilai untuk semua kelas sekaligus
+                                const { data } = await db
+                                    .from('erapor_nilai')
+                                    .select('*')
+                                    .eq('tahun_ajaran', k.tahun_ajaran)
+                                    .eq('semester', k.semester)
+                                    .in('kelas', kelasList);
+                                (data || []).forEach(row => {
+                                    if (!row.mapel) return;
+                                    if (!this.allGrades[row.kelas]) this.allGrades[row.kelas] = {};
+                                    this.allGrades[row.kelas][row.mapel] = row.data || {};
+                                });
                             }
-                        } catch (e) {
-                            console.error('ERROR CLOUD load nilai', e);
-                        }
+                        } catch (e) { console.error('ERROR CLOUD load nilai', e); }
                     }
                 },
                 async saveNilaiToCloud(kelas, mapel) {
@@ -990,9 +990,7 @@
                         kelas,
                         mapel,
                         data,
-                        updated_at: serverTimestamp(),
-                    };
-                    await this._cloudSetDoc('erapor_nilai', id, payload, false);
+                        updated_at: new Date().toISOString(),
                     await this._updateProgressFlag(kelas, mapel, any);
                 },
                 async saveEkskulToCloud(kelas) {
@@ -1002,7 +1000,7 @@
                     const data = this.ekskulData?.[kelas] || {};
                     const any = Object.values(data).some(row => row && (this._isNonEmpty(row.name1) || this._isNonEmpty(row.name2) || this._isNonEmpty(row.name3) || this._isNonEmpty(row.desc1) || this._isNonEmpty(row.desc2) || this._isNonEmpty(row.desc3)));
                     const id = this._docIdClass(kelas);
-                    await this._cloudSetDoc('erapor_ekskul', id, { tahun_ajaran: k.tahun_ajaran, semester: k.semester, jenjang: k.jenjang, kelas, data, updated_at: serverTimestamp() }, false);
+                    await this._cloudSetDoc('erapor_ekskul', id, { tahun_ajaran: k.tahun_ajaran, semester: k.semester, jenjang: k.jenjang, kelas, data, updated_at: new Date().toISOString() }, false);
                     await this._updateProgressFlag(kelas, 'EKSKUL', any);
                 },
                 async saveKewalasanToCloud(kelas) {
@@ -1013,7 +1011,7 @@
                     const config = this.kewalasanConfig?.[kelas] || {};
                     const any = Object.values(data).some(row => row && (this._isNonEmpty(row.s) || this._isNonEmpty(row.i) || this._isNonEmpty(row.a)));
                     const id = this._docIdClass(kelas);
-                    await this._cloudSetDoc('erapor_kewalasan', id, { tahun_ajaran: k.tahun_ajaran, semester: k.semester, jenjang: k.jenjang, kelas, data, config, updated_at: serverTimestamp() }, false);
+                    await this._cloudSetDoc('erapor_kewalasan', id, { tahun_ajaran: k.tahun_ajaran, semester: k.semester, jenjang: k.jenjang, kelas, data, config, updated_at: new Date().toISOString() }, false);
                     await this._updateProgressFlag(kelas, 'KEWALASAN', any);
                 },
                 async saveKaihToCloud(kelas) {
@@ -1023,7 +1021,7 @@
                     const data = this.kaihData?.[kelas] || {};
                     const any = Object.values(data).some(row => row && (this._isNonEmpty(row.kaih)));
                     const id = this._docIdClass(kelas);
-                    await this._cloudSetDoc('erapor_kaih', id, { tahun_ajaran: k.tahun_ajaran, semester: k.semester, jenjang: k.jenjang, kelas, data, updated_at: serverTimestamp() }, false);
+                    await this._cloudSetDoc('erapor_kaih', id, { tahun_ajaran: k.tahun_ajaran, semester: k.semester, jenjang: k.jenjang, kelas, data, updated_at: new Date().toISOString() }, false);
                     await this._updateProgressFlag(kelas, 'KAIH', any);
                 },
                 async saveMetaToCloud(kelas) {
@@ -1034,7 +1032,8 @@
                     const wali_kelas = this.waliKelasByClass?.[kelas] || null;
                     const any = Object.values(studentMeta).some(row => row && this._isNonEmpty(row.nis_nisn)) || this._isNonEmpty(wali_kelas);
                     const id = this._docIdClass(kelas);
-                    await this._cloudSetDoc('erapor_meta', id, { tahun_ajaran: k.tahun_ajaran, semester: k.semester, jenjang: k.jenjang, kelas, studentMeta, wali_kelas, updated_at: serverTimestamp() }, false);
+                    // ✅ studentMeta → student_meta (snake_case sesuai kolom erapor_meta di Supabase)
+                    await this._cloudSetDoc('erapor_meta', id, { tahun_ajaran: k.tahun_ajaran, semester: k.semester, jenjang: k.jenjang, kelas, student_meta: studentMeta, wali_kelas, updated_at: new Date().toISOString() }, false);
                     await this._updateProgressFlag(kelas, 'META', any);
                     await this._updateProgressMeta(kelas);
                 },
@@ -1179,8 +1178,17 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                     return `Ananda ${name} ${predikat} dalam ${best.name}.`;
                 },
 
-                async loadBankSoal() { const q = query(collection(db, "bank_soal")); const snap = await getDocs(q); snap.forEach(doc => { this.bankSoalCache[doc.id] = doc.data(); }); },
-                getRealScoreFromDoc(docData) { const exam = this.bankSoalCache[docData.examId]; if (!exam) return 0; let score = 0; exam.soal.forEach((q, idx) => { if (['PG', 'BS'].includes(q.type) && docData.answers[idx] === q.answer) score += parseInt(q.poin); if (['URAIAN', 'ESAI', 'ISIAN'].includes(q.type) && docData.manualScores && docData.manualScores[idx] !== undefined) { score += parseInt(docData.manualScores[idx]); } }); return score; },
+                // ============================================================
+                // ✅ loadBankSoal
+                // Sebelum: getDocs(query(collection(db,"bank_soal")))
+                // Sesudah: db.from('bank_soal').select('id, soal, config')
+                // ============================================================
+                async loadBankSoal() {
+                    const { data, error } = await db.from('bank_soal').select('id, soal, config');
+                    if (!error && data) data.forEach(s => { this.bankSoalCache[s.id] = s; });
+                },
+                // ✅ exam_id, manual_scores (snake_case)
+                getRealScoreFromDoc(docData) { const exam = this.bankSoalCache[docData.exam_id]; if (!exam) return 0; let score = 0; exam.soal.forEach((q, idx) => { if (['PG', 'BS'].includes(q.type) && docData.answers[idx] === q.answer) score += parseInt(q.poin); if (['URAIAN', 'ESAI', 'ISIAN'].includes(q.type) && docData.manual_scores && docData.manual_scores[idx] !== undefined) { score += parseInt(docData.manual_scores[idx]); } }); return score; },
                 
                 async fetchStudentsAndScores() {
                     if(!this.selectedClass) return; 
@@ -1200,35 +1208,54 @@ switchToRekap() { this.currentTab = 'rekap'; this.selectedClass = ''; },
                             (['rekap','rekap_akhir','lhbs','monitoring'].includes(this.currentTab) ? 'all' : 'none');
                         await this.loadCloudForClasses(classesToFetch, loadMode);
                         if (!this._cloudInitDone) await this.loadCloudProgress();
-                        const qAbsen = query(collection(db, "data_absensi"), where("kelas", "in", classesToFetch));
-                        const snapAbsen = await getDocs(qAbsen);
-                        
+                        // ============================================================
+                        // ✅ Fetch data_absensi
+                        // Sebelum: getDocs(query(..., where("kelas","in", classesToFetch)))
+                        // Sesudah: db.from('data_absensi').select('*').in('kelas', classesToFetch)
+                        // ============================================================
+                        const { data: absenData } = await db
+                            .from('data_absensi')
+                            .select('*')
+                            .in('kelas', classesToFetch)
+                            .eq('status', 'H');
+
                         const uniqueMap = new Map();
-                        snapAbsen.docs.forEach(doc => { 
-                            const d = doc.data(); 
-                            if(!uniqueMap.has(d.nama)) {
-                                uniqueMap.set(d.nama, { 
-                                    id: doc.id, 
-                                    nama: d.nama, 
+                        (absenData || []).forEach(d => {
+                            if (!uniqueMap.has(d.nama)) {
+                                uniqueMap.set(d.nama, {
+                                    id: d.id,
+                                    nama: d.nama,
                                     kelas: d.kelas,
-                                    nis: d.nis || d.nisn || "-", // Handle NIS fallback
-                                    asasTesScore: 0 
-                                }); 
+                                    nis: d.nis || d.nisn || "-",
+                                    asasTesScore: 0
+                                });
                             }
                         });
 
                         if (this.currentTab === 'nilai') {
-                            const qJawaban = query(collection(db, "jawaban_siswa"), where("mapel", "==", this.identitas.mapel), where("student.kelas", "in", classesToFetch));
-                            const snapJawaban = await getDocs(qJawaban);
-                            snapJawaban.docs.forEach(doc => { 
-                                const data = doc.data(); 
-                                const sName = data.student.nama; 
-                                if (uniqueMap.has(sName)) { 
-                                    const score = this.getRealScoreFromDoc(data); 
-                                    const finalScore = data.isRemedialDone ? 75 : score; 
-                                    uniqueMap.get(sName).asasTesScore = finalScore; 
-                                } 
-                            });
+                            // ============================================================
+                            // ✅ Fetch jawaban_siswa
+                            // Sebelum: where("student.kelas","in", classesToFetch)
+                            //          → Firebase support nested field filter
+                            // Sesudah: filter('student->>kelas','in', JSON string array)
+                            //          → PostgREST tidak support 'in' pada nested JSONB
+                            // Solusi: fetch by mapel saja, filter kelas di client
+                            // ============================================================
+                            const { data: jawabanData } = await db
+                                .from('jawaban_siswa')
+                                .select('student, mapel, answers, manual_scores, is_remedial_done, exam_id')
+                                .eq('mapel', this.identitas.mapel);
+
+                            (jawabanData || []).filter(d => classesToFetch.includes(d.student?.kelas))
+                                .forEach(d => {
+                                    const sName = d.student.nama;
+                                    if (uniqueMap.has(sName)) {
+                                        // ✅ is_remedial_done (snake_case)
+                                        const score = this.getRealScoreFromDoc(d);
+                                        const finalScore = d.is_remedial_done ? 75 : score;
+                                        uniqueMap.get(sName).asasTesScore = finalScore;
+                                    }
+                                });
                         }
 
                         this.studentList = Array.from(uniqueMap.values()).sort((a,b) => {
