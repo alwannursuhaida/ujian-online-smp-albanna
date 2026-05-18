@@ -183,22 +183,20 @@
 
     </div>
 
-    <script type="module">
-        import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, where, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <!-- ✅ SUPABASE: Ganti Firebase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // ================================================================
+        // ✅ SUPABASE CONFIG
+        // ================================================================
+        const SUPABASE_URL  = 'https://XXXX.supabase.co';
+        const SUPABASE_ANON = 'eyJ...';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBivREr2y61OYTE0kLxRnkGtPCdLvHn_og",
-            authDomain: "cbt-albanna.firebaseapp.com",
-            projectId: "cbt-albanna",
-            storageBucket: "cbt-albanna.firebasestorage.app",
-            messagingSenderId: "740622197344",
-            appId: "1:740622197344:web:6112adf59edfbe496ed905"
-        };
-
-        const appFirebase = initializeApp(firebaseConfig);
-        const db = getFirestore(appFirebase);
+        const { createClient } = supabase;
+        const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+    </script>
+    <script>
+        const { createApp } = Vue;
 
         createApp({
             data() {
@@ -211,7 +209,8 @@
                     filterReportClass: 'SEMUA',
                     
                     filterArchiveClass: '', filterArchiveDate: '', viewArchiveModal: null, chartInstance: null,
-                    stats: { hadir: 0, absen: 0, total: 0 }, sekolah: { logoBase64: null, logoPreview: null }, bulkInput: new Array(30).fill('')
+                    stats: { hadir: 0, absen: 0, total: 0 }, sekolah: { logoBase64: null, logoPreview: null }, bulkInput: new Array(30).fill(''),
+                    channels: [] // ✅ Supabase Realtime channels
                 }
             },
             computed: {
@@ -263,89 +262,204 @@
                 activeTab(val) { if(val === 'dashboard') setTimeout(this.renderChart, 100); },
                 allStudents: { handler() { this.updateStats(); }, deep: true }
             },
-            mounted() {
-                const q = query(collection(db, "data_absensi"));
-                // --- BAGIAN INI SUDAH DIPERBAIKI ---
-                onSnapshot(q, (snap) => { 
-                    this.allStudents = snap.docs.map(d => {
-                        const data = d.data();
-                        return { 
-                            id: d.id, 
-                            ...data 
-                        };
-                    });
-                    
-                    console.log("Data Siswa Berhasil Ditarik:", this.allStudents); // Cek Console sekarang!
-                    
-                    this.isLoading = false; 
-                    this.updateStats(); 
-                    if(this.activeTab==='dashboard') this.renderChart(); 
-                }, (error) => {
-                    console.error("Gagal mengambil data:", error);
-                    this.isLoading = false;
-                });
-                // ------------------------------------
+            async mounted() {
+                // ============================================================
+                // ✅ LOAD data_absensi + REALTIME
+                //
+                // Sebelum: onSnapshot(query(collection(db,"data_absensi")), ...)
+                // Sesudah: fetch awal REST + channel WebSocket
+                //
+                // Catatan: data_absensi di sini dipakai sebagai "Live Data" —
+                // status siswa hari ini sebelum diarsipkan.
+                // ============================================================
+                const { data: siswaData, error: siswaError } = await db
+                    .from('data_absensi')
+                    .select('*');
 
-                const qArsip = query(collection(db, "history_absensi"), orderBy("timestamp", "desc"));
-                onSnapshot(qArsip, (snap) => { this.archives = snap.docs.map(d => ({ id: d.id, ...d.data() })); });
+                if (!siswaError) {
+                    this.allStudents = siswaData;
+                }
+                this.isLoading = false;
+                this.updateStats();
+                if (this.activeTab === 'dashboard') this.renderChart();
+
+                // Channel 1: data_absensi
+                this.channels.push(
+                    db.channel('absensi-live')
+                        .on('postgres_changes', { event: '*', schema: 'public', table: 'data_absensi' }, (payload) => {
+                            const { eventType, new: newRow, old: oldRow } = payload;
+                            if (eventType === 'INSERT') {
+                                this.allStudents.push(newRow);
+                            } else if (eventType === 'UPDATE') {
+                                const idx = this.allStudents.findIndex(s => s.id === newRow.id);
+                                if (idx !== -1) this.allStudents.splice(idx, 1, newRow);
+                            } else if (eventType === 'DELETE') {
+                                this.allStudents = this.allStudents.filter(s => s.id !== oldRow.id);
+                            }
+                            this.updateStats();
+                            if (this.activeTab === 'dashboard') this.renderChart();
+                        })
+                        .subscribe()
+                );
+
+                // ============================================================
+                // ✅ LOAD history_absensi + REALTIME
+                //
+                // Sebelum: onSnapshot(query(...orderBy("timestamp","desc")), ...)
+                // Sesudah: fetch awal REST (ordered) + channel WebSocket
+                // ============================================================
+                const { data: arsipData, error: arsipError } = await db
+                    .from('history_absensi')
+                    .select('*')
+                    .order('timestamp', { ascending: false });
+
+                if (!arsipError) this.archives = arsipData;
+
+                // Channel 2: history_absensi
+                this.channels.push(
+                    db.channel('absensi-arsip')
+                        .on('postgres_changes', { event: '*', schema: 'public', table: 'history_absensi' }, (payload) => {
+                            const { eventType, new: newRow, old: oldRow } = payload;
+                            if (eventType === 'INSERT') {
+                                this.archives.unshift(newRow); // newest first
+                            } else if (eventType === 'UPDATE') {
+                                const idx = this.archives.findIndex(a => a.id === newRow.id);
+                                if (idx !== -1) this.archives.splice(idx, 1, newRow);
+                                // ✅ Sync modal jika sedang dibuka untuk arsip yang sama
+                                if (this.viewArchiveModal?.id === newRow.id) {
+                                    this.viewArchiveModal = JSON.parse(JSON.stringify(newRow));
+                                }
+                            } else if (eventType === 'DELETE') {
+                                this.archives = this.archives.filter(a => a.id !== oldRow.id);
+                            }
+                        })
+                        .subscribe()
+                );
+            },
+            beforeUnmount() {
+                this.channels.forEach(ch => db.removeChannel(ch));
             },
             methods: {
+                // ============================================================
+                // ✅ saveAttendance
+                //
+                // Sebelum:
+                //   writeBatch(db) → batch.update per siswa → batch.commit()
+                //   addDoc / updateDoc history_absensi
+                //
+                // Sesudah:
+                //   Supabase tidak punya writeBatch.
+                //   Ganti dengan: db.from('data_absensi').upsert([...rows])
+                //   → Satu request untuk update banyak baris sekaligus
+                // ============================================================
                 async saveAttendance() {
-                    this.isLoading = true; const batch = writeBatch(db); const currentSnapshot = [];
-                    this.filteredStudents.forEach(s => {
-                        const ref = doc(db, "data_absensi", s.id); batch.update(ref, { status: s.status });
-                        currentSnapshot.push({ id: s.id, nama: s.nama, status: s.status, ket_susulan: s.ket_susulan || '' });
-                    });
+                    this.isLoading = true;
+                    const currentSnapshot = this.filteredStudents.map(s => ({
+                        id: s.id,
+                        nama: s.nama,
+                        status: s.status,
+                        ket_susulan: s.ket_susulan || ''
+                    }));
+
                     try {
-                        await batch.commit();
-                        const existingArchive = this.archives.find(a => a.kelas === this.selectedClass && a.tanggal === this.attendanceDate);
+                        // ✅ Upsert status semua siswa sekaligus (ganti writeBatch)
+                        const upsertRows = this.filteredStudents.map(s => ({
+                            id: s.id,
+                            nama: s.nama,
+                            kelas: s.kelas,
+                            status: s.status,
+                            nis: s.nis || null,
+                            nisn: s.nisn || null,
+                            ket_susulan: s.ket_susulan || ''
+                        }));
+
+                        const { error: upsertError } = await db
+                            .from('data_absensi')
+                            .upsert(upsertRows, { onConflict: 'id' });
+
+                        if (upsertError) throw upsertError;
+
+                        // ✅ Simpan / update arsip
+                        const existingArchive = this.archives.find(
+                            a => a.kelas === this.selectedClass && a.tanggal === this.attendanceDate
+                        );
+
                         if (existingArchive) {
-                            await updateDoc(doc(db, "history_absensi", existingArchive.id), { records: currentSnapshot, timestamp: new Date().toISOString() });
+                            const { error } = await db
+                                .from('history_absensi')
+                                .update({ records: currentSnapshot, timestamp: new Date().toISOString() })
+                                .eq('id', existingArchive.id);
+                            if (error) throw error;
                             alert(`Arsip ${this.attendanceDate} diperbarui!`);
                         } else {
-                            await addDoc(collection(db, "history_absensi"), { kelas: this.selectedClass, tanggal: this.attendanceDate, records: currentSnapshot, timestamp: new Date().toISOString() });
+                            const { error } = await db
+                                .from('history_absensi')
+                                .insert({
+                                    kelas:     this.selectedClass,
+                                    tanggal:   this.attendanceDate,
+                                    records:   currentSnapshot,
+                                    timestamp: new Date().toISOString()
+                                });
+                            if (error) throw error;
                             alert("Arsip Baru Disimpan!");
                         }
+                        // ✅ Tidak perlu update allStudents / archives manual — realtime menanganinya
                     } catch(e) { alert("Gagal: " + e.message); } finally { this.isLoading = false; }
                 },
                 
-                // --- UPDATE SUSULAN (Flexible: Live or Archive) ---
+                // ============================================================
+                // ✅ saveAllSusulan
+                //
+                // Sebelum:
+                //   writeBatch → batch.update per siswa live
+                //   updateDoc per arsip
+                //
+                // Sesudah:
+                //   Live updates: upsert array sekaligus
+                //   Arsip updates: update per arsip (loop kecil, bukan N siswa)
+                // ============================================================
                 async saveAllSusulan() {
-                    if(this.susulanList.length === 0) return;
+                    if (this.susulanList.length === 0) return;
                     this.isLoading = true;
                     try {
-                        // Group by Archive ID untuk batch update arsip
-                        const updates = {}; // { archiveId: [records] }
-                        const liveBatch = writeBatch(db);
-                        let liveUpdatesCount = 0;
+                        // Pisahkan live vs arsip
+                        const liveItems   = this.susulanList.filter(item => item.isLive);
+                        const archiveItems = this.susulanList.filter(item => !item.isLive && item.archiveId);
 
-                        this.susulanList.forEach(item => {
-                            if (item.isLive) {
-                                // Update Data Live
-                                const ref = doc(db, "data_absensi", item.id);
-                                liveBatch.update(ref, { ket_susulan: item.ket_susulan });
-                                liveUpdatesCount++;
-                            } else if (item.archiveId) {
-                                // Siapkan update arsip
-                                if (!updates[item.archiveId]) {
-                                    // Clone records dari arsip asli
-                                    const arc = this.archives.find(a => a.id === item.archiveId);
-                                    if(arc) updates[item.archiveId] = [...arc.records];
-                                }
-                                // Update record spesifik di dalam array
-                                const recIndex = updates[item.archiveId].findIndex(r => r.nama === item.nama);
-                                if (recIndex !== -1) {
-                                    updates[item.archiveId][recIndex].ket_susulan = item.ket_susulan;
-                                }
+                        // ✅ Live updates: upsert sekaligus (ganti writeBatch)
+                        if (liveItems.length > 0) {
+                            const upsertRows = liveItems.map(item => ({
+                                id:          item.id,
+                                nama:        item.nama,
+                                kelas:       item.kelas,
+                                status:      item.status,
+                                ket_susulan: item.ket_susulan
+                            }));
+                            const { error } = await db
+                                .from('data_absensi')
+                                .upsert(upsertRows, { onConflict: 'id' });
+                            if (error) throw error;
+                        }
+
+                        // ✅ Arsip updates: group by archiveId, update records JSONB
+                        const updates = {};
+                        archiveItems.forEach(item => {
+                            if (!updates[item.archiveId]) {
+                                const arc = this.archives.find(a => a.id === item.archiveId);
+                                if (arc) updates[item.archiveId] = [...arc.records];
+                            }
+                            if (updates[item.archiveId]) {
+                                const recIdx = updates[item.archiveId].findIndex(r => r.nama === item.nama);
+                                if (recIdx !== -1) updates[item.archiveId][recIdx].ket_susulan = item.ket_susulan;
                             }
                         });
 
-                        // Execute Live Updates
-                        if (liveUpdatesCount > 0) await liveBatch.commit();
-
-                        // Execute Archive Updates
                         for (const [arcId, newRecords] of Object.entries(updates)) {
-                            await updateDoc(doc(db, "history_absensi", arcId), { records: newRecords });
+                            const { error } = await db
+                                .from('history_absensi')
+                                .update({ records: newRecords })
+                                .eq('id', arcId);
+                            if (error) throw error;
                         }
 
                         alert("Perubahan Tersimpan!");
@@ -356,16 +470,25 @@
 
                 async removeSusulan(student) {
                     if(!confirm(`Ubah status ${student.nama} menjadi HADIR?`)) return;
-                    
+
                     if (student.isLive) {
-                        await updateDoc(doc(db, "data_absensi", student.id), { status: 'H', ket_susulan: '' });
+                        // ✅ update data live
+                        await db.from('data_absensi')
+                            .update({ status: 'H', ket_susulan: '' })
+                            .eq('id', student.id);
                     } else if (student.archiveId) {
                         const arc = this.archives.find(a => a.id === student.archiveId);
                         if (arc) {
-                            const newRecords = arc.records.map(r => r.nama === student.nama ? { ...r, status: 'H', ket_susulan: '' } : r);
-                            await updateDoc(doc(db, "history_absensi", student.archiveId), { records: newRecords });
+                            const newRecords = arc.records.map(r =>
+                                r.nama === student.nama ? { ...r, status: 'H', ket_susulan: '' } : r
+                            );
+                            // ✅ update records JSONB di arsip
+                            await db.from('history_absensi')
+                                .update({ records: newRecords })
+                                .eq('id', student.archiveId);
                         }
                     }
+                    // ✅ Tidak perlu update lokal — realtime UPDATE menanganinya
                 },
 
                 // --- PDF ---
@@ -400,17 +523,94 @@
                     doc.save(`Laporan_Susulan_${this.filterReportDate}.pdf`);
                 },
 
-                // Basic CRUD & Helper (Same as before)
-                async addStudent() { if(!this.newStudentName.trim()) return alert("Kosong!"); try { await addDoc(collection(db, "data_absensi"), { nama: this.newStudentName.toUpperCase(), kelas: this.selectedClass, status: 'H', ket_susulan: '' }); this.newStudentName = ''; } catch(e){alert(e.message);} },
-                async deleteStudent(id) { if(confirm("Hapus?")) await deleteDoc(doc(db, "data_absensi", id)); },
+                // ============================================================
+                // ✅ addStudent
+                // Sebelum: addDoc(collection(db,"data_absensi"), {...})
+                // Sesudah: db.from('data_absensi').insert({...})
+                // ============================================================
+                async addStudent() {
+                    if (!this.newStudentName.trim()) return alert("Kosong!");
+                    try {
+                        const { error } = await db.from('data_absensi').insert({
+                            nama: this.newStudentName.toUpperCase(),
+                            kelas: this.selectedClass,
+                            status: 'H',
+                            ket_susulan: ''
+                        });
+                        if (error) throw error;
+                        this.newStudentName = '';
+                    } catch(e) { alert(e.message); }
+                },
+
+                // ============================================================
+                // ✅ deleteStudent
+                // Sebelum: deleteDoc(doc(db,"data_absensi", id))
+                // Sesudah: db.from('data_absensi').delete().eq('id', id)
+                // ============================================================
+                async deleteStudent(id) {
+                    if (confirm("Hapus?")) {
+                        const { error } = await db.from('data_absensi').delete().eq('id', id);
+                        if (error) alert(error.message);
+                    }
+                },
+
+                // ============================================================
+                // ✅ saveBulkStudents
+                // Sebelum: writeBatch → b.set(doc(collection(db,...))) per siswa → b.commit()
+                // Sesudah: db.from('data_absensi').insert([...rows]) — satu request
+                // ============================================================
+                async saveBulkStudents() {
+                    const names = this.bulkInput.filter(x => x.trim() !== '');
+                    if (names.length === 0) return;
+                    this.isLoading = true;
+                    try {
+                        const rows = names.map(x => ({
+                            nama: x.toUpperCase(),
+                            kelas: this.selectedClass,
+                            status: 'H',
+                            ket_susulan: ''
+                        }));
+                        const { error } = await db.from('data_absensi').insert(rows);
+                        if (error) throw error;
+                        this.bulkInput.fill('');
+                    } catch(e) { alert(e.message); } finally { this.isLoading = false; }
+                },
+
+                // ============================================================
+                // ✅ updateArchiveData (dari modal edit arsip)
+                // Sebelum: updateDoc(doc(db,"history_absensi",id), {records:...})
+                // Sesudah: db.from('history_absensi').update({records:...}).eq('id', id)
+                // ============================================================
+                async updateArchiveData() {
+                    if (!this.viewArchiveModal) return;
+                    try {
+                        const { error } = await db
+                            .from('history_absensi')
+                            .update({ records: this.viewArchiveModal.records })
+                            .eq('id', this.viewArchiveModal.id);
+                        if (error) throw error;
+                        this.viewArchiveModal = null;
+                        // ✅ Realtime UPDATE menangani sinkronisasi archives[]
+                    } catch(e) { alert(e.message); }
+                },
+
+                // ============================================================
+                // ✅ deleteArchive
+                // Sebelum: deleteDoc(doc(db,"history_absensi", id))
+                // Sesudah: db.from('history_absensi').delete().eq('id', id)
+                // ============================================================
+                async deleteArchive(id) {
+                    if (confirm("Hapus?")) {
+                        const { error } = await db.from('history_absensi').delete().eq('id', id);
+                        if (error) alert(error.message);
+                    }
+                },
+                // helper methods (tidak berubah)
                 handlePaste(e, idx) { e.preventDefault(); const txt = (e.clipboardData||window.clipboardData).getData('text'); const rows=txt.split(/\r?\n/).filter(r=>r.trim()!==''); rows.forEach((n,i)=>{ if(idx+i<this.bulkInput.length) this.bulkInput[idx+i]=n.trim().toUpperCase(); }); },
                 downloadTemplate() { const ws=XLSX.utils.aoa_to_sheet([["Nama Siswa"]]); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"T"); XLSX.writeFile(wb,"Template.xlsx"); },
                 handleFileUpload(ev) { const f=ev.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=e=>{ const d=new Uint8Array(e.target.result); const wb=XLSX.read(d,{type:'array'}); const j=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1}); let c=0; for(let i=1;i<j.length;i++){ if(j[i][0] && c<this.bulkInput.length) { this.bulkInput[c]=String(j[i][0]).toUpperCase().trim(); c++; } } }; r.readAsArrayBuffer(f); },
-                async saveBulkStudents() { const n=this.bulkInput.filter(x=>x.trim()!==''); if(n.length===0) return; this.isLoading=true; const b=writeBatch(db); n.forEach(x=>{ b.set(doc(collection(db,"data_absensi")), {nama:x, kelas:this.selectedClass, status:'H', ket_susulan:''}); }); await b.commit(); this.bulkInput.fill(''); this.isLoading=false; },
                 clearBulk() { this.bulkInput.fill(''); },
                 viewArchive(a) { this.viewArchiveModal=JSON.parse(JSON.stringify(a)); },
-                async updateArchiveData() { if(!this.viewArchiveModal) return; try { await updateDoc(doc(db,"history_absensi",this.viewArchiveModal.id), {records:this.viewArchiveModal.records}); this.viewArchiveModal=null; } catch(e){alert(e.message);} },
-                async deleteArchive(id) { if(confirm("Hapus?")) await deleteDoc(doc(db,"history_absensi",id)); },
                 handleLogoUpload(ev) { const f=ev.target.files[0]; if(f) { const r=new FileReader(); r.onload=e=>{this.sekolah.logoBase64=e.target.result; this.sekolah.logoPreview=e.target.result;}; r.readAsDataURL(f); } },
                 countStatus(r, s) { return r.filter(x=>x.status===s).length; },
                 formatDate(iso) { return new Date(iso).toLocaleDateString('id-ID'); },
