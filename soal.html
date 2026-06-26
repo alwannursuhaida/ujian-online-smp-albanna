@@ -360,11 +360,153 @@
                 },
 
                 downloadExcelTemplate() {
-                    const ws = XLSX.utils.aoa_to_sheet([["No", "Pertanyaan", "A", "B", "C", "D", "Kunci"]]);
-                    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Template");
-                    XLSX.writeFile(wb, "Template_Soal.xlsx");
+                    const wb = XLSX.utils.book_new();
+                    const cfg = this.config;
+                    const qs  = this.questions;
+
+                    const BIRU   = 'FF1F4E8A';
+                    const HIJAU  = 'FF217346';
+                    const TYPE_COLOR = { PG: 'FF217346', PG_KOMPLEKS: 'FF6A0DAD', BS: 'FFB8460B', ISIAN: 'FF4A4A4A', URAIAN: 'FF8B0000' };
+
+                    const sc = (ws, addr, opts = {}) => {
+                        if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+                        ws[addr].s = {
+                            font:      { name: 'Calibri', sz: opts.sz || 11, bold: !!opts.bold, color: { rgb: opts.color || 'FF000000' } },
+                            fill:      opts.bg ? { fgColor: { rgb: opts.bg }, patternType: 'solid' } : undefined,
+                            alignment: { horizontal: opts.h || 'left', vertical: 'center', wrapText: !!opts.wrap },
+                            border:    opts.border ? { top:{style:'thin',color:{rgb:'FFB0B0B0'}}, bottom:{style:'thin',color:{rgb:'FFB0B0B0'}}, left:{style:'thin',color:{rgb:'FFB0B0B0'}}, right:{style:'thin',color:{rgb:'FFB0B0B0'}} } : undefined
+                        };
+                    };
+
+                    // ── SHEET 1: SOAL ──────────────────────────────────────
+                    const rows = [];
+                    rows.push([`TEMPLATE SOAL — ${cfg.mapel} | KELAS ${cfg.kelas} | ${cfg.guru}`, '', '', '', '']);
+                    rows.push([`Tanggal: ${cfg.tanggal}   Pukul: ${cfg.pukul}   Durasi: ${cfg.durasi} menit`, '', '', '', '']);
+                    rows.push(['⚠ Isi kolom PERTANYAAN dan OPSI. Jangan ubah kolom NO, TIPE, POIN.', '', '', '', '']);
+                    rows.push([]);
+
+                    const hasPG  = qs.some(q => q.type === 'PG');
+                    const hasPGK = qs.some(q => q.type === 'PG_KOMPLEKS');
+                    let headers  = ['NO', 'TIPE', 'POIN', 'INDIKATOR', 'PERTANYAAN'];
+                    if (hasPG)  headers.push('A', 'B', 'C', 'D');
+                    if (hasPGK) headers.push('PERNYATAAN 1', 'PERNYATAAN 2', 'PERNYATAAN 3', 'PERNYATAAN 4', 'PERNYATAAN 5');
+                    rows.push(headers);
+
+                    qs.forEach((q, i) => {
+                        const row = [i + 1, q.typeLabel, q.poin, q.indikator || '', q.text || ''];
+                        if (hasPG)  { if (q.type==='PG')           row.push(q.options.A||'', q.options.B||'', q.options.C||'', q.options.D||''); else row.push('','','',''); }
+                        if (hasPGK) { if (q.type==='PG_KOMPLEKS')  q.options.forEach(o => row.push(o.text||'')); else row.push('','','','',''); }
+                        rows.push(row);
+                    });
+
+                    const ws1 = XLSX.utils.aoa_to_sheet(rows);
+                    const colW = [{wch:5},{wch:14},{wch:6},{wch:35},{wch:50}];
+                    if (hasPG)  ['A','B','C','D'].forEach(() => colW.push({wch:30}));
+                    if (hasPGK) [1,2,3,4,5].forEach(() => colW.push({wch:30}));
+                    ws1['!cols'] = colW;
+                    ws1['!rows'] = [{hpt:30},{hpt:20},{hpt:20},{hpt:8},{hpt:25},...qs.map(()=>({hpt:45}))];
+                    const lc = headers.length - 1;
+                    ws1['!merges'] = [{s:{r:0,c:0},e:{r:0,c:lc}},{s:{r:1,c:0},e:{r:1,c:lc}},{s:{r:2,c:0},e:{r:2,c:lc}}];
+
+                    sc(ws1, XLSX.utils.encode_cell({r:0,c:0}), {sz:14, bold:true, color:'FFFFFFFF', bg:BIRU, h:'center'});
+                    sc(ws1, XLSX.utils.encode_cell({r:1,c:0}), {sz:10, color:'FF333333', h:'center'});
+                    sc(ws1, XLSX.utils.encode_cell({r:2,c:0}), {sz:10, bold:true, color:'FF8B0000', bg:'FFFFF3CD', h:'center'});
+                    headers.forEach((_, ci) => sc(ws1, XLSX.utils.encode_cell({r:4,c:ci}), {bold:true, color:'FFFFFFFF', bg:BIRU, h:'center', border:true}));
+
+                    qs.forEach((q, i) => {
+                        headers.forEach((_, ci) => {
+                            sc(ws1, XLSX.utils.encode_cell({r:5+i,c:ci}), {
+                                bg: ci < 3 ? 'FFF5F5F5' : 'FFFFFFFF',
+                                h: ci < 3 ? 'center' : 'left', border:true, wrap:true, bold: ci < 3
+                            });
+                        });
+                        const ta = XLSX.utils.encode_cell({r:5+i,c:1});
+                        if (ws1[ta] && ws1[ta].s) ws1[ta].s.font.color = { rgb: TYPE_COLOR[q.type] || 'FF000000' };
+                    });
+                    XLSX.utils.book_append_sheet(wb, ws1, 'Soal');
+
+                    // ── SHEET 2: KUNCI ─────────────────────────────────────
+                    const kRows = [
+                        ['KUNCI JAWABAN', '', '', ''],
+                        ['NO', 'TIPE', 'POIN', 'KUNCI / JAWABAN BENAR'],
+                    ];
+                    qs.forEach((q, i) => {
+                        let kunci = q.answer || '';
+                        if (q.type === 'PG_KOMPLEKS') kunci = (q.options||[]).filter(o=>o.isCorrect).map(o=>o.text).join(' | ') || '';
+                        kRows.push([i+1, q.typeLabel, q.poin, kunci]);
+                    });
+                    const ws2 = XLSX.utils.aoa_to_sheet(kRows);
+                    ws2['!cols'] = [{wch:5},{wch:14},{wch:6},{wch:60}];
+                    ws2['!rows'] = [{hpt:25},{hpt:20},...qs.map(()=>({hpt:35}))];
+                    ws2['!merges'] = [{s:{r:0,c:0},e:{r:0,c:3}}];
+                    sc(ws2, 'A1', {sz:13, bold:true, color:'FFFFFFFF', bg:HIJAU, h:'center'});
+                    ['NO','TIPE','POIN','KUNCI / JAWABAN BENAR'].forEach((_,ci) =>
+                        sc(ws2, XLSX.utils.encode_cell({r:1,c:ci}), {bold:true, color:'FFFFFFFF', bg:BIRU, h:'center', border:true}));
+                    qs.forEach((_, i) => [0,1,2,3].forEach(ci =>
+                        sc(ws2, XLSX.utils.encode_cell({r:2+i,c:ci}), {bg: ci===3?'FFE8F5E9':'FFF5F5F5', h:ci<3?'center':'left', border:true, wrap:true})));
+                    XLSX.utils.book_append_sheet(wb, ws2, 'Kunci');
+
+                    // ── SHEET 3: INFO ──────────────────────────────────────
+                    const typeCount = {};
+                    qs.forEach(q => { typeCount[q.typeLabel] = (typeCount[q.typeLabel]||0)+1; });
+                    const sRows = [
+                        ['RINGKASAN PAKET SOAL',''],
+                        ['Mata Pelajaran', cfg.mapel], ['Kelas', cfg.kelas], ['Guru', cfg.guru],
+                        ['Tanggal', cfg.tanggal], ['Pukul', cfg.pukul], ['Durasi', `${cfg.durasi} menit`],
+                        ['Total Soal', qs.length], ['',''],
+                        ['Rincian Tipe Soal',''],
+                        ...Object.entries(typeCount).map(([t,n])=>[t,n]),
+                        ['',''], ['Estimasi Skor Maksimal', this.totalEstimatedScore],
+                    ];
+                    const ws3 = XLSX.utils.aoa_to_sheet(sRows);
+                    ws3['!cols'] = [{wch:25},{wch:35}];
+                    ws3['!merges'] = [{s:{r:0,c:0},e:{r:0,c:1}}];
+                    sc(ws3, 'A1', {sz:13, bold:true, color:'FFFFFFFF', bg:BIRU, h:'center'});
+                    XLSX.utils.book_append_sheet(wb, ws3, 'Info');
+
+                    XLSX.writeFile(wb, `Template_${cfg.mapel}_Kelas${cfg.kelas}_${cfg.tanggal||'nodate'}.xlsx`);
                 },
-                handleExcelUpload(e) { /* implementasi sesuai kebutuhan */ },
+
+                handleExcelUpload(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        try {
+                            const wb = XLSX.read(ev.target.result, { type: 'binary' });
+                            const ws = wb.Sheets['Soal'];
+                            if (!ws) return alert('Sheet "Soal" tidak ditemukan. Pastikan upload file dari tombol Template.');
+
+                            const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+                            const headerRow = rows[4] || [];
+                            const colIdx = {};
+                            headerRow.forEach((h, i) => { colIdx[String(h).trim().toUpperCase()] = i; });
+
+                            let updated = 0;
+                            for (let r = 5; r < rows.length; r++) {
+                                const row = rows[r];
+                                const no  = parseInt(row[colIdx['NO']]);
+                                if (!no || no < 1 || no > this.questions.length) continue;
+                                const q = this.questions[no - 1];
+                                if (row[colIdx['PERTANYAAN']] !== undefined && row[colIdx['PERTANYAAN']] !== '') q.text = String(row[colIdx['PERTANYAAN']]);
+                                if (row[colIdx['INDIKATOR']]  !== undefined && row[colIdx['INDIKATOR']]  !== '') q.indikator = String(row[colIdx['INDIKATOR']]);
+                                if (q.type === 'PG') ['A','B','C','D'].forEach(opt => {
+                                    if (colIdx[opt] !== undefined && row[colIdx[opt]] !== '') q.options[opt] = String(row[colIdx[opt]]);
+                                });
+                                if (q.type === 'PG_KOMPLEKS') for (let p = 1; p <= 5; p++) {
+                                    const key = `PERNYATAAN ${p}`;
+                                    if (colIdx[key] !== undefined && row[colIdx[key]] !== '') q.options[p-1].text = String(row[colIdx[key]]);
+                                }
+                                updated++;
+                            }
+                            alert(`✅ ${updated} soal berhasil diimport dari Excel!`);
+                            e.target.value = '';
+                        } catch(err) {
+                            alert('Gagal membaca file: ' + err.message);
+                        }
+                    };
+                    reader.readAsBinaryString(file);
+                },
                 handleImageUpload(e, i) {
                     const f = e.target.files[0];
                     if (f) { const r = new FileReader(); r.onload = (ev) => this.questions[i].image = ev.target.result; r.readAsDataURL(f); }
