@@ -1,0 +1,10 @@
+/* ================================================================
+   PRINT.CSS
+   ================================================================
+   CATATAN: source code asli tidak punya @media print atau style
+   khusus cetak sama sekali — export PDF (soal, rekap nilai, dsb)
+   semuanya digenerate lewat jsPDF di sisi JavaScript, bukan lewat
+   CSS print. File ini sengaja dikosongkan sebagai placeholder agar
+   struktur folder sesuai rencana; isi sesuai kebutuhan jika nanti
+   ada halaman yang perlu dicetak langsung dari browser (Ctrl+P).
+   ================================================================ */

@@ -1,0 +1,44 @@
+/* ================================================================
+   BASE.CSS — reset & style dasar yang dipakai di SEMUA halaman
+   ================================================================
+   Dipindahkan dari <style> inline yang berulang persis sama di
+   banyak file: index.html, admin.html, guru.html, siswa.html,
+   soal.html, jawaban.html, remidi.html, input.html, perencanaan.html,
+   administrasi.html, absen-ujian.html.
+   ================================================================ */
+
+body {
+    font-family: 'Montserrat', sans-serif;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* --- Scrollbar kustom (dipakai di admin.html) --- */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* --- Animasi umum (dipakai di admin.html & remidi.html) --- */
+.animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* --- Animasi umum (dipakai di siswa.html) --- */
+.animate-pop { animation: popIn 0.3s ease-out; }
+@keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* --- Animasi umum (dipakai di perencanaan.html) --- */
+.animate-float { animation: float 6s ease-in-out infinite; }
+@keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-20px); } 100% { transform: translateY(0px); } }
+
+/* --- Transisi Vue <transition> generik --- */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.slide-enter-active, .slide-leave-active { transition: transform 0.3s ease-in-out; }
+.slide-enter-from, .slide-leave-to { transform: translateX(100%); }

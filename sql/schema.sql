@@ -1,0 +1,33 @@
+-- ================================================================
+-- SCHEMA.SQL — PLACEHOLDER
+-- ================================================================
+-- File ini TIDAK ada di source project asli (semua akses tabel
+-- dilakukan langsung lewat Supabase client di JS, tanpa file SQL
+-- yang disimpan di repo).
+--
+-- Daftar di bawah adalah nama tabel yang TERDETEKSI dipanggil lewat
+-- db.from('nama_tabel') di seluruh halaman (hasil grep kode, bukan
+-- hasil pg_dump/export resmi). Kemungkinan ada tabel lain yang luput
+-- kalau namanya dibentuk secara dinamis di JS.
+--
+-- Tabel terdeteksi:
+--   bank_kisi_kisi
+--   bank_soal
+--   blocked_students
+--   data_absensi
+--   erapor_ekskul
+--   erapor_kaih
+--   erapor_kewalasan
+--   erapor_meta
+--   erapor_nilai
+--   erapor_progress
+--   history_absensi
+--   jadwal_remidi
+--   jawaban_siswa
+--
+-- Untuk mendapatkan DDL asli (CREATE TABLE beserta tipe kolom,
+-- constraint, index): buka Supabase Dashboard > Database >
+-- Database backups, atau jalankan `supabase db dump` via Supabase
+-- CLI, lalu tempel hasilnya di sini menggantikan file placeholder
+-- ini.
+-- ================================================================

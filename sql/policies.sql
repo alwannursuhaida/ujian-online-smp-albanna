@@ -1,0 +1,21 @@
+-- ================================================================
+-- POLICIES.SQL — PLACEHOLDER
+-- ================================================================
+-- File ini juga tidak ada di source asli. Karena aplikasi memakai
+-- SUPABASE ANON KEY langsung dari browser (lihat js/config.js),
+-- keamanan datanya bergantung SEPENUHNYA pada Row Level Security
+-- (RLS) yang dikonfigurasi di masing-masing tabel Supabase.
+--
+-- PENTING untuk dicek sebelum repo ini di-publish ke GitHub:
+--   1) Pastikan RLS sudah AKTIF (enabled) di semua 13 tabel yang
+--      tercantum di sql/schema.sql — kalau ada satu saja yang RLS
+--      -nya mati, siapa pun yang tahu anon key bisa baca/tulis bebas.
+--   2) Pastikan policy tiap tabel membatasi akses sesuai peran
+--      (siswa hanya boleh baca soal miliknya sendiri & tulis
+--      jawaban_siswa miliknya sendiri, guru/admin baru boleh akses
+--      lebih luas, dst).
+--
+-- Untuk mengambil policy yang sudah berjalan: Supabase Dashboard >
+-- Authentication > Policies (atau Database > Policies), lalu salin
+-- definisi CREATE POLICY masing-masing tabel ke sini.
+-- ================================================================

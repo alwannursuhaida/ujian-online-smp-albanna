@@ -13,381 +13,9 @@
     <!-- Vue 3 (CDN ringan) -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 
-    <style>
-        /* ================================================================
-           DESIGN TOKENS
-           Palet: Deep Navy + Electric Teal + Warm White
-           Tidak pakai Tailwind — CSS murni = lebih ringan di HP
-        ================================================================ */
-        :root {
-            --navy:     #0d1b2a;
-            --navy-2:   #1b2d42;
-            --navy-3:   #243347;
-            --teal:     #0caadc;
-            --teal-dim: #0891c2;
-            --teal-glow:#0caadc26;
-            --cream:    #f5f7fa;
-            --white:    #ffffff;
-            --text-1:   #0d1b2a;
-            --text-2:   #3d5166;
-            --text-3:   #7a8fa6;
-            --border:   #e4eaf0;
-            --radius-sm: 10px;
-            --radius-md: 16px;
-            --radius-lg: 24px;
-            --shadow-sm: 0 1px 4px rgba(13,27,42,.06), 0 2px 12px rgba(13,27,42,.04);
-            --shadow-md: 0 4px 20px rgba(13,27,42,.10);
-            --shadow-lg: 0 8px 40px rgba(13,27,42,.14);
-            --font: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        html { -webkit-tap-highlight-color: transparent; }
-
-        body {
-            font-family: var(--font);
-            background: var(--cream);
-            color: var(--text-1);
-            min-height: 100dvh;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* ================================================================
-           LOGIN PAGE
-        ================================================================ */
-        .login-wrap {
-            min-height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 24px 16px;
-            background: var(--navy);
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Background decoration — pure CSS, no image */
-        .login-wrap::before {
-            content: '';
-            position: absolute;
-            top: -120px; right: -120px;
-            width: 380px; height: 380px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(12,170,220,.18) 0%, transparent 70%);
-            pointer-events: none;
-        }
-        .login-wrap::after {
-            content: '';
-            position: absolute;
-            bottom: -80px; left: -80px;
-            width: 280px; height: 280px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(12,170,220,.10) 0%, transparent 70%);
-            pointer-events: none;
-        }
-
-        .login-card {
-            background: var(--white);
-            border-radius: var(--radius-lg);
-            padding: 36px 28px 32px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: var(--shadow-lg);
-            position: relative;
-            z-index: 1;
-            animation: fadeUp .5s ease both;
-        }
-
-        .login-brand {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-        .login-icon {
-            width: 64px; height: 64px;
-            background: var(--navy);
-            border-radius: var(--radius-md);
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 16px;
-            box-shadow: 0 4px 20px rgba(12,170,220,.3);
-        }
-        .login-icon svg { width: 30px; height: 30px; fill: var(--teal); }
-        .login-brand h1 { font-size: 1.4rem; font-weight: 800; color: var(--navy); letter-spacing: -.3px; }
-        .login-brand p  { font-size: .75rem; color: var(--text-3); margin-top: 4px; font-weight: 500; letter-spacing: .5px; }
-
-        .field { margin-bottom: 16px; }
-        .field label { display: block; font-size: .7rem; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
-        .field-input {
-            position: relative;
-        }
-        .field-input svg {
-            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-            width: 16px; height: 16px; fill: var(--text-3); pointer-events: none;
-        }
-        .field-input input {
-            width: 100%;
-            padding: 13px 14px 13px 40px;
-            border: 1.5px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-family: var(--font);
-            font-size: .9rem;
-            font-weight: 500;
-            color: var(--text-1);
-            background: var(--cream);
-            outline: none;
-            transition: border-color .2s, box-shadow .2s;
-        }
-        .field-input input:focus {
-            border-color: var(--teal);
-            box-shadow: 0 0 0 3px var(--teal-glow);
-            background: var(--white);
-        }
-
-        .btn-login {
-            width: 100%;
-            margin-top: 8px;
-            padding: 14px;
-            background: var(--navy);
-            color: var(--white);
-            border: none;
-            border-radius: var(--radius-sm);
-            font-family: var(--font);
-            font-size: .9rem;
-            font-weight: 700;
-            letter-spacing: .3px;
-            cursor: pointer;
-            transition: background .2s, transform .15s, box-shadow .2s;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .btn-login:hover { background: var(--navy-3); box-shadow: var(--shadow-md); }
-        .btn-login:active { transform: scale(.98); }
-
-        .login-note {
-            text-align: center;
-            font-size: .72rem;
-            color: var(--text-3);
-            margin-top: 20px;
-            padding-top: 16px;
-            border-top: 1px solid var(--border);
-        }
-
-        /* ================================================================
-           DASHBOARD
-        ================================================================ */
-        .dash-wrap { min-height: 100dvh; display: flex; flex-direction: column; }
-
-        /* Sticky header */
-        .topbar {
-            position: sticky; top: 0; z-index: 100;
-            background: var(--navy);
-            padding: 14px 20px;
-            display: flex; align-items: center; justify-content: space-between;
-            box-shadow: 0 2px 12px rgba(13,27,42,.25);
-        }
-        .topbar-left { display: flex; align-items: center; gap: 12px; }
-        .topbar-logo {
-            width: 38px; height: 38px;
-            background: var(--teal);
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-        .topbar-logo svg { width: 20px; height: 20px; fill: var(--white); }
-        .topbar-title { font-size: 1rem; font-weight: 800; color: var(--white); letter-spacing: -.2px; }
-        .topbar-sub   { font-size: .7rem; color: rgba(255,255,255,.55); font-weight: 500; margin-top: 1px; }
-
-        .btn-logout {
-            padding: 8px 14px;
-            background: rgba(255,255,255,.08);
-            border: 1px solid rgba(255,255,255,.12);
-            color: rgba(255,255,255,.7);
-            border-radius: 8px;
-            font-family: var(--font);
-            font-size: .72rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background .2s, color .2s;
-            display: flex; align-items: center; gap: 6px;
-        }
-        .btn-logout:hover { background: rgba(220,38,38,.75); color: var(--white); border-color: transparent; }
-
-        /* Greeting section */
-        .dash-greet {
-            padding: 28px 20px 0;
-            max-width: 680px;
-            margin: 0 auto;
-            width: 100%;
-            animation: fadeUp .4s .1s ease both;
-        }
-        .greet-chip {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: var(--teal-glow);
-            color: var(--teal-dim);
-            border: 1px solid rgba(12,170,220,.2);
-            border-radius: 100px;
-            padding: 4px 12px;
-            font-size: .7rem; font-weight: 700; letter-spacing: .4px;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-        }
-        .greet-chip span { width: 6px; height: 6px; background: var(--teal); border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
-        .dash-greet h2 { font-size: 1.35rem; font-weight: 800; color: var(--text-1); letter-spacing: -.3px; }
-        .dash-greet p  { font-size: .82rem; color: var(--text-3); margin-top: 4px; font-weight: 500; }
-
-        /* Section label */
-        .section-label {
-            font-size: .65rem; font-weight: 800; color: var(--text-3);
-            letter-spacing: 1.2px; text-transform: uppercase;
-            padding: 24px 20px 10px;
-            max-width: 680px; margin: 0 auto; width: 100%;
-        }
-
-        /* Menu grid */
-        .menu-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            padding: 0 20px 8px;
-            max-width: 680px;
-            margin: 0 auto;
-            width: 100%;
-        }
-        .menu-grid.full { grid-template-columns: 1fr; }
-
-        /* Menu card */
-        .menu-card {
-            display: flex;
-            flex-direction: column;
-            background: var(--white);
-            border-radius: var(--radius-md);
-            padding: 18px 16px;
-            text-decoration: none;
-            color: var(--text-1);
-            border: 1.5px solid var(--border);
-            box-shadow: var(--shadow-sm);
-            transition: transform .2s, box-shadow .2s, border-color .2s;
-            position: relative;
-            overflow: hidden;
-            animation: fadeUp .4s ease both;
-            -webkit-tap-highlight-color: transparent;
-            cursor: pointer;
-        }
-        .menu-card:active { transform: scale(.97); }
-        @media (hover: hover) {
-            .menu-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--card-accent, var(--teal)); }
-        }
-
-        /* Accent line top */
-        .menu-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            background: var(--card-accent, var(--teal));
-            border-radius: var(--radius-md) var(--radius-md) 0 0;
-        }
-
-        .card-icon {
-            width: 40px; height: 40px;
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            margin-bottom: 14px;
-            background: color-mix(in srgb, var(--card-accent, var(--teal)) 12%, transparent);
-            flex-shrink: 0;
-        }
-        .card-icon svg { width: 20px; height: 20px; fill: var(--card-accent, var(--teal)); }
-
-        .card-badge {
-            position: absolute; top: 14px; right: 14px;
-            font-size: .6rem; font-weight: 800;
-            letter-spacing: .5px; text-transform: uppercase;
-            padding: 3px 8px;
-            border-radius: 100px;
-            background: color-mix(in srgb, var(--card-accent, var(--teal)) 10%, transparent);
-            color: var(--card-accent, var(--teal));
-        }
-
-        .card-title {
-            font-size: .88rem; font-weight: 700;
-            color: var(--text-1); line-height: 1.3;
-            margin-bottom: 6px;
-        }
-        .card-desc {
-            font-size: .72rem; font-weight: 500;
-            color: var(--text-3); line-height: 1.5;
-            margin-top: auto;
-        }
-
-        /* Special card: Admin (dark) */
-        .menu-card.card-dark {
-            background: var(--navy);
-            border-color: var(--navy-3);
-        }
-        .menu-card.card-dark .card-title { color: var(--white); }
-        .menu-card.card-dark .card-desc  { color: rgba(255,255,255,.4); }
-        .menu-card.card-dark .card-badge { background: rgba(220,38,38,.15); color: #f87171; }
-
-        /* Wide card (spans 2 cols) */
-        .menu-card.card-wide {
-            grid-column: 1 / -1;
-            flex-direction: row;
-            align-items: center;
-            gap: 16px;
-        }
-        .menu-card.card-wide .card-icon { margin-bottom: 0; flex-shrink: 0; width: 48px; height: 48px; }
-        .menu-card.card-wide .card-icon svg { width: 24px; height: 24px; }
-        .menu-card.card-wide .card-body { flex: 1; }
-        .menu-card.card-wide .card-title { margin-bottom: 3px; }
-        .menu-card.card-wide::after {
-            content: '→';
-            font-size: 1.1rem; color: var(--card-accent, var(--teal));
-            margin-left: auto; flex-shrink: 0;
-        }
-
-        /* Footer */
-        .dash-footer {
-            text-align: center;
-            padding: 28px 20px 36px;
-            font-size: .7rem;
-            color: var(--text-3);
-            font-weight: 500;
-        }
-
-        /* ================================================================
-           ANIMATIONS (CSS-only, ringan)
-        ================================================================ */
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(14px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .3; }
-        }
-
-        /* Stagger animasi tiap card */
-        .menu-card:nth-child(1)  { animation-delay: .05s; }
-        .menu-card:nth-child(2)  { animation-delay: .10s; }
-        .menu-card:nth-child(3)  { animation-delay: .15s; }
-        .menu-card:nth-child(4)  { animation-delay: .20s; }
-        .menu-card:nth-child(5)  { animation-delay: .25s; }
-        .menu-card:nth-child(6)  { animation-delay: .30s; }
-        .menu-card:nth-child(7)  { animation-delay: .35s; }
-        .menu-card:nth-child(8)  { animation-delay: .40s; }
-        .menu-card:nth-child(9)  { animation-delay: .45s; }
-
-        /* ================================================================
-           RESPONSIVE — desktop sedikit lebih lega
-        ================================================================ */
-        @media (min-width: 520px) {
-            .login-card { padding: 44px 40px 40px; }
-            .menu-grid  { grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
-            .menu-card.card-wide { grid-column: span 1; flex-direction: column; }
-            .menu-card.card-wide::after { display: none; }
-            .menu-card.card-wide .card-icon { margin-bottom: 14px; }
-        }
-    </style>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/print.css">
 </head>
 <body>
 <div id="app">
@@ -465,7 +93,7 @@
         <div class="section-label">Guru Mapel</div>
         <div class="menu-grid">
 
-            <a href="input.html" class="menu-card" style="--card-accent:#6366f1">
+            <a href="pages/input.html" class="menu-card" style="--card-accent:#6366f1">
                 <div class="card-badge">E-Rapor</div>
                 <div class="card-icon">
                     <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
@@ -474,7 +102,7 @@
                 <div class="card-desc">Penyusunan TP (ABCD) dan input nilai rapor siswa.</div>
             </a>
 
-            <a href="guru.html" class="menu-card" style="--card-accent:#8b5cf6">
+            <a href="pages/guru.html" class="menu-card" style="--card-accent:#8b5cf6">
                 <div class="card-badge">Admin</div>
                 <div class="card-icon">
                     <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
@@ -483,7 +111,7 @@
                 <div class="card-desc">Buat dokumen kisi-kisi soal ujian standar (PDF).</div>
             </a>
 
-            <a href="soal.html" class="menu-card" style="--card-accent:#0ea5e9">
+            <a href="pages/soal.html" class="menu-card" style="--card-accent:#0ea5e9">
                 <div class="card-badge">Soal</div>
                 <div class="card-icon">
                     <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
@@ -492,7 +120,7 @@
                 <div class="card-desc">Susun paket soal ujian multi-tipe lengkap.</div>
             </a>
 
-            <a href="jawaban.html" class="menu-card" style="--card-accent:#f59e0b">
+            <a href="pages/jawaban.html" class="menu-card" style="--card-accent:#f59e0b">
                 <div class="card-badge">Laporan</div>
                 <div class="card-icon">
                     <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
@@ -507,7 +135,7 @@
         <div class="section-label">Administrasi</div>
         <div class="menu-grid">
 
-            <a href="perencanaan.html" class="menu-card" style="--card-accent:#14b8a6">
+            <a href="pages/perencanaan.html" class="menu-card" style="--card-accent:#14b8a6">
                 <div class="card-badge">Admin</div>
                 <div class="card-icon">
                     <svg viewBox="0 0 24 24"><path d="M21 6.5l-4-4-1.41 1.41 4 4L21 6.5zM2.99 17.01L2 22l4.99-1-4-3.99zM17 7.99L7 18H3v-4L13.01 3.99l3.99 4z"/></svg>
@@ -516,7 +144,7 @@
                 <div class="card-desc">Generator RPP/Modul Ajar Mindful & Joyful.</div>
             </a>
 
-            <a href="absen_ujian.html" class="menu-card" style="--card-accent:#22c55e">
+            <a href="pages/absen-ujian.html" class="menu-card" style="--card-accent:#22c55e">
                 <div class="card-badge">Admin</div>
                 <div class="card-icon">
                     <svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
@@ -525,7 +153,7 @@
                 <div class="card-desc">Kehadiran harian dan jadwal ujian susulan.</div>
             </a>
 
-            <a href="administrasi.html" class="menu-card" style="--card-accent:#06b6d4">
+            <a href="pages/administrasi.html" class="menu-card" style="--card-accent:#06b6d4">
                 <div class="card-badge">Admin</div>
                 <div class="card-icon">
                     <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 14H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
@@ -540,7 +168,7 @@
         <div class="section-label">Akses Siswa</div>
         <div class="menu-grid">
 
-            <a href="siswa.html" class="menu-card card-wide" style="--card-accent:#10b981">
+            <a href="pages/siswa.html" class="menu-card card-wide" style="--card-accent:#10b981">
                 <div class="card-icon">
                     <svg viewBox="0 0 24 24"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/></svg>
                 </div>
@@ -550,7 +178,7 @@
                 </div>
             </a>
 
-            <a href="remidi.html" class="menu-card card-wide" style="--card-accent:#ec4899">
+            <a href="pages/remidi.html" class="menu-card card-wide" style="--card-accent:#ec4899">
                 <div class="card-icon">
                     <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
                 </div>
@@ -565,7 +193,7 @@
         <!-- Section: Admin IT -->
         <div class="section-label">Sistem</div>
         <div class="menu-grid">
-            <a href="admin.html" class="menu-card card-wide card-dark" style="--card-accent:#ef4444">
+            <a href="pages/admin.html" class="menu-card card-wide card-dark" style="--card-accent:#ef4444">
                 <div class="card-icon" style="background:rgba(239,68,68,.15)">
                     <svg viewBox="0 0 24 24" style="fill:#ef4444"><path d="M20 3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h3l-1 1v2h12v-2l-1-1h3c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 13H4V5h16v11z"/></svg>
                 </div>
